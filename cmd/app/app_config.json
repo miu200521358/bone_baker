@@ -1,0 +1,14 @@
+{
+    "Name": "PhysicsFixer",
+    "Version": "1.0.0_beta_01",
+    "Horizontal": true,
+    "CloseConfirm": true,
+    "ControlWindowSize": {
+        "Width": 512,
+        "Height": 768
+    },
+    "ViewWindowSize": {
+        "Width": 512,
+        "Height": 768
+    }
+}

@@ -1,0 +1,70 @@
+[
+    {
+        "id": "&ツールについて",
+        "translation": "&About the Tool"
+    },
+    {
+        "id": "使い方説明",
+        "translation": "If you associate the tool with the pmx or x file extension, you can launch the viewer by double-clicking the file.\nYou can also apply motions and toggle material display."
+    },
+    {
+        "id": "ビューワー",
+        "translation": "Viewer"
+    },
+    {
+        "id": "設定",
+        "translation": "Settings"
+    },
+    {
+        "id": "設定説明",
+        "translation": "Settings Description"
+    },
+    {
+        "id": "設定保存",
+        "translation": "Save settings and exit"
+    },
+    {
+        "id": "ファイル",
+        "translation": "File"
+    },
+    {
+        "id": "材質ビュー",
+        "translation": "Material View"
+    },
+    {
+        "id": "材質ビュー説明",
+        "translation": "Displays the selected material.\nInitially, all materials are selected and displayed.\nSelecting a material toggles its selection state.\nHolding Shift while selecting toggles the selection state of materials within the range.\nIf a texture cannot be interpreted, the text color will be displayed in red."
+    },
+    {
+        "id": "モデルファイル",
+        "translation": "Model File"
+    },
+    {
+        "id": "モデルファイルを選択してください",
+        "translation": "Please select a model file\nPmx or X files can be opened."
+    },
+    {
+        "id": "モーションファイル",
+        "translation": "Motion File"
+    },
+    {
+        "id": "モーションファイルを選択してください",
+        "translation": "Please select a motion file\nVmd or Vpd files can be opened."
+    },
+    {
+        "id": "全",
+        "translation": "All"
+    },
+    {
+        "id": "反",
+        "translation": "Invert"
+    },
+    {
+        "id": "全ボタン説明",
+        "translation": "Displays all materials."
+    },
+    {
+        "id": "反ボタン説明",
+        "translation": "Inverts the selection state of all materials."
+    }
+]
