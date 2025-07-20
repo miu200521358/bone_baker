@@ -32,7 +32,6 @@ type PhysicsSet struct {
 	PhysicsModel        *pmx.PmxModel  `json:"-"` // 物理焼き込み先モデル
 	PhysicsConfigModel  *pmx.PmxModel  `json:"-"` // 物理焼き込み先モデル(ボーン追加)
 	OutputMotion        *vmd.VmdMotion `json:"-"` // 出力結果モーション
-
 }
 
 func NewPhysicsSet(index int) *PhysicsSet {
@@ -60,7 +59,7 @@ func (ss *PhysicsSet) CreateOutputMotionPath() string {
 	_, fileName, _ := mfile.SplitPath(ss.PhysicsModelPath)
 
 	return mfile.CreateOutputPath(
-		ss.OriginalMotionPath, fmt.Sprintf("%s%s%02d", fileName, "PF", ss.Index))
+		ss.OriginalMotionPath, fmt.Sprintf("%s_%s_%02d", fileName, "PF", ss.Index))
 }
 
 func (ss *PhysicsSet) setMotion(originalMotion, outputMotion *vmd.VmdMotion) {
@@ -320,4 +319,23 @@ func (ss *PhysicsSet) Delete() {
 	ss.PhysicsModel = nil
 	ss.PhysicsConfigModel = nil
 	ss.OutputMotion = nil
+}
+
+// 物理ボーンだけ残す
+func (ss *PhysicsSet) RemoveWithoutPhysicsBones() {
+	if ss.PhysicsModel == nil || ss.OutputMotion == nil {
+		return
+	}
+
+	ss.OutputMotion.BoneFrames.ForEach(func(boneName string, boneNameFrames *vmd.BoneNameFrames) {
+		if bone, err := ss.PhysicsModel.Bones.GetByName(boneName); err == nil {
+			if bone.RigidBody != nil && bone.RigidBody.PhysicsType != pmx.PHYSICS_TYPE_STATIC {
+				// 物理剛体がくっついているボーンのみ残す
+				return
+			}
+
+			// 物理剛体がくっついていないボーンは削除
+			ss.OutputMotion.BoneFrames.Update(vmd.NewBoneNameFrames(boneName))
+		}
+	})
 }

@@ -27,10 +27,12 @@ type PhysicsState struct {
 	PhysicsModelPicker   *widget.FilePicker   // 物理焼き込み先モデル
 	OutputMotionPicker   *widget.FilePicker   // 出力モーション
 	OutputModelPicker    *widget.FilePicker   // 出力モデル
+	BakeButton           *widget.MPushButton  // 物理焼き込み開始ボタン
 	SaveButton           *widget.MPushButton  // 保存ボタン
 	Player               *widget.MotionPlayer // モーションプレイヤー
 	GravitySlider        *widget.TextSlider   // 重力スライダー
 	PhysicsSets          []*domain.PhysicsSet `json:"physics_sets"` // 物理焼き込みセット
+	isBaking             bool                 // 物理焼き込み中フラグ
 }
 
 func (ss *PhysicsState) AddAction() {

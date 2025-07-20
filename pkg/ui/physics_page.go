@@ -211,6 +211,9 @@ func NewPhysicsPage(mWidgets *controller.MWidgets) declarative.TabPage {
 
 		for _, physicsSet := range physicsState.PhysicsSets {
 			if physicsSet.OutputMotionPath != "" && physicsSet.OutputMotion != nil {
+				// 物理ボーンのみ残す
+				physicsSet.RemoveWithoutPhysicsBones()
+
 				rep := repository.NewVmdRepository(true)
 				if err := rep.Save(physicsSet.OutputMotionPath, physicsSet.OutputMotion, false); err != nil {
 					mlog.ET(mi18n.T("保存失敗"), err, "")
@@ -225,17 +228,39 @@ func NewPhysicsPage(mWidgets *controller.MWidgets) declarative.TabPage {
 		controller.Beep()
 	})
 
+	physicsState.BakeButton = widget.NewMPushButton()
+	physicsState.BakeButton.SetLabel(mi18n.T("物理焼き込み開始"))
+	physicsState.BakeButton.SetTooltip(mi18n.T("物理焼き込み説明"))
+	physicsState.BakeButton.SetMinSize(declarative.Size{Width: 256, Height: 20})
+	physicsState.BakeButton.SetStretchFactor(20)
+	physicsState.BakeButton.SetOnClicked(func(cw *controller.ControlWindow) {
+		physicsState.isBaking = !physicsState.isBaking
+		if physicsState.isBaking {
+			physicsState.BakeButton.PushButton.SetText(mi18n.T("物理焼き込み停止"))
+		} else {
+			physicsState.BakeButton.PushButton.SetText(mi18n.T("物理焼き込み開始"))
+		}
+		cw.SetSaveDelta(physicsState.isBaking)
+	})
+
 	mWidgets.Widgets = append(mWidgets.Widgets, physicsState.Player, physicsState.OriginalMotionPicker,
 		physicsState.PhysicsModelPicker, physicsState.OutputMotionPicker,
 		physicsState.OutputModelPicker, physicsState.AddSetButton, physicsState.ResetSetButton,
 		physicsState.LoadSetButton, physicsState.SaveSetButton, physicsState.SaveButton,
-		physicsState.GravitySlider)
+		physicsState.BakeButton, physicsState.GravitySlider)
 	mWidgets.SetOnLoaded(func() {
 		physicsState.PhysicsSets = append(physicsState.PhysicsSets, domain.NewPhysicsSet(len(physicsState.PhysicsSets)))
 		physicsState.AddAction()
 	})
 	mWidgets.SetOnChangePlaying(func(playing bool) {
 		physicsState.SetPhysicsOptionEnabled(!playing)
+
+		if !playing {
+			// 再生停止時に、変形情報モーションを保存
+			for n, physicsSet := range physicsState.PhysicsSets {
+				physicsSet.OutputMotion = mWidgets.Window().LoadDeltaMotion(0, n)
+			}
+		}
 	})
 
 	return declarative.TabPage{
@@ -286,6 +311,7 @@ func NewPhysicsPage(mWidgets *controller.MWidgets) declarative.TabPage {
 					physicsState.PhysicsModelPicker.Widgets(),
 					physicsState.OriginalMotionPicker.Widgets(),
 					declarative.VSeparator{},
+					physicsState.BakeButton.Widgets(),
 					declarative.TextLabel{
 						Text: mi18n.T("物理焼き込みオプション"),
 						OnMouseDown: func(x, y int, button walk.MouseButton) {
