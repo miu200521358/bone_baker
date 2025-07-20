@@ -63,7 +63,9 @@ func main() {
 			}
 
 			controlWindow, err = controller.NewControlWindow(shared, appConfig,
-				ui.NewMenuItems(), []declarative.TabPage{},
+				ui.NewMenuItems(), []declarative.TabPage{
+					ui.NewPhysicsPage(widgets),
+				},
 				widgets.SetEnabledInPlaying,
 				widths[0], heights[0], positionXs[0], positionYs[0], viewerCount)
 			if err != nil {

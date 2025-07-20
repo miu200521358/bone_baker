@@ -5,7 +5,7 @@
     },
     {
         "id": "使い方説明",
-        "translation": "If you associate the tool with the pmx or x file extension, you can launch the viewer by double-clicking the file.\nYou can also apply motions and toggle material display."
+        "translation": "If you associate the tool with the .vmd or .vpd file extension, you can launch the viewer by double-clicking the file.\nYou can also check for missing standard bones and morphs."
     },
     {
         "id": "ビューワー",
@@ -21,19 +21,7 @@
     },
     {
         "id": "設定保存",
-        "translation": "Save settings and exit"
-    },
-    {
-        "id": "ファイル",
-        "translation": "File"
-    },
-    {
-        "id": "材質ビュー",
-        "translation": "Material View"
-    },
-    {
-        "id": "材質ビュー説明",
-        "translation": "Displays the selected material.\nInitially, all materials are selected and displayed.\nSelecting a material toggles its selection state.\nHolding Shift while selecting toggles the selection state of materials within the range.\nIf a texture cannot be interpreted, the text color will be displayed in red."
+        "translation": "Save Model Settings"
     },
     {
         "id": "モデルファイル",
@@ -41,7 +29,7 @@
     },
     {
         "id": "モデルファイルを選択してください",
-        "translation": "Please select a model file\nPmx or X files can be opened."
+        "translation": "Please select a model file. Pmx or X files can be opened.\n・You can set the Pmx model to be applied when opening a motion.\n・Click the save button to save the model path and close the window."
     },
     {
         "id": "モーションファイル",
@@ -49,22 +37,58 @@
     },
     {
         "id": "モーションファイルを選択してください",
-        "translation": "Please select a motion file\nVmd or Vpd files can be opened."
+        "translation": "Please select a motion file.\nVmd or Vpd files can be opened."
     },
     {
-        "id": "全",
-        "translation": "All"
+        "id": "保存失敗",
+        "translation": "Failed to Save Settings"
     },
     {
-        "id": "反",
-        "translation": "Invert"
+        "id": "保存エラーメッセージ",
+        "translation": "Failed to save model settings.\n\nError message: {{.Error}}"
     },
     {
-        "id": "全ボタン説明",
-        "translation": "Displays all materials."
+        "id": "保存失敗メッセージ",
+        "translation": "Failed to save model settings.\nPlease check if the correct model path is specified.\n\nModel path: {{.Path}}"
     },
     {
-        "id": "反ボタン説明",
-        "translation": "Inverts the selection state of all materials."
+        "id": "OKボーン",
+        "translation": "[OK] Bone"
+    },
+    {
+        "id": "OKボーン説明",
+        "translation": "Bones that exist in both the motion and the model."
+    },
+    {
+        "id": "OKモーフ",
+        "translation": "[OK] Morph"
+    },
+    {
+        "id": "OKモーフ説明",
+        "translation": "Morphs that exist in both the motion and the model."
+    },
+    {
+        "id": "NGボーン",
+        "translation": "[NG] Bone"
+    },
+    {
+        "id": "NGボーン説明",
+        "translation": "Bones that exist in the motion but not in the model."
+    },
+    {
+        "id": "NGモーフ",
+        "translation": "[NG] Morph"
+    },
+    {
+        "id": "NGモーフ説明",
+        "translation": "Morphs that exist in the motion but not in the model."
+    },
+    {
+        "id": "保存成功",
+        "translation": "Successfully Saved Settings"
+    },
+    {
+        "id": "保存成功メッセージ",
+        "translation": "Model settings have been successfully saved.\nPlease close the window.\nIf you have not yet associated the file extension, please do so.\n\nModel path: {{.Path}}"
     }
 ]
