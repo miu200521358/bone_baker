@@ -9,6 +9,7 @@ import (
 	"github.com/miu200521358/mlib_go/pkg/config/merr"
 	"github.com/miu200521358/mlib_go/pkg/config/mi18n"
 	"github.com/miu200521358/mlib_go/pkg/config/mlog"
+	"github.com/miu200521358/mlib_go/pkg/domain/mmath"
 	"github.com/miu200521358/mlib_go/pkg/infrastructure/repository"
 	"github.com/miu200521358/mlib_go/pkg/interface/controller"
 	"github.com/miu200521358/mlib_go/pkg/interface/controller/widget"
@@ -24,12 +25,16 @@ func NewPhysicsPage(mWidgets *controller.MWidgets) declarative.TabPage {
 	physicsState.GravitySlider = widget.NewTextSlider(
 		mi18n.T("重力"),
 		mi18n.T("重力説明"),
-		float32(-10.0), // sliderMin
+		float32(-20.0), // sliderMin
 		float32(20.0),  // sliderMax
-		float32(9.8),   // initialValue
+		float32(-9.8),  // initialValue
 		8,              // gridColumns
 		5,              // sliderColumns
 		func(cw *controller.ControlWindow) {
+			// 重力値変更時のコールバック
+			gravity := &mmath.MVec3{X: 0, Y: float64(physicsState.GravitySlider.Value()), Z: 0}
+			cw.SetGravity(gravity)
+			cw.TriggerPhysicsReset()
 		})
 
 	physicsState.OutputMotionPicker = widget.NewVmdSaveFilePicker(
@@ -278,8 +283,8 @@ func NewPhysicsPage(mWidgets *controller.MWidgets) declarative.TabPage {
 				MinSize: declarative.Size{Width: 126, Height: 350},
 				MaxSize: declarative.Size{Width: 2560, Height: 5120},
 				Children: []declarative.Widget{
-					physicsState.OriginalMotionPicker.Widgets(),
 					physicsState.PhysicsModelPicker.Widgets(),
+					physicsState.OriginalMotionPicker.Widgets(),
 					declarative.VSeparator{},
 					declarative.TextLabel{
 						Text: mi18n.T("物理焼き込みオプション"),
