@@ -29,6 +29,7 @@ type PhysicsState struct {
 	OutputModelPicker    *widget.FilePicker   // 出力モデル
 	SaveButton           *widget.MPushButton  // 保存ボタン
 	Player               *widget.MotionPlayer // モーションプレイヤー
+	GravitySlider        *widget.TextSlider   // 重力スライダー
 	PhysicsSets          []*domain.PhysicsSet `json:"physics_sets"` // 物理焼き込みセット
 }
 
@@ -245,6 +246,7 @@ func (physicsState *PhysicsState) SetPhysicsEnabled(enabled bool) {
 	physicsState.OutputModelPicker.SetEnabled(enabled)
 
 	physicsState.Player.SetEnabled(enabled)
+	physicsState.GravitySlider.SetEnabled(enabled)
 
 	physicsState.SetPhysicsOptionEnabled(enabled)
 }

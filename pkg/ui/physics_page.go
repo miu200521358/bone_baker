@@ -21,6 +21,16 @@ func NewPhysicsPage(mWidgets *controller.MWidgets) declarative.TabPage {
 	physicsState := new(PhysicsState)
 
 	physicsState.Player = widget.NewMotionPlayer()
+	physicsState.GravitySlider = widget.NewTextSlider(
+		mi18n.T("重力"),
+		mi18n.T("重力説明"),
+		float32(-10.0), // sliderMin
+		float32(20.0),  // sliderMax
+		float32(9.8),   // initialValue
+		8,              // gridColumns
+		5,              // sliderColumns
+		func(cw *controller.ControlWindow) {
+		})
 
 	physicsState.OutputMotionPicker = widget.NewVmdSaveFilePicker(
 		mi18n.T("物理焼き込み後モーション(Vmd)"),
@@ -213,7 +223,8 @@ func NewPhysicsPage(mWidgets *controller.MWidgets) declarative.TabPage {
 	mWidgets.Widgets = append(mWidgets.Widgets, physicsState.Player, physicsState.OriginalMotionPicker,
 		physicsState.PhysicsModelPicker, physicsState.OutputMotionPicker,
 		physicsState.OutputModelPicker, physicsState.AddSetButton, physicsState.ResetSetButton,
-		physicsState.LoadSetButton, physicsState.SaveSetButton, physicsState.SaveButton)
+		physicsState.LoadSetButton, physicsState.SaveSetButton, physicsState.SaveButton,
+		physicsState.GravitySlider)
 	mWidgets.SetOnLoaded(func() {
 		physicsState.PhysicsSets = append(physicsState.PhysicsSets, domain.NewPhysicsSet(len(physicsState.PhysicsSets)))
 		physicsState.AddAction()
@@ -276,42 +287,7 @@ func NewPhysicsPage(mWidgets *controller.MWidgets) declarative.TabPage {
 							mlog.ILT(mi18n.T("物理焼き込みオプション"), mi18n.T("物理焼き込みオプション説明"))
 						},
 					},
-					// declarative.Composite{
-					// 	Layout: declarative.Grid{Columns: 8},
-					// 	Children: []declarative.Widget{
-					// 		declarative.TextLabel{
-					// 			Text: mi18n.T("肩の比重"),
-					// 		},
-					// 		declarative.TextEdit{
-					// 			AssignTo: &physicsState.ShoulderWeightEdit,
-					// 			OnTextChanged: func() {
-					// 				if physicsState.ShoulderWeightEdit.Text() != "" {
-					// 					weight, err := strconv.Atoi(physicsState.ShoulderWeightEdit.Text())
-					// 					if err != nil {
-					// 						physicsState.ShoulderWeightSlider.SetValue(0)
-					// 						return
-					// 					}
-					// 					physicsState.ShoulderWeightSlider.SetValue(weight)
-					// 				}
-					// 			},
-					// 			MinSize: declarative.Size{Width: 30, Height: 20},
-					// 			MaxSize: declarative.Size{Width: 30, Height: 20},
-					// 		},
-					// 		declarative.TextLabel{
-					// 			Text: "%",
-					// 		},
-					// 		declarative.Slider{
-					// 			AssignTo:    &physicsState.ShoulderWeightSlider,
-					// 			ToolTipText: mi18n.T("肩比重説明"),
-					// 			OnValueChanged: func() {
-					// 				physicsState.ShoulderWeightEdit.ChangeText(
-					// 					strconv.Itoa(physicsState.ShoulderWeightSlider.Value()))
-					// 				changePhysicsCheck(mWidgets.Window(), physicsState)
-					// 			},
-					// 			ColumnSpan: 5,
-					// 		},
-					// 	},
-					// },
+					physicsState.GravitySlider.Widgets(),
 					// declarative.VSeparator{},
 					// declarative.Composite{
 					// 	Layout: declarative.Grid{Columns: 3},
