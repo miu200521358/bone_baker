@@ -1,7 +1,6 @@
 package ui
 
 import (
-	"fmt"
 	"path/filepath"
 
 	"github.com/miu200521358/physics_fixer/pkg/domain"
@@ -43,7 +42,6 @@ func NewPhysicsPage(mWidgets *controller.MWidgets) declarative.TabPage {
 				}
 				gravity := cw.Gravity()
 				gravity.Y = v // 重力のY成分を更新
-				mlog.IL(mi18n.T("重力変更"), fmt.Sprintf(mi18n.T("重力設定: %.1f"), v))
 				cw.SetGravity(gravity)
 				cw.TriggerPhysicsReset()
 			}))
@@ -238,7 +236,15 @@ func NewPhysicsPage(mWidgets *controller.MWidgets) declarative.TabPage {
 		for _, physicsSet := range physicsState.PhysicsSets {
 			if physicsSet.OutputMotionPath != "" && physicsSet.OutputMotion != nil {
 				// 物理ボーンのみ残す
-				motion := physicsSet.GetOutputMotionOnlyPhysics()
+				motion, err := physicsSet.GetOutputMotionOnlyPhysics(
+					physicsState.StartFrameEdit.Value(),
+					physicsState.EndFrameEdit.Value(),
+				)
+				if err != nil {
+					mlog.ET(mi18n.T("保存失敗"), err, "")
+					return
+				}
+
 				rep := repository.NewVmdRepository(true)
 				if err := rep.Save(physicsSet.OutputMotionPath, motion, false); err != nil {
 					mlog.ET(mi18n.T("保存失敗"), err, "")
@@ -276,10 +282,9 @@ func NewPhysicsPage(mWidgets *controller.MWidgets) declarative.TabPage {
 			if physicsState.CurrentSet().OriginalMotion != nil {
 				copiedOriginalMotion, _ := physicsState.CurrentSet().OriginalMotion.Copy()
 				mWidgets.Window().StoreDeltaMotion(0, physicsState.CurrentIndex(), 0, copiedOriginalMotion)
-			}
 
-			if physicsState.CurrentSet().OutputMotion != nil {
-				copiedOutputMotion, _ := physicsState.CurrentSet().OutputMotion.Copy()
+				// 出力も元からコピー
+				copiedOutputMotion, _ := physicsState.CurrentSet().OriginalMotion.Copy()
 				mWidgets.Window().StoreDeltaMotion(1, physicsState.CurrentIndex(), 0, copiedOutputMotion)
 			}
 		} else {
@@ -350,8 +355,20 @@ func NewPhysicsPage(mWidgets *controller.MWidgets) declarative.TabPage {
 					physicsState.PhysicsParamSliders.Widgets(),
 					declarative.VSeparator{},
 					declarative.Composite{
+						Layout:   declarative.HBox{},
+						Children: []declarative.Widget{},
+					},
+					physicsState.OutputModelPicker.Widgets(),
+					physicsState.OutputMotionPicker.Widgets(),
+					declarative.VSeparator{},
+					physicsState.SaveModelButton.Widgets(),
+					declarative.Composite{
 						Layout: declarative.HBox{},
 						Children: []declarative.Widget{
+							declarative.TextLabel{
+								Text:        mi18n.T("焼き込みIndex"),
+								ToolTipText: mi18n.T("焼き込みIndex説明"),
+							},
 							declarative.NumberEdit{
 								SpinButtonsVisible: true,
 								AssignTo:           &physicsState.OutputMotionIndexEdit,
@@ -380,12 +397,34 @@ func NewPhysicsPage(mWidgets *controller.MWidgets) declarative.TabPage {
 									physicsState.OutputMotionPicker.ChangePath(currentSet.OutputMotionPath)
 								},
 							},
+							declarative.TextLabel{
+								Text:        mi18n.T("開始"),
+								ToolTipText: mi18n.T("開始フレーム説明"),
+							},
+							declarative.NumberEdit{
+								ToolTipText:        mi18n.T("開始フレーム説明"),
+								SpinButtonsVisible: true,
+								AssignTo:           &physicsState.StartFrameEdit,
+								Decimals:           0,
+								Increment:          1,
+								MinValue:           0,
+								MaxValue:           1,
+							},
+							declarative.TextLabel{
+								Text:        mi18n.T("終了"),
+								ToolTipText: mi18n.T("終了フレーム説明"),
+							},
+							declarative.NumberEdit{
+								ToolTipText:        mi18n.T("終了フレーム説明"),
+								SpinButtonsVisible: true,
+								AssignTo:           &physicsState.EndFrameEdit,
+								Decimals:           0,
+								Increment:          1,
+								MinValue:           0,
+								MaxValue:           1,
+							},
 						},
 					},
-					physicsState.OutputModelPicker.Widgets(),
-					physicsState.OutputMotionPicker.Widgets(),
-					declarative.VSeparator{},
-					physicsState.SaveModelButton.Widgets(),
 					physicsState.SaveMotionButton.Widgets(),
 				},
 			},

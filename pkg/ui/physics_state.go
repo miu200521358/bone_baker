@@ -29,6 +29,8 @@ type PhysicsState struct {
 	OutputModelPicker     *widget.FilePicker   // 出力モデル
 	OutputMotionIndexEdit *walk.NumberEdit     // 出力モーションインデックスプルダウン
 	SaveModelButton       *widget.MPushButton  // モデル保存ボタン
+	StartFrameEdit        *walk.NumberEdit     // 開始フレーム
+	EndFrameEdit          *walk.NumberEdit     // 終了フレーム
 	SaveMotionButton      *widget.MPushButton  // モーション保存ボタン
 	Player                *widget.MotionPlayer // モーションプレイヤー
 	PhysicsParamSliders   *widget.ValueSliders // 物理パラメータスライダー
@@ -178,7 +180,11 @@ func (physicsState *PhysicsState) LoadModel(
 	cw.StoreModel(1, physicsState.CurrentIndex(), physicsState.CurrentSet().PhysicsBakedModel)
 
 	cw.StoreMotion(0, physicsState.CurrentIndex(), physicsState.CurrentSet().OriginalMotion)
-	cw.StoreMotion(1, physicsState.CurrentIndex(), physicsState.CurrentSet().OutputMotion)
+	if physicsState.CurrentSet().OriginalMotion != nil {
+		if copiedMotion, err := physicsState.CurrentSet().OriginalMotion.Copy(); err == nil {
+			cw.StoreMotion(1, physicsState.CurrentIndex(), copiedMotion)
+		}
+	}
 
 	physicsState.OutputModelPicker.ChangePath(physicsState.CurrentSet().OutputModelPath)
 	physicsState.SetWidgetEnabled(true)
@@ -202,11 +208,17 @@ func (physicsState *PhysicsState) LoadMotion(
 	}
 
 	cw.StoreMotion(0, physicsState.CurrentIndex(), physicsState.CurrentSet().OriginalMotion)
-	cw.StoreMotion(1, physicsState.CurrentIndex(), physicsState.CurrentSet().OutputMotion)
 
 	// モーションプレイヤーのリセット
 	if physicsState.CurrentSet().OriginalMotion != nil {
+		if copiedMotion, err := physicsState.CurrentSet().OriginalMotion.Copy(); err == nil {
+			cw.StoreMotion(1, physicsState.CurrentIndex(), copiedMotion)
+		}
+
 		physicsState.Player.Reset(physicsState.CurrentSet().OriginalMotion.MaxFrame())
+		physicsState.StartFrameEdit.SetRange(0, float64(physicsState.CurrentSet().OriginalMotion.MaxFrame()))
+		physicsState.EndFrameEdit.SetRange(0, float64(physicsState.CurrentSet().OriginalMotion.MaxFrame()))
+		physicsState.EndFrameEdit.SetValue(float64(physicsState.CurrentSet().OriginalMotion.MaxFrame()))
 	}
 
 	physicsState.OutputMotionPicker.SetPath(physicsState.CurrentSet().OutputMotionPath)
