@@ -187,6 +187,16 @@ func (physicsState *PhysicsState) LoadModel(
 		}
 	}
 
+	for n := range physicsState.PhysicsSets {
+		cw.ClearDeltaMotion(0, n)
+		cw.ClearDeltaMotion(1, n)
+		cw.SetSaveDeltaIndex(0, 0)
+		cw.SetSaveDeltaIndex(1, 0)
+	}
+
+	physicsState.OutputMotionIndexEdit.SetValue(1.0)
+	physicsState.OutputMotionIndexEdit.SetRange(1.0, 2.0)
+
 	physicsState.OutputModelPicker.ChangePath(physicsState.CurrentSet().OutputModelPath)
 	physicsState.SetWidgetEnabled(true)
 
@@ -216,6 +226,16 @@ func (physicsState *PhysicsState) LoadMotion(
 		cw.StoreMotion(1, physicsState.CurrentIndex(), physicsState.CurrentSet().OutputMotion)
 	}
 
+	for n := range physicsState.PhysicsSets {
+		cw.ClearDeltaMotion(0, n)
+		cw.ClearDeltaMotion(1, n)
+		cw.SetSaveDeltaIndex(0, 0)
+		cw.SetSaveDeltaIndex(1, 0)
+	}
+
+	physicsState.OutputMotionIndexEdit.SetValue(1.0)
+	physicsState.OutputMotionIndexEdit.SetRange(1.0, 2.0)
+
 	// モーションプレイヤーのリセット
 	if physicsState.CurrentSet().OriginalMotion != nil {
 		physicsState.Player.Reset(physicsState.CurrentSet().OriginalMotion.MaxFrame())
@@ -243,13 +263,18 @@ func (physicsState *PhysicsState) SetWidgetEnabled(enabled bool) {
 	physicsState.OutputModelPicker.SetEnabled(enabled)
 
 	physicsState.Player.SetEnabled(enabled)
-	physicsState.GravityEdit.SetEnabled(enabled)
-	physicsState.MaxSubStepsEdit.SetEnabled(enabled)
+
+	physicsState.SaveModelButton.SetEnabled(enabled)
+	physicsState.SaveMotionButton.SetEnabled(enabled)
 
 	physicsState.SetPhysicsOptionEnabled(enabled)
 }
 
 func (physicsState *PhysicsState) SetPhysicsOptionEnabled(enabled bool) {
-	physicsState.SaveModelButton.SetEnabled(enabled)
-	physicsState.SaveMotionButton.SetEnabled(enabled)
+	physicsState.GravityEdit.SetEnabled(enabled)
+	physicsState.MaxSubStepsEdit.SetEnabled(enabled)
+
+	physicsState.StartFrameEdit.SetEnabled(enabled)
+	physicsState.EndFrameEdit.SetEnabled(enabled)
+	physicsState.OutputMotionIndexEdit.SetEnabled(enabled)
 }

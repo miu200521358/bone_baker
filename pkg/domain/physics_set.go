@@ -121,6 +121,8 @@ func (ss *PhysicsSet) LoadModel(path string) error {
 			} else {
 				// 物理ボーンの名前に接頭辞を追加
 				ss.insertPhysicsBonePrefix(originalModel)
+				// 物理ボーンを表示枠に追加
+				ss.appendPhysicsBoneToDisplaySlots(originalModel)
 			}
 		} else {
 			mlog.ET(mi18n.T("読み込み失敗"), err, "")
@@ -141,6 +143,8 @@ func (ss *PhysicsSet) LoadModel(path string) error {
 			} else {
 				// 物理ボーンの名前に接頭辞を追加
 				ss.insertPhysicsBonePrefix(physicsBakedModel)
+				// 物理ボーンを表示枠に追加
+				ss.appendPhysicsBoneToDisplaySlots(physicsBakedModel)
 				// 物理ボーンの物理剛体を無効化
 				ss.fixPhysicsRigidBodies(physicsBakedModel)
 			}
@@ -166,6 +170,59 @@ func (ss *PhysicsSet) LoadModel(path string) error {
 	return nil
 }
 
+// appendPhysicsBoneToDisplaySlots 物理ボーンを表示枠に追加
+func (ss *PhysicsSet) appendPhysicsBoneToDisplaySlots(model *pmx.PmxModel) {
+	if model == nil {
+		return
+	}
+
+	// 表示枠に追加済みのボーン一覧を取得
+	displayedBones := make([]bool, model.Bones.Length())
+	model.DisplaySlots.ForEach(func(slotIndex int, slot *pmx.DisplaySlot) bool {
+		for _, ref := range slot.References {
+			if ref.DisplayType == pmx.DISPLAY_TYPE_BONE {
+				displayedBones[ref.DisplayIndex] = true
+			}
+		}
+		return true
+	})
+
+	var physicsDisplaySlot *pmx.DisplaySlot
+
+	// 物理ボーンを表示枠に追加
+	model.Bones.ForEach(func(boneIndex int, bone *pmx.Bone) bool {
+		if bone.RigidBody != nil &&
+			bone.RigidBody.PhysicsType != pmx.PHYSICS_TYPE_STATIC &&
+			!displayedBones[boneIndex] {
+			// 物理ボーンで、表示枠に追加されていない場合
+			if physicsDisplaySlot == nil {
+				// 物理ボーン用の表示枠がまだない場合、作成する
+				physicsDisplaySlot = pmx.NewDisplaySlot()
+				physicsDisplaySlot.SetName("Physics")
+			}
+
+			// 物理ボーンを表示枠に追加
+			ref := pmx.NewDisplaySlotReferenceByValues(pmx.DISPLAY_TYPE_BONE, boneIndex)
+			physicsDisplaySlot.References = append(physicsDisplaySlot.References, ref)
+
+			// 操作できるようにフラグを設定
+			bone.BoneFlag |= pmx.BONE_FLAG_IS_VISIBLE
+			bone.BoneFlag |= pmx.BONE_FLAG_CAN_MANIPULATE
+			bone.BoneFlag |= pmx.BONE_FLAG_CAN_TRANSLATE
+			bone.BoneFlag |= pmx.BONE_FLAG_CAN_ROTATE
+
+			model.Bones.Update(bone)
+		}
+		return true
+	})
+
+	if physicsDisplaySlot != nil {
+		// 物理ボーン用の表示枠が作成された場合、モデルに追加する
+		model.DisplaySlots.Append(physicsDisplaySlot)
+	}
+}
+
+// insertPhysicsBonePrefix 物理ボーンの名前に接頭辞を追加
 func (ss *PhysicsSet) insertPhysicsBonePrefix(model *pmx.PmxModel) {
 	if model == nil {
 		return

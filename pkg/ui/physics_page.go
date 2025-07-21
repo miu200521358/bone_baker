@@ -400,7 +400,7 @@ func NewPhysicsPage(mWidgets *controller.MWidgets) declarative.TabPage {
 								Decimals:           0,
 								Increment:          1,
 								MinValue:           1,
-								MaxValue:           1,
+								MaxValue:           2,
 								OnValueChanged: func() {
 									// 出力モーションインデックスが変更されたときの処理
 									currentSet := physicsState.CurrentSet()
