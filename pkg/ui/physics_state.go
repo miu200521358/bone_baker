@@ -33,7 +33,8 @@ type PhysicsState struct {
 	EndFrameEdit          *walk.NumberEdit     // 終了フレーム
 	SaveMotionButton      *widget.MPushButton  // モーション保存ボタン
 	Player                *widget.MotionPlayer // モーションプレイヤー
-	PhysicsParamSliders   *widget.ValueSliders // 物理パラメータスライダー
+	GravityEdit           *walk.NumberEdit     // 重力値入力
+	MaxSubStepsEdit       *walk.NumberEdit     // 最大サブステップ数
 	PhysicsSets           []*domain.PhysicsSet `json:"physics_sets"` // 物理焼き込みセット
 }
 
@@ -207,14 +208,16 @@ func (physicsState *PhysicsState) LoadMotion(
 		return err
 	}
 
-	cw.StoreMotion(0, physicsState.CurrentIndex(), physicsState.CurrentSet().OriginalMotion)
+	if physicsState.CurrentSet().OriginalMotion != nil {
+		cw.StoreMotion(0, physicsState.CurrentIndex(), physicsState.CurrentSet().OriginalMotion)
+	}
+
+	if physicsState.CurrentSet().OutputMotion != nil {
+		cw.StoreMotion(1, physicsState.CurrentIndex(), physicsState.CurrentSet().OutputMotion)
+	}
 
 	// モーションプレイヤーのリセット
 	if physicsState.CurrentSet().OriginalMotion != nil {
-		if copiedMotion, err := physicsState.CurrentSet().OriginalMotion.Copy(); err == nil {
-			cw.StoreMotion(1, physicsState.CurrentIndex(), copiedMotion)
-		}
-
 		physicsState.Player.Reset(physicsState.CurrentSet().OriginalMotion.MaxFrame())
 		physicsState.StartFrameEdit.SetRange(0, float64(physicsState.CurrentSet().OriginalMotion.MaxFrame()))
 		physicsState.EndFrameEdit.SetRange(0, float64(physicsState.CurrentSet().OriginalMotion.MaxFrame()))
@@ -240,7 +243,8 @@ func (physicsState *PhysicsState) SetWidgetEnabled(enabled bool) {
 	physicsState.OutputModelPicker.SetEnabled(enabled)
 
 	physicsState.Player.SetEnabled(enabled)
-	physicsState.PhysicsParamSliders.SetEnabled(enabled)
+	physicsState.GravityEdit.SetEnabled(enabled)
+	physicsState.MaxSubStepsEdit.SetEnabled(enabled)
 
 	physicsState.SetPhysicsOptionEnabled(enabled)
 }

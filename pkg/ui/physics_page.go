@@ -23,29 +23,6 @@ func NewPhysicsPage(mWidgets *controller.MWidgets) declarative.TabPage {
 	physicsState.Player = widget.NewMotionPlayer()
 	physicsState.Player.SetLabelTexts(mi18n.T("焼き込み停止"), mi18n.T("焼き込み再生"))
 
-	physicsState.PhysicsParamSliders = widget.NewValueSliders()
-	physicsState.PhysicsParamSliders.AddSlider(
-		widget.NewValueSlider(
-			mi18n.T("重力"),
-			mi18n.T("重力説明"),
-			-20.0, // sliderMin
-			10.0,  // sliderMax
-			-9.8,  // initialValue
-			1,     // decimals
-			0.1,   // increment
-			8,     // gridColumns
-			1,     // labelColumns
-			func(v float64, cw *controller.ControlWindow) {
-				// 重力値変更時のコールバック
-				if cw == nil {
-					return
-				}
-				gravity := cw.Gravity()
-				gravity.Y = v // 重力のY成分を更新
-				cw.SetGravity(gravity)
-				cw.TriggerPhysicsReset()
-			}))
-
 	physicsState.OutputMotionPicker = widget.NewVmdSaveFilePicker(
 		mi18n.T("物理焼き込み後モーション(Vmd)"),
 		mi18n.T("物理焼き込み後モーションツールチップ"),
@@ -263,36 +240,32 @@ func NewPhysicsPage(mWidgets *controller.MWidgets) declarative.TabPage {
 		physicsState.OriginalModelPicker, physicsState.OutputMotionPicker,
 		physicsState.OutputModelPicker, physicsState.AddSetButton, physicsState.ResetSetButton,
 		physicsState.LoadSetButton, physicsState.SaveSetButton, physicsState.SaveMotionButton,
-		physicsState.SaveModelButton, physicsState.PhysicsParamSliders)
+		physicsState.SaveModelButton)
 	mWidgets.SetOnLoaded(func() {
 		physicsState.PhysicsSets = append(physicsState.PhysicsSets, domain.NewPhysicsSet(len(physicsState.PhysicsSets)))
 		physicsState.AddAction()
 	})
 	mWidgets.SetOnChangePlaying(func(playing bool) {
-		mWidgets.Window().SetSaveDelta(playing)
+		mWidgets.Window().SetSaveDelta(0, playing)
 		physicsState.SetPhysicsOptionEnabled(!playing)
 
 		if playing {
 			// 焼き込み開始時にINDEX加算
-			deltaIndex := mWidgets.Window().GetDeltaMotionCount(1, physicsState.CurrentIndex())
+			deltaIndex := mWidgets.Window().GetDeltaMotionCount(0, physicsState.CurrentIndex())
 			deltaIndex += 1
-			mWidgets.Window().SetSaveDeltaIndex(deltaIndex)
-			physicsState.OutputMotionIndexEdit.SetValue(float64(deltaIndex + 1))
 
-			if physicsState.CurrentSet().OriginalMotion != nil {
-				copiedOriginalMotion, _ := physicsState.CurrentSet().OriginalMotion.Copy()
-				mWidgets.Window().StoreDeltaMotion(0, physicsState.CurrentIndex(), 0, copiedOriginalMotion)
-
-				// 出力も元からコピー
-				copiedOutputMotion, _ := physicsState.CurrentSet().OriginalMotion.Copy()
-				mWidgets.Window().StoreDeltaMotion(1, physicsState.CurrentIndex(), 0, copiedOutputMotion)
+			for _, physicsSet := range physicsState.PhysicsSets {
+				if physicsSet.OriginalMotion != nil {
+					if copiedOriginalMotion, err := physicsSet.OriginalMotion.Copy(); err == nil {
+						mWidgets.Window().StoreDeltaMotion(0, physicsSet.Index, deltaIndex, copiedOriginalMotion)
+					}
+				}
 			}
+
+			mWidgets.Window().SetSaveDeltaIndex(0, deltaIndex)
 		} else {
 			// 焼き込み完了時に範囲を更新
-			deltaCnt := mWidgets.Window().GetDeltaMotionCount(1, physicsState.CurrentIndex())
-			if deltaCnt <= 1 {
-				deltaCnt = 2 // 範囲制限のため、最低2個は必要
-			}
+			deltaCnt := mWidgets.Window().GetDeltaMotionCount(0, physicsState.CurrentIndex())
 			physicsState.OutputMotionIndexEdit.SetRange(1, float64(deltaCnt))
 			physicsState.OutputMotionIndexEdit.SetValue(float64(deltaCnt))
 		}
@@ -352,11 +325,63 @@ func NewPhysicsPage(mWidgets *controller.MWidgets) declarative.TabPage {
 							mlog.ILT(mi18n.T("物理焼き込みオプション"), mi18n.T("物理焼き込みオプション説明"))
 						},
 					},
-					physicsState.PhysicsParamSliders.Widgets(),
-					declarative.VSeparator{},
 					declarative.Composite{
-						Layout:   declarative.HBox{},
-						Children: []declarative.Widget{},
+						Layout: declarative.Grid{Columns: 6, SpacingZero: true},
+						Children: []declarative.Widget{
+							declarative.TextLabel{
+								Text:        mi18n.T("重力"),
+								ToolTipText: mi18n.T("重力説明"),
+								OnMouseDown: func(x, y int, button walk.MouseButton) {
+									mlog.IL("%s", mi18n.T("重力説明"))
+								},
+								StretchFactor: 1,
+							},
+							declarative.NumberEdit{
+								AssignTo: &physicsState.GravityEdit,
+								OnValueChanged: func() {
+									// 重力値変更時のコールバック
+									if mWidgets.Window() == nil {
+										return
+									}
+									gravity := mWidgets.Window().Gravity()
+									gravity.Y = physicsState.GravityEdit.Value() // 重力のY成分を更新
+									mWidgets.Window().SetGravity(gravity)
+									mWidgets.Window().TriggerPhysicsReset()
+								},
+								Value:              -9.8,   // 初期値
+								MinValue:           -100.0, // 最小値
+								MaxValue:           100.0,  // 最大値
+								Decimals:           1,      // 小数点以下の桁数
+								Increment:          0.1,    // 増分
+								SpinButtonsVisible: true,   // スピンボタンを表示
+								StretchFactor:      20,
+							},
+							declarative.TextLabel{
+								Text:        mi18n.T("サブステップ数"),
+								ToolTipText: mi18n.T("サブステップ数説明"),
+								OnMouseDown: func(x, y int, button walk.MouseButton) {
+									mlog.IL("%s", mi18n.T("サブステップ数説明"))
+								},
+								StretchFactor: 1,
+							},
+							declarative.NumberEdit{
+								AssignTo: &physicsState.MaxSubStepsEdit,
+								OnValueChanged: func() {
+									// 重力値変更時のコールバック
+									if mWidgets.Window() == nil {
+										return
+									}
+									mWidgets.Window().SetMaxSubSteps(int(physicsState.MaxSubStepsEdit.Value()))
+								},
+								Value:              2.0,   // 初期値
+								MinValue:           1.0,   // 最小値
+								MaxValue:           100.0, // 最大値
+								Decimals:           0,     // 小数点以下の桁数
+								Increment:          1.0,   // 増分
+								SpinButtonsVisible: true,  // スピンボタンを表示
+								StretchFactor:      20,
+							},
+						},
 					},
 					physicsState.OutputModelPicker.Widgets(),
 					physicsState.OutputMotionPicker.Widgets(),
@@ -375,13 +400,13 @@ func NewPhysicsPage(mWidgets *controller.MWidgets) declarative.TabPage {
 								Decimals:           0,
 								Increment:          1,
 								MinValue:           1,
-								MaxValue:           2,
+								MaxValue:           1,
 								OnValueChanged: func() {
 									// 出力モーションインデックスが変更されたときの処理
 									currentSet := physicsState.CurrentSet()
 									deltaIndex := int(physicsState.OutputMotionIndexEdit.Value() - 1)
 									if deltaIndex < 0 ||
-										deltaIndex >= mWidgets.Window().GetDeltaMotionCount(1, currentSet.Index) {
+										deltaIndex >= mWidgets.Window().GetDeltaMotionCount(0, currentSet.Index) {
 										// インデックスが範囲外の場合は、0に戻す
 										deltaIndex = 0
 									}
