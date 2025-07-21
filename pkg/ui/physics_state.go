@@ -17,22 +17,22 @@ import (
 )
 
 type PhysicsState struct {
-	AddSetButton         *widget.MPushButton  // セット追加ボタン
-	ResetSetButton       *widget.MPushButton  // セットリセットボタン
-	SaveSetButton        *widget.MPushButton  // セット保存ボタン
-	LoadSetButton        *widget.MPushButton  // セット読込ボタン
-	NavToolBar           *walk.ToolBar        // セットツールバー
-	currentIndex         int                  // 現在のインデックス
-	OriginalMotionPicker *widget.FilePicker   // 元モーション
-	PhysicsModelPicker   *widget.FilePicker   // 物理焼き込み先モデル
-	OutputMotionPicker   *widget.FilePicker   // 出力モーション
-	OutputModelPicker    *widget.FilePicker   // 出力モデル
-	BakeButton           *widget.MPushButton  // 物理焼き込み開始ボタン
-	SaveButton           *widget.MPushButton  // 保存ボタン
-	Player               *widget.MotionPlayer // モーションプレイヤー
-	GravitySlider        *widget.TextSlider   // 重力スライダー
-	PhysicsSets          []*domain.PhysicsSet `json:"physics_sets"` // 物理焼き込みセット
-	isBaking             bool                 // 物理焼き込み中フラグ
+	AddSetButton          *widget.MPushButton  // セット追加ボタン
+	ResetSetButton        *widget.MPushButton  // セットリセットボタン
+	SaveSetButton         *widget.MPushButton  // セット保存ボタン
+	LoadSetButton         *widget.MPushButton  // セット読込ボタン
+	NavToolBar            *walk.ToolBar        // セットツールバー
+	currentIndex          int                  // 現在のインデックス
+	OriginalMotionPicker  *widget.FilePicker   // 元モーション
+	OriginalModelPicker   *widget.FilePicker   // 物理焼き込み先モデル
+	OutputMotionPicker    *widget.FilePicker   // 出力モーション
+	OutputModelPicker     *widget.FilePicker   // 出力モデル
+	OutputMotionIndexEdit *walk.NumberEdit     // 出力モーションインデックスプルダウン
+	SaveModelButton       *widget.MPushButton  // モデル保存ボタン
+	SaveMotionButton      *widget.MPushButton  // モーション保存ボタン
+	Player                *widget.MotionPlayer // モーションプレイヤー
+	PhysicsParamSliders   *widget.ValueSliders // 物理パラメータスライダー
+	PhysicsSets           []*domain.PhysicsSet `json:"physics_sets"` // 物理焼き込みセット
 }
 
 func (ss *PhysicsState) AddAction() {
@@ -83,10 +83,10 @@ func (ss *PhysicsState) ChangeCurrentAction(index int) {
 	ss.NavToolBar.Actions().At(index).SetChecked(true)
 
 	// 物理焼き込みセットの情報を表示
+	ss.OriginalModelPicker.ChangePath(ss.CurrentSet().OriginalModelPath)
 	ss.OriginalMotionPicker.ChangePath(ss.CurrentSet().OriginalMotionPath)
-	ss.PhysicsModelPicker.ChangePath(ss.CurrentSet().PhysicsModelPath)
-	ss.OutputMotionPicker.ChangePath(ss.CurrentSet().OutputMotionPath)
 	ss.OutputModelPicker.ChangePath(ss.CurrentSet().OutputModelPath)
+	ss.OutputMotionPicker.ChangePath(ss.CurrentSet().OutputMotionPath)
 }
 
 func (ss *PhysicsState) ClearOptions() {
@@ -113,6 +113,10 @@ func (ss *PhysicsState) CurrentIndex() int {
 }
 
 func (ss *PhysicsState) CurrentSet() *domain.PhysicsSet {
+	if ss.currentIndex < 0 || ss.currentIndex >= len(ss.PhysicsSets) {
+		return nil
+	}
+
 	return ss.PhysicsSets[ss.currentIndex]
 }
 
@@ -157,60 +161,36 @@ func (ss *PhysicsState) LoadSet(jsonPath string) error {
 	return nil
 }
 
-// LoadOriginalModel 元モデルを読み込む
-func (physicsState *PhysicsState) LoadOriginalModel(
+// LoadModel 元モデルを読み込む
+func (physicsState *PhysicsState) LoadModel(
 	cw *controller.ControlWindow, path string,
 ) error {
-	physicsState.SetPhysicsEnabled(false)
+	physicsState.SetWidgetEnabled(false)
 
 	// オプションクリア
 	physicsState.ClearOptions()
 
-	if err := physicsState.CurrentSet().LoadOriginalModel(path); err != nil {
+	if err := physicsState.CurrentSet().LoadModel(path); err != nil {
 		return err
 	}
 
-	cw.StoreModel(1, physicsState.CurrentIndex(), physicsState.CurrentSet().OriginalModel)
+	cw.StoreModel(0, physicsState.CurrentIndex(), physicsState.CurrentSet().OriginalModel)
+	cw.StoreModel(1, physicsState.CurrentIndex(), physicsState.CurrentSet().PhysicsBakedModel)
 
-	cw.StoreMotion(0, physicsState.CurrentIndex(), physicsState.CurrentSet().OutputMotion)
-	cw.StoreMotion(1, physicsState.CurrentIndex(), physicsState.CurrentSet().OriginalMotion)
+	cw.StoreMotion(0, physicsState.CurrentIndex(), physicsState.CurrentSet().OriginalMotion)
+	cw.StoreMotion(1, physicsState.CurrentIndex(), physicsState.CurrentSet().OutputMotion)
 
-	physicsState.SetPhysicsEnabled(true)
+	physicsState.OutputModelPicker.ChangePath(physicsState.CurrentSet().OutputModelPath)
+	physicsState.SetWidgetEnabled(true)
 
 	return nil
 }
 
-// LoadPhysicsModel 物理焼き込み先モデルを読み込む
-func (physicsState *PhysicsState) LoadPhysicsModel(
-	cw *controller.ControlWindow, path string,
-) error {
-	physicsState.SetPhysicsEnabled(false)
-
-	// オプションクリア
-	physicsState.ClearOptions()
-
-	if err := physicsState.CurrentSet().LoadPhysicsModel(path); err != nil {
-		return err
-	}
-
-	cw.StoreModel(0, physicsState.CurrentIndex(), physicsState.CurrentSet().PhysicsModel)
-
-	cw.StoreMotion(0, physicsState.CurrentIndex(), physicsState.CurrentSet().OutputMotion)
-	cw.StoreMotion(1, physicsState.CurrentIndex(), physicsState.CurrentSet().OriginalMotion)
-
-	physicsState.OutputModelPicker.SetPath(physicsState.CurrentSet().OutputModelPath)
-	physicsState.OutputMotionPicker.SetPath(physicsState.CurrentSet().OutputMotionPath)
-
-	physicsState.SetPhysicsEnabled(true)
-
-	return nil
-}
-
-// LoadPhysicsMotion 物理焼き込みモーションを読み込む
-func (physicsState *PhysicsState) LoadPhysicsMotion(
+// LoadMotion 物理焼き込みモーションを読み込む
+func (physicsState *PhysicsState) LoadMotion(
 	cw *controller.ControlWindow, path string, isClear bool,
 ) error {
-	physicsState.SetPhysicsEnabled(false)
+	physicsState.SetWidgetEnabled(false)
 
 	// オプションクリア
 	if isClear {
@@ -221,38 +201,39 @@ func (physicsState *PhysicsState) LoadPhysicsMotion(
 		return err
 	}
 
-	cw.StoreMotion(0, physicsState.CurrentIndex(), physicsState.CurrentSet().OutputMotion)
-	cw.StoreMotion(1, physicsState.CurrentIndex(), physicsState.CurrentSet().OriginalMotion)
+	cw.StoreMotion(0, physicsState.CurrentIndex(), physicsState.CurrentSet().OriginalMotion)
+	cw.StoreMotion(1, physicsState.CurrentIndex(), physicsState.CurrentSet().OutputMotion)
 
+	// モーションプレイヤーのリセット
 	if physicsState.CurrentSet().OriginalMotion != nil {
 		physicsState.Player.Reset(physicsState.CurrentSet().OriginalMotion.MaxFrame())
 	}
 
 	physicsState.OutputMotionPicker.SetPath(physicsState.CurrentSet().OutputMotionPath)
-
-	physicsState.SetPhysicsEnabled(true)
+	physicsState.SetWidgetEnabled(true)
 
 	return nil
 }
 
-// SetPhysicsEnabled 物理焼き込み有効無効設定
-func (physicsState *PhysicsState) SetPhysicsEnabled(enabled bool) {
+// SetWidgetEnabled 物理焼き込み有効無効設定
+func (physicsState *PhysicsState) SetWidgetEnabled(enabled bool) {
 	physicsState.AddSetButton.SetEnabled(enabled)
 	physicsState.ResetSetButton.SetEnabled(enabled)
 	physicsState.SaveSetButton.SetEnabled(enabled)
 	physicsState.LoadSetButton.SetEnabled(enabled)
 
 	physicsState.OriginalMotionPicker.SetEnabled(enabled)
-	physicsState.PhysicsModelPicker.SetEnabled(enabled)
+	physicsState.OriginalModelPicker.SetEnabled(enabled)
 	physicsState.OutputMotionPicker.SetEnabled(enabled)
 	physicsState.OutputModelPicker.SetEnabled(enabled)
 
 	physicsState.Player.SetEnabled(enabled)
-	physicsState.GravitySlider.SetEnabled(enabled)
+	physicsState.PhysicsParamSliders.SetEnabled(enabled)
 
 	physicsState.SetPhysicsOptionEnabled(enabled)
 }
 
 func (physicsState *PhysicsState) SetPhysicsOptionEnabled(enabled bool) {
-	physicsState.SaveButton.SetEnabled(enabled)
+	physicsState.SaveModelButton.SetEnabled(enabled)
+	physicsState.SaveMotionButton.SetEnabled(enabled)
 }

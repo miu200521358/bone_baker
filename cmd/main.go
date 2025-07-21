@@ -42,7 +42,7 @@ var appFiles embed.FS
 var appI18nFiles embed.FS
 
 func main() {
-	viewerCount := 1
+	viewerCount := 2
 
 	appConfig := mconfig.LoadAppConfig(appFiles)
 	appConfig.Env = env
@@ -86,11 +86,13 @@ func main() {
 		return
 	}
 
+	viewerName := []string{"Viewer", "Physics Baked Viewer"}
+
 	// 描画ウィンドウはメインスレッドで起動
 	defer app.SafeExecute(appConfig, func() {
 		for n := range viewerCount {
 			nIdx := n + 1
-			if err := viewerWindowList.Add("Viewer",
+			if err := viewerWindowList.Add(viewerName[n],
 				widths[nIdx], heights[nIdx], positionXs[nIdx], positionYs[nIdx]); err != nil {
 				merr.ShowFatalErrorDialog(appConfig, err)
 				return
