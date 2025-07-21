@@ -35,11 +35,14 @@ type PhysicsSet struct {
 	OriginalModel     *pmx.PmxModel  `json:"-"` // 元モデル
 	PhysicsBakedModel *pmx.PmxModel  `json:"-"` // 物理焼き込み先モデル
 	OutputMotion      *vmd.VmdMotion `json:"-"` // 出力結果モーション
+
+	PhysicsTree *PhysicsModel `json:"-"` // 物理ボーンツリー
 }
 
 func NewPhysicsSet(index int) *PhysicsSet {
 	return &PhysicsSet{
-		Index: index,
+		Index:       index,
+		PhysicsTree: NewPhysicsModel(),
 	}
 }
 
@@ -191,9 +194,7 @@ func (ss *PhysicsSet) appendPhysicsBoneToDisplaySlots(model *pmx.PmxModel) {
 
 	// 物理ボーンを表示枠に追加
 	model.Bones.ForEach(func(boneIndex int, bone *pmx.Bone) bool {
-		if bone.RigidBody != nil &&
-			bone.RigidBody.PhysicsType != pmx.PHYSICS_TYPE_STATIC &&
-			!displayedBones[boneIndex] {
+		if bone.HasPhysics() && !displayedBones[boneIndex] {
 			// 物理ボーンで、表示枠に追加されていない場合
 			if physicsDisplaySlot == nil {
 				// 物理ボーン用の表示枠がまだない場合、作成する
@@ -232,7 +233,7 @@ func (ss *PhysicsSet) insertPhysicsBonePrefix(model *pmx.PmxModel) {
 
 	// 物理ボーンの名前に接頭辞を追加
 	model.Bones.ForEach(func(boneIndex int, bone *pmx.Bone) bool {
-		if bone.RigidBody != nil && bone.RigidBody.PhysicsType != pmx.PHYSICS_TYPE_STATIC {
+		if bone.HasPhysics() {
 			// ボーンINDEXを0埋めして設定
 			formattedBoneName := fmt.Sprintf("PF%0*d_%s", digits, boneIndex, bone.Name())
 			bone.SetName(ss.encodeName(formattedBoneName, 15))
@@ -384,7 +385,7 @@ func (ss *PhysicsSet) GetOutputMotionOnlyPhysics(startFrame, endFrame float64) (
 	motion := vmd.NewVmdMotion(ss.OutputMotionPath)
 
 	ss.OriginalModel.Bones.ForEach(func(boneIndex int, bone *pmx.Bone) bool {
-		if bone.RigidBody == nil || bone.RigidBody.PhysicsType == pmx.PHYSICS_TYPE_STATIC {
+		if !bone.HasPhysics() {
 			// 物理剛体がくっついていないボーンは対象外
 			return true
 		}

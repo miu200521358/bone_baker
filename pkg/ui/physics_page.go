@@ -383,6 +383,16 @@ func NewPhysicsPage(mWidgets *controller.MWidgets) declarative.TabPage {
 							},
 						},
 					},
+					declarative.Composite{
+						Layout: declarative.VBox{},
+						Children: []declarative.Widget{
+							declarative.TreeView{
+								AssignTo: &physicsState.PhysicsTreeView,
+								Model:    domain.NewPhysicsModel(),
+								MinSize:  declarative.Size{Width: 230, Height: 200},
+							},
+						},
+					},
 					physicsState.OutputModelPicker.Widgets(),
 					physicsState.OutputMotionPicker.Widgets(),
 					declarative.VSeparator{},

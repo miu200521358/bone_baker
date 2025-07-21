@@ -35,6 +35,7 @@ type PhysicsState struct {
 	Player                *widget.MotionPlayer // モーションプレイヤー
 	GravityEdit           *walk.NumberEdit     // 重力値入力
 	MaxSubStepsEdit       *walk.NumberEdit     // 最大サブステップ数
+	PhysicsTreeView       *walk.TreeView       // 物理ボーン表示ツリー
 	PhysicsSets           []*domain.PhysicsSet `json:"physics_sets"` // 物理焼き込みセット
 }
 
@@ -90,6 +91,12 @@ func (ss *PhysicsState) ChangeCurrentAction(index int) {
 	ss.OriginalMotionPicker.ChangePath(ss.CurrentSet().OriginalMotionPath)
 	ss.OutputModelPicker.ChangePath(ss.CurrentSet().OutputModelPath)
 	ss.OutputMotionPicker.ChangePath(ss.CurrentSet().OutputMotionPath)
+
+	// 物理ツリーのモデル変更
+	if ss.CurrentSet().PhysicsTree == nil {
+		ss.CurrentSet().PhysicsTree = domain.NewPhysicsModel()
+	}
+	ss.PhysicsTreeView.SetModel(ss.CurrentSet().PhysicsTree)
 }
 
 func (ss *PhysicsState) ClearOptions() {
@@ -187,6 +194,9 @@ func (physicsState *PhysicsState) LoadModel(
 		}
 	}
 
+	// 物理ツリーモデ作成
+	physicsState.createPhysicsTree()
+
 	for n := range physicsState.PhysicsSets {
 		cw.ClearDeltaMotion(0, n)
 		cw.ClearDeltaMotion(1, n)
@@ -201,6 +211,32 @@ func (physicsState *PhysicsState) LoadModel(
 	physicsState.SetWidgetEnabled(true)
 
 	return nil
+}
+
+func (physicsState *PhysicsState) createPhysicsTree() {
+	// 物理ツリーのモデル変更
+	tree := physicsState.CurrentSet().PhysicsTree
+	if tree == nil {
+		tree = domain.NewPhysicsModel()
+	}
+
+	for _, boneIndex := range physicsState.CurrentSet().OriginalModel.Bones.LayerSortedIndexes {
+		if bone, err := physicsState.CurrentSet().OriginalModel.Bones.Get(boneIndex); err == nil {
+			parent := tree.AtByBoneIndex(bone.ParentIndex)
+			item := domain.NewPhysicsItem(bone, parent)
+			if parent == nil {
+				tree.AddNode(item)
+			} else {
+				parent.(*domain.PhysicsItem).AddChild(item)
+			}
+		}
+	}
+
+	// 物理ボーンを持つアイテムのみを保存
+	tree.SaveOnlyPhysicsItems()
+	if err := physicsState.PhysicsTreeView.SetModel(tree); err != nil {
+		mlog.E(mi18n.T("物理ボーンツリー設定失敗エラー"), err, "")
+	}
 }
 
 // LoadMotion 物理焼き込みモーションを読み込む
