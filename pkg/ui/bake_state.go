@@ -376,6 +376,8 @@ func (bakeState *BakeState) SetOutputChildrenChecked(item walk.TreeItem, checked
 		bakeState.IsOutputUpdatingChildren = false
 	}()
 
+	item.(*domain.OutputItem).SetChecked(checked)
+
 	// 子どもの数を取得
 	childCount := item.ChildCount()
 	for i := range childCount {
@@ -387,7 +389,6 @@ func (bakeState *BakeState) SetOutputChildrenChecked(item walk.TreeItem, checked
 		// 子どものチェック状態を設定
 		if outputItem, ok := child.(*domain.OutputItem); ok {
 			outputItem.SetChecked(checked)
-			// TreeViewのチェック状態も更新
 			bakeState.OutputTreeView.SetChecked(outputItem, checked)
 		}
 
@@ -428,6 +429,7 @@ func (bakeState *BakeState) SetOutputPhysicsChecked(item walk.TreeItem, checked 
 		// 出力IKボーンのチェック状態を設定
 		if outputItem, ok := child.(*domain.OutputItem); ok {
 			if outputItem.AsPhysics() {
+				outputItem.SetChecked(checked)
 				bakeState.OutputTreeView.SetChecked(outputItem, checked)
 			}
 		}
@@ -467,6 +469,7 @@ func (bakeState *BakeState) SetOutputIkChecked(item walk.TreeItem, checked bool)
 		// 出力IKボーンのチェック状態を設定
 		if outputItem, ok := child.(*domain.OutputItem); ok {
 			if outputItem.AsIk() {
+				outputItem.SetChecked(checked)
 				bakeState.OutputTreeView.SetChecked(outputItem, checked)
 			}
 		}

@@ -374,7 +374,7 @@ func (ss *BakeSet) Delete() {
 }
 
 // 物理ボーンだけ残す
-func (ss *BakeSet) GetOutputMotionOnlyPhysics(startFrame, endFrame float64) (*vmd.VmdMotion, error) {
+func (ss *BakeSet) GetOutputMotionOnlyChecked(startFrame, endFrame float64) (*vmd.VmdMotion, error) {
 	if ss.OriginalModel == nil || ss.OutputMotion == nil {
 		return nil, errors.New(mi18n.T("物理焼き込みセットの元モデルまたは出力モーションが設定されていません"))
 	}
@@ -386,8 +386,9 @@ func (ss *BakeSet) GetOutputMotionOnlyPhysics(startFrame, endFrame float64) (*vm
 	motion := vmd.NewVmdMotion(ss.OutputMotionPath)
 
 	ss.OriginalModel.Bones.ForEach(func(boneIndex int, bone *pmx.Bone) bool {
-		if !bone.HasPhysics() {
-			// 物理剛体がくっついていないボーンは対象外
+		item := ss.OutputTree.AtByBoneIndex(boneIndex)
+		if item == nil || !item.(*OutputItem).Checked() {
+			// チェックされていないボーンはスキップ
 			return true
 		}
 
@@ -400,9 +401,9 @@ func (ss *BakeSet) GetOutputMotionOnlyPhysics(startFrame, endFrame float64) (*vm
 			motion.AppendBoneFrame(bone.Name(), bf)
 		}
 
-		{
+		if bone.HasPhysics() {
 			// 最後に物理有効化を入れる
-			lastBf := ss.OutputMotion.BoneFrames.Get(bone.Name()).Get(float32(endFrame))
+			lastBf := ss.OutputMotion.BoneFrames.Get(bone.Name()).Get(float32(endFrame + 1))
 			if lastBf != nil {
 				lastBf.DisablePhysics = false // 物理演算を有効にする
 				motion.AppendBoneFrame(bone.Name(), lastBf)

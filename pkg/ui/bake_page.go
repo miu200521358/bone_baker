@@ -213,8 +213,8 @@ func NewBakePage(mWidgets *controller.MWidgets) declarative.TabPage {
 
 		for _, physicsSet := range bakeState.BakeSets {
 			if physicsSet.OutputMotionPath != "" && physicsSet.OutputMotion != nil {
-				// 物理ボーンのみ残す
-				motion, err := physicsSet.GetOutputMotionOnlyPhysics(
+				// チェックボーンのみ残す
+				motion, err := physicsSet.GetOutputMotionOnlyChecked(
 					bakeState.StartFrameEdit.Value(),
 					bakeState.EndFrameEdit.Value(),
 				)
@@ -602,10 +602,11 @@ func NewBakePage(mWidgets *controller.MWidgets) declarative.TabPage {
 							},
 						},
 					},
-					bakeState.OutputModelPicker.Widgets(),
-					bakeState.OutputMotionPicker.Widgets(),
 					declarative.VSeparator{},
+					bakeState.OutputModelPicker.Widgets(),
 					bakeState.SaveModelButton.Widgets(),
+					declarative.VSeparator{},
+					bakeState.OutputMotionPicker.Widgets(),
 					declarative.Composite{
 						Layout: declarative.Grid{Columns: 6},
 						Children: []declarative.Widget{
