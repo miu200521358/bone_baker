@@ -12,6 +12,7 @@ import (
 	"github.com/miu200521358/walk/pkg/declarative"
 	"github.com/miu200521358/walk/pkg/walk"
 
+	"github.com/miu200521358/bone_baker/pkg/ui"
 	"github.com/miu200521358/mlib_go/pkg/config/mconfig"
 	"github.com/miu200521358/mlib_go/pkg/config/merr"
 	"github.com/miu200521358/mlib_go/pkg/config/mi18n"
@@ -20,7 +21,6 @@ import (
 	"github.com/miu200521358/mlib_go/pkg/interface/app"
 	"github.com/miu200521358/mlib_go/pkg/interface/controller"
 	"github.com/miu200521358/mlib_go/pkg/interface/viewer"
-	"github.com/miu200521358/physics_fixer/pkg/ui"
 )
 
 var env string
@@ -64,7 +64,7 @@ func main() {
 
 			controlWindow, err = controller.NewControlWindow(shared, appConfig,
 				ui.NewMenuItems(), []declarative.TabPage{
-					ui.NewPhysicsPage(widgets),
+					ui.NewBakePage(widgets),
 				},
 				widgets.SetEnabledInPlaying,
 				widths[0], heights[0], positionXs[0], positionYs[0], viewerCount)

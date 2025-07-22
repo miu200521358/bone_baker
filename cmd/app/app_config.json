@@ -1,6 +1,6 @@
 {
-    "Name": "PhysicsFixer",
-    "Version": "1.0.0_beta_01",
+    "Name": "BoneBaker",
+    "Version": "1.0.0_beta_02",
     "Horizontal": true,
     "CloseConfirm": true,
     "ControlWindowSize": {

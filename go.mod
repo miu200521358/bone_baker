@@ -1,4 +1,4 @@
-module github.com/miu200521358/physics_fixer
+module github.com/miu200521358/bone_baker
 
 go 1.23.7
 

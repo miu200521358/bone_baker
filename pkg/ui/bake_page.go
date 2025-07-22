@@ -3,7 +3,7 @@ package ui
 import (
 	"path/filepath"
 
-	"github.com/miu200521358/physics_fixer/pkg/domain"
+	"github.com/miu200521358/bone_baker/pkg/domain"
 
 	"github.com/miu200521358/mlib_go/pkg/config/mconfig"
 	"github.com/miu200521358/mlib_go/pkg/config/merr"
@@ -17,26 +17,26 @@ import (
 	"github.com/miu200521358/walk/pkg/walk"
 )
 
-func NewPhysicsPage(mWidgets *controller.MWidgets) declarative.TabPage {
-	var physicsTab *walk.TabPage
-	physicsState := new(PhysicsState)
+func NewBakePage(mWidgets *controller.MWidgets) declarative.TabPage {
+	var bakeTab *walk.TabPage
+	bakeState := new(BakeState)
 
-	physicsState.Player = widget.NewMotionPlayer()
-	physicsState.Player.SetLabelTexts(mi18n.T("焼き込み停止"), mi18n.T("焼き込み再生"))
+	bakeState.Player = widget.NewMotionPlayer()
+	bakeState.Player.SetLabelTexts(mi18n.T("焼き込み停止"), mi18n.T("焼き込み再生"))
 
-	physicsState.OutputMotionPicker = widget.NewVmdSaveFilePicker(
-		mi18n.T("物理焼き込み後モーション(Vmd)"),
-		mi18n.T("物理焼き込み後モーションツールチップ"),
+	bakeState.OutputMotionPicker = widget.NewVmdSaveFilePicker(
+		mi18n.T("焼き込み後モーション(Vmd)"),
+		mi18n.T("焼き込み後モーションツールチップ"),
 		func(cw *controller.ControlWindow, rep repository.IRepository, path string) {
 		},
 	)
 
-	physicsState.OutputModelPicker = widget.NewPmxSaveFilePicker(
-		mi18n.T("物理変更後モデル(Pmx)"),
-		mi18n.T("物理変更後モデルツールチップ"),
+	bakeState.OutputModelPicker = widget.NewPmxSaveFilePicker(
+		mi18n.T("変更後モデル(Pmx)"),
+		mi18n.T("変更後モデルツールチップ"),
 		func(cw *controller.ControlWindow, rep repository.IRepository, path string) {
 			// 実際に保存するのは、物理有効な元モデル
-			model := physicsState.CurrentSet().OriginalModel
+			model := bakeState.CurrentSet().OriginalModel
 			if model == nil {
 				return
 			}
@@ -44,68 +44,68 @@ func NewPhysicsPage(mWidgets *controller.MWidgets) declarative.TabPage {
 			if err := rep.Save(path, model, false); err != nil {
 				mlog.ET(mi18n.T("保存失敗"), err, "")
 				if ok := merr.ShowErrorDialog(cw.AppConfig(), err); ok {
-					physicsState.SetWidgetEnabled(true)
+					bakeState.SetWidgetEnabled(true)
 				}
 			}
 		},
 	)
 
-	physicsState.OriginalMotionPicker = widget.NewVmdVpdLoadFilePicker(
+	bakeState.OriginalMotionPicker = widget.NewVmdVpdLoadFilePicker(
 		"vmd",
 		mi18n.T("モーション(Vmd/Vpd)"),
 		mi18n.T("モーションツールチップ"),
 		func(cw *controller.ControlWindow, rep repository.IRepository, path string) {
-			if err := physicsState.LoadMotion(cw, path, true); err != nil {
+			if err := bakeState.LoadMotion(cw, path, true); err != nil {
 				if ok := merr.ShowErrorDialog(cw.AppConfig(), err); ok {
-					physicsState.SetWidgetEnabled(true)
+					bakeState.SetWidgetEnabled(true)
 				}
 			}
 		},
 	)
 
-	physicsState.OriginalModelPicker = widget.NewPmxLoadFilePicker(
+	bakeState.OriginalModelPicker = widget.NewPmxLoadFilePicker(
 		"pmx",
 		mi18n.T("モデル(Pmx)"),
 		mi18n.T("モデルツールチップ"),
 		func(cw *controller.ControlWindow, rep repository.IRepository, path string) {
-			if err := physicsState.LoadModel(cw, path); err != nil {
+			if err := bakeState.LoadModel(cw, path); err != nil {
 				if ok := merr.ShowErrorDialog(cw.AppConfig(), err); ok {
-					physicsState.SetWidgetEnabled(true)
+					bakeState.SetWidgetEnabled(true)
 				}
 			}
 		},
 	)
 
-	physicsState.AddSetButton = widget.NewMPushButton()
-	physicsState.AddSetButton.SetLabel(mi18n.T("セット追加"))
-	physicsState.AddSetButton.SetTooltip(mi18n.T("セット追加説明"))
-	physicsState.AddSetButton.SetMaxSize(declarative.Size{Width: 100, Height: 20})
-	physicsState.AddSetButton.SetOnClicked(func(cw *controller.ControlWindow) {
-		physicsState.PhysicsSets = append(physicsState.PhysicsSets,
-			domain.NewPhysicsSet(len(physicsState.PhysicsSets)))
-		physicsState.AddAction()
+	bakeState.AddSetButton = widget.NewMPushButton()
+	bakeState.AddSetButton.SetLabel(mi18n.T("セット追加"))
+	bakeState.AddSetButton.SetTooltip(mi18n.T("セット追加説明"))
+	bakeState.AddSetButton.SetMaxSize(declarative.Size{Width: 100, Height: 20})
+	bakeState.AddSetButton.SetOnClicked(func(cw *controller.ControlWindow) {
+		bakeState.BakeSets = append(bakeState.BakeSets,
+			domain.NewPhysicsSet(len(bakeState.BakeSets)))
+		bakeState.AddAction()
 	})
 
-	physicsState.ResetSetButton = widget.NewMPushButton()
-	physicsState.ResetSetButton.SetLabel(mi18n.T("セット全削除"))
-	physicsState.ResetSetButton.SetTooltip(mi18n.T("セット全削除説明"))
-	physicsState.ResetSetButton.SetMaxSize(declarative.Size{Width: 100, Height: 20})
-	physicsState.ResetSetButton.SetOnClicked(func(cw *controller.ControlWindow) {
+	bakeState.ResetSetButton = widget.NewMPushButton()
+	bakeState.ResetSetButton.SetLabel(mi18n.T("セット全削除"))
+	bakeState.ResetSetButton.SetTooltip(mi18n.T("セット全削除説明"))
+	bakeState.ResetSetButton.SetMaxSize(declarative.Size{Width: 100, Height: 20})
+	bakeState.ResetSetButton.SetOnClicked(func(cw *controller.ControlWindow) {
 		for n := range 2 {
-			for m := range physicsState.NavToolBar.Actions().Len() {
+			for m := range bakeState.NavToolBar.Actions().Len() {
 				mWidgets.Window().StoreModel(n, m, nil)
 				mWidgets.Window().StoreMotion(n, m, nil)
 			}
 		}
 
-		physicsState.ResetSet()
+		bakeState.ResetSet()
 	})
 
-	physicsState.LoadSetButton = widget.NewMPushButton()
-	physicsState.LoadSetButton.SetLabel(mi18n.T("セット設定読込"))
-	physicsState.LoadSetButton.SetTooltip(mi18n.T("セット設定読込説明"))
-	physicsState.LoadSetButton.SetMaxSize(declarative.Size{Width: 100, Height: 20})
-	physicsState.LoadSetButton.SetOnClicked(func(cw *controller.ControlWindow) {
+	bakeState.LoadSetButton = widget.NewMPushButton()
+	bakeState.LoadSetButton.SetLabel(mi18n.T("セット設定読込"))
+	bakeState.LoadSetButton.SetTooltip(mi18n.T("セット設定読込説明"))
+	bakeState.LoadSetButton.SetMaxSize(declarative.Size{Width: 100, Height: 20})
+	bakeState.LoadSetButton.SetOnClicked(func(cw *controller.ControlWindow) {
 		choices := mconfig.LoadUserConfig("physics_set_path")
 		var initialDirPath string
 		if len(choices) > 0 {
@@ -125,41 +125,41 @@ func NewPhysicsPage(mWidgets *controller.MWidgets) declarative.TabPage {
 		if ok, err := dlg.ShowOpen(nil); err != nil {
 			walk.MsgBox(nil, mi18n.T("ファイル選択ダイアログ選択エラー"), err.Error(), walk.MsgBoxIconError)
 		} else if ok {
-			physicsState.SetWidgetEnabled(false)
+			bakeState.SetWidgetEnabled(false)
 			mconfig.SaveUserConfig("physics_set_path", dlg.FilePath, 1)
 
 			for n := range 2 {
-				for m := range physicsState.NavToolBar.Actions().Len() {
+				for m := range bakeState.NavToolBar.Actions().Len() {
 					mWidgets.Window().StoreModel(n, m, nil)
 					mWidgets.Window().StoreMotion(n, m, nil)
 				}
 			}
 
-			physicsState.ResetSet()
-			physicsState.LoadSet(dlg.FilePath)
+			bakeState.ResetSet()
+			bakeState.LoadSet(dlg.FilePath)
 
-			for range len(physicsState.PhysicsSets) - 1 {
-				physicsState.AddAction()
+			for range len(bakeState.BakeSets) - 1 {
+				bakeState.AddAction()
 			}
 
-			for index := range physicsState.PhysicsSets {
-				physicsState.ChangeCurrentAction(index)
-				physicsState.OriginalMotionPicker.SetForcePath(physicsState.PhysicsSets[index].OriginalMotionPath)
-				physicsState.OutputModelPicker.SetForcePath(physicsState.PhysicsSets[index].OutputModelPath)
+			for index := range bakeState.BakeSets {
+				bakeState.ChangeCurrentAction(index)
+				bakeState.OriginalMotionPicker.SetForcePath(bakeState.BakeSets[index].OriginalMotionPath)
+				bakeState.OutputModelPicker.SetForcePath(bakeState.BakeSets[index].OutputModelPath)
 			}
 
-			physicsState.SetCurrentIndex(0)
-			physicsState.SetWidgetEnabled(true)
+			bakeState.SetCurrentIndex(0)
+			bakeState.SetWidgetEnabled(true)
 		}
 	})
 
-	physicsState.SaveSetButton = widget.NewMPushButton()
-	physicsState.SaveSetButton.SetLabel(mi18n.T("セット設定保存"))
-	physicsState.SaveSetButton.SetTooltip(mi18n.T("セット設定保存説明"))
-	physicsState.SaveSetButton.SetMaxSize(declarative.Size{Width: 100, Height: 20})
-	physicsState.SaveSetButton.SetOnClicked(func(cw *controller.ControlWindow) {
-		// 物理焼き込み元モーションパスを初期パスとする
-		initialDirPath := filepath.Dir(physicsState.CurrentSet().OriginalMotionPath)
+	bakeState.SaveSetButton = widget.NewMPushButton()
+	bakeState.SaveSetButton.SetLabel(mi18n.T("セット設定保存"))
+	bakeState.SaveSetButton.SetTooltip(mi18n.T("セット設定保存説明"))
+	bakeState.SaveSetButton.SetMaxSize(declarative.Size{Width: 100, Height: 20})
+	bakeState.SaveSetButton.SetOnClicked(func(cw *controller.ControlWindow) {
+		// 焼き込み元モーションパスを初期パスとする
+		initialDirPath := filepath.Dir(bakeState.CurrentSet().OriginalMotionPath)
 
 		// ファイル選択ダイアログを開く
 		dlg := walk.FileDialog{
@@ -173,50 +173,50 @@ func NewPhysicsPage(mWidgets *controller.MWidgets) declarative.TabPage {
 		if ok, err := dlg.ShowSave(nil); err != nil {
 			walk.MsgBox(nil, mi18n.T("ファイル選択ダイアログ選択エラー"), err.Error(), walk.MsgBoxIconError)
 		} else if ok {
-			physicsState.SaveSet(dlg.FilePath)
+			bakeState.SaveSet(dlg.FilePath)
 			mconfig.SaveUserConfig("physics_set_path", dlg.FilePath, 1)
 		}
 	})
 
-	physicsState.SaveModelButton = widget.NewMPushButton()
-	physicsState.SaveModelButton.SetLabel(mi18n.T("モデル保存"))
-	physicsState.SaveModelButton.SetTooltip(mi18n.T("モデル保存説明"))
-	physicsState.SaveModelButton.SetMinSize(declarative.Size{Width: 256, Height: 20})
-	physicsState.SaveModelButton.SetStretchFactor(20)
-	physicsState.SaveModelButton.SetOnClicked(func(cw *controller.ControlWindow) {
-		physicsState.SetWidgetEnabled(false)
+	bakeState.SaveModelButton = widget.NewMPushButton()
+	bakeState.SaveModelButton.SetLabel(mi18n.T("モデル保存"))
+	bakeState.SaveModelButton.SetTooltip(mi18n.T("モデル保存説明"))
+	bakeState.SaveModelButton.SetMinSize(declarative.Size{Width: 256, Height: 20})
+	bakeState.SaveModelButton.SetStretchFactor(20)
+	bakeState.SaveModelButton.SetOnClicked(func(cw *controller.ControlWindow) {
+		bakeState.SetWidgetEnabled(false)
 
-		for _, physicsSet := range physicsState.PhysicsSets {
+		for _, physicsSet := range bakeState.BakeSets {
 			if physicsSet.OutputModelPath != "" && physicsSet.OriginalModel != nil {
 				// 保存するのは物理が有効になっている元モデル
 				rep := repository.NewPmxRepository(true)
 				if err := rep.Save(physicsSet.OutputModelPath, physicsSet.OriginalModel, false); err != nil {
 					mlog.ET(mi18n.T("保存失敗"), err, "")
 					if ok := merr.ShowErrorDialog(cw.AppConfig(), err); ok {
-						physicsState.SetWidgetEnabled(true)
+						bakeState.SetWidgetEnabled(true)
 					}
 				}
 			}
 		}
 
-		physicsState.SetWidgetEnabled(true)
+		bakeState.SetWidgetEnabled(true)
 		controller.Beep()
 	})
 
-	physicsState.SaveMotionButton = widget.NewMPushButton()
-	physicsState.SaveMotionButton.SetLabel(mi18n.T("モーション保存"))
-	physicsState.SaveMotionButton.SetTooltip(mi18n.T("モーション保存説明"))
-	physicsState.SaveMotionButton.SetMinSize(declarative.Size{Width: 256, Height: 20})
-	physicsState.SaveMotionButton.SetStretchFactor(20)
-	physicsState.SaveMotionButton.SetOnClicked(func(cw *controller.ControlWindow) {
-		physicsState.SetWidgetEnabled(false)
+	bakeState.SaveMotionButton = widget.NewMPushButton()
+	bakeState.SaveMotionButton.SetLabel(mi18n.T("モーション保存"))
+	bakeState.SaveMotionButton.SetTooltip(mi18n.T("モーション保存説明"))
+	bakeState.SaveMotionButton.SetMinSize(declarative.Size{Width: 256, Height: 20})
+	bakeState.SaveMotionButton.SetStretchFactor(20)
+	bakeState.SaveMotionButton.SetOnClicked(func(cw *controller.ControlWindow) {
+		bakeState.SetWidgetEnabled(false)
 
-		for _, physicsSet := range physicsState.PhysicsSets {
+		for _, physicsSet := range bakeState.BakeSets {
 			if physicsSet.OutputMotionPath != "" && physicsSet.OutputMotion != nil {
 				// 物理ボーンのみ残す
 				motion, err := physicsSet.GetOutputMotionOnlyPhysics(
-					physicsState.StartFrameEdit.Value(),
-					physicsState.EndFrameEdit.Value(),
+					bakeState.StartFrameEdit.Value(),
+					bakeState.EndFrameEdit.Value(),
 				)
 				if err != nil {
 					mlog.ET(mi18n.T("保存失敗"), err, "")
@@ -227,40 +227,40 @@ func NewPhysicsPage(mWidgets *controller.MWidgets) declarative.TabPage {
 				if err := rep.Save(physicsSet.OutputMotionPath, motion, false); err != nil {
 					mlog.ET(mi18n.T("保存失敗"), err, "")
 					if ok := merr.ShowErrorDialog(cw.AppConfig(), err); ok {
-						physicsState.SetWidgetEnabled(true)
+						bakeState.SetWidgetEnabled(true)
 					}
 				}
 			}
 		}
 
-		physicsState.SetWidgetEnabled(true)
+		bakeState.SetWidgetEnabled(true)
 		controller.Beep()
 	})
 
-	mWidgets.Widgets = append(mWidgets.Widgets, physicsState.Player, physicsState.OriginalMotionPicker,
-		physicsState.OriginalModelPicker, physicsState.OutputMotionPicker,
-		physicsState.OutputModelPicker, physicsState.AddSetButton, physicsState.ResetSetButton,
-		physicsState.LoadSetButton, physicsState.SaveSetButton, physicsState.SaveMotionButton,
-		physicsState.SaveModelButton)
+	mWidgets.Widgets = append(mWidgets.Widgets, bakeState.Player, bakeState.OriginalMotionPicker,
+		bakeState.OriginalModelPicker, bakeState.OutputMotionPicker,
+		bakeState.OutputModelPicker, bakeState.AddSetButton, bakeState.ResetSetButton,
+		bakeState.LoadSetButton, bakeState.SaveSetButton, bakeState.SaveMotionButton,
+		bakeState.SaveModelButton)
 	mWidgets.SetOnLoaded(func() {
-		physicsState.PhysicsSets = append(physicsState.PhysicsSets, domain.NewPhysicsSet(len(physicsState.PhysicsSets)))
-		physicsState.AddAction()
+		bakeState.BakeSets = append(bakeState.BakeSets, domain.NewPhysicsSet(len(bakeState.BakeSets)))
+		bakeState.AddAction()
 	})
 	mWidgets.SetOnChangePlaying(func(playing bool) {
 		mWidgets.Window().SetSaveDelta(0, playing)
-		physicsState.SetWidgetEnabled(!playing)
+		bakeState.SetWidgetEnabled(!playing)
 
 		// フレームドロップ無効
 		mWidgets.Window().SetFrameDropEnabled(false)
 
 		if playing {
-			physicsState.SetWidgetPlayingEnabled(true)
+			bakeState.SetWidgetPlayingEnabled(true)
 
 			// 焼き込み開始時にINDEX加算
-			deltaIndex := mWidgets.Window().GetDeltaMotionCount(0, physicsState.CurrentIndex())
+			deltaIndex := mWidgets.Window().GetDeltaMotionCount(0, bakeState.CurrentIndex())
 			deltaIndex += 1
 
-			for _, physicsSet := range physicsState.PhysicsSets {
+			for _, physicsSet := range bakeState.BakeSets {
 				if physicsSet.OriginalMotion != nil {
 					if copiedOriginalMotion, err := physicsSet.OriginalMotion.Copy(); err == nil {
 						mWidgets.Window().StoreDeltaMotion(0, physicsSet.Index, deltaIndex, copiedOriginalMotion)
@@ -271,15 +271,15 @@ func NewPhysicsPage(mWidgets *controller.MWidgets) declarative.TabPage {
 			mWidgets.Window().SetSaveDeltaIndex(0, deltaIndex)
 		} else {
 			// 焼き込み完了時に範囲を更新
-			deltaCnt := mWidgets.Window().GetDeltaMotionCount(0, physicsState.CurrentIndex())
-			physicsState.OutputMotionIndexEdit.SetRange(1, float64(deltaCnt))
-			physicsState.OutputMotionIndexEdit.SetValue(float64(deltaCnt))
+			deltaCnt := mWidgets.Window().GetDeltaMotionCount(0, bakeState.CurrentIndex())
+			bakeState.OutputMotionIndexEdit.SetRange(1, float64(deltaCnt))
+			bakeState.OutputMotionIndexEdit.SetValue(float64(deltaCnt))
 		}
 	})
 
 	return declarative.TabPage{
-		Title:    mi18n.T("物理焼き込み"),
-		AssignTo: &physicsTab,
+		Title:    mi18n.T("焼き込み"),
+		AssignTo: &bakeTab,
 		Layout:   declarative.VBox{},
 		Background: declarative.SolidColorBrush{
 			Color: controller.ColorTabBackground,
@@ -291,10 +291,10 @@ func NewPhysicsPage(mWidgets *controller.MWidgets) declarative.TabPage {
 				MaxSize: declarative.Size{Width: 5120, Height: 40},
 				Children: []declarative.Widget{
 					declarative.HSpacer{},
-					physicsState.AddSetButton.Widgets(),
-					physicsState.ResetSetButton.Widgets(),
-					physicsState.LoadSetButton.Widgets(),
-					physicsState.SaveSetButton.Widgets(),
+					bakeState.AddSetButton.Widgets(),
+					bakeState.ResetSetButton.Widgets(),
+					bakeState.LoadSetButton.Widgets(),
+					bakeState.SaveSetButton.Widgets(),
 				},
 			},
 			// セットスクロール
@@ -306,7 +306,7 @@ func NewPhysicsPage(mWidgets *controller.MWidgets) declarative.TabPage {
 				Children: []declarative.Widget{
 					// ナビゲーション用ツールバー
 					declarative.ToolBar{
-						AssignTo:           &physicsState.NavToolBar,
+						AssignTo:           &bakeState.NavToolBar,
 						MinSize:            declarative.Size{Width: 200, Height: 25},
 						MaxSize:            declarative.Size{Width: 5120, Height: 25},
 						DefaultButtonWidth: 200,
@@ -316,19 +316,19 @@ func NewPhysicsPage(mWidgets *controller.MWidgets) declarative.TabPage {
 				},
 			},
 
-			// セットごとの物理焼き込み内容
+			// セットごとの焼き込み内容
 			declarative.ScrollView{
 				Layout:  declarative.VBox{},
 				MinSize: declarative.Size{Width: 126, Height: 350},
 				MaxSize: declarative.Size{Width: 2560, Height: 5120},
 				Children: []declarative.Widget{
-					physicsState.OriginalModelPicker.Widgets(),
-					physicsState.OriginalMotionPicker.Widgets(),
+					bakeState.OriginalModelPicker.Widgets(),
+					bakeState.OriginalMotionPicker.Widgets(),
 					declarative.VSeparator{},
 					declarative.TextLabel{
-						Text: mi18n.T("物理焼き込みオプション"),
+						Text: mi18n.T("焼き込みオプション"),
 						OnMouseDown: func(x, y int, button walk.MouseButton) {
-							mlog.ILT(mi18n.T("物理焼き込みオプション"), mi18n.T("物理焼き込みオプション説明"))
+							mlog.ILT(mi18n.T("焼き込みオプション"), mi18n.T("焼き込みオプション説明"))
 						},
 					},
 					declarative.Composite{
@@ -343,7 +343,7 @@ func NewPhysicsPage(mWidgets *controller.MWidgets) declarative.TabPage {
 								StretchFactor: 1,
 							},
 							declarative.NumberEdit{
-								AssignTo:           &physicsState.GravityEdit,
+								AssignTo:           &bakeState.GravityEdit,
 								Value:              -9.8,   // 初期値
 								MinValue:           -100.0, // 最小値
 								MaxValue:           100.0,  // 最大値
@@ -361,7 +361,7 @@ func NewPhysicsPage(mWidgets *controller.MWidgets) declarative.TabPage {
 								StretchFactor: 1,
 							},
 							declarative.NumberEdit{
-								AssignTo:           &physicsState.MaxSubStepsEdit,
+								AssignTo:           &bakeState.MaxSubStepsEdit,
 								Value:              2.0,   // 初期値
 								MinValue:           1.0,   // 最小値
 								MaxValue:           100.0, // 最大値
@@ -379,7 +379,7 @@ func NewPhysicsPage(mWidgets *controller.MWidgets) declarative.TabPage {
 								StretchFactor: 1,
 							},
 							declarative.NumberEdit{
-								AssignTo:           &physicsState.FixedTimeStepEdit,
+								AssignTo:           &bakeState.FixedTimeStepEdit,
 								Value:              60.0,   // 初期値
 								MinValue:           10.0,   // 最小値
 								MaxValue:           4800.0, // 最大値
@@ -397,11 +397,11 @@ func NewPhysicsPage(mWidgets *controller.MWidgets) declarative.TabPage {
 								StretchFactor: 1,
 							},
 							declarative.NumberEdit{
-								AssignTo: &physicsState.MassEdit,
+								AssignTo: &bakeState.MassEdit,
 								OnValueChanged: func() {
-									if currentItem := physicsState.PhysicsTreeView.CurrentItem(); currentItem != nil {
-										currentItem.(*domain.PhysicsItem).CalcMass(physicsState.MassEdit.Value())
-										physicsState.PhysicsTreeView.Model().(*domain.PhysicsModel).PublishItemChanged(currentItem)
+									if currentItem := bakeState.PhysicsTreeView.CurrentItem(); currentItem != nil {
+										currentItem.(*domain.PhysicsItem).CalcMass(bakeState.MassEdit.Value())
+										bakeState.PhysicsTreeView.Model().(*domain.PhysicsModel).PublishItemChanged(currentItem)
 									}
 								},
 								Value:              1,     // 初期値
@@ -421,12 +421,12 @@ func NewPhysicsPage(mWidgets *controller.MWidgets) declarative.TabPage {
 								StretchFactor: 1,
 							},
 							declarative.NumberEdit{
-								AssignTo: &physicsState.StiffnessEdit,
+								AssignTo: &bakeState.StiffnessEdit,
 								OnValueChanged: func() {
-									if currentItem := physicsState.PhysicsTreeView.CurrentItem(); currentItem != nil {
+									if currentItem := bakeState.PhysicsTreeView.CurrentItem(); currentItem != nil {
 										// 選択されている物理ボーンの硬さを更新
-										currentItem.(*domain.PhysicsItem).CalcStiffness(physicsState.StiffnessEdit.Value())
-										physicsState.PhysicsTreeView.Model().(*domain.PhysicsModel).PublishItemChanged(currentItem)
+										currentItem.(*domain.PhysicsItem).CalcStiffness(bakeState.StiffnessEdit.Value())
+										bakeState.PhysicsTreeView.Model().(*domain.PhysicsModel).PublishItemChanged(currentItem)
 									}
 								},
 								Value:              1,     // 初期値
@@ -446,11 +446,11 @@ func NewPhysicsPage(mWidgets *controller.MWidgets) declarative.TabPage {
 								StretchFactor: 1,
 							},
 							declarative.NumberEdit{
-								AssignTo: &physicsState.TensionEdit,
+								AssignTo: &bakeState.TensionEdit,
 								OnValueChanged: func() {
-									if currentItem := physicsState.PhysicsTreeView.CurrentItem(); currentItem != nil {
-										currentItem.(*domain.PhysicsItem).CalcTension(physicsState.TensionEdit.Value())
-										physicsState.PhysicsTreeView.Model().(*domain.PhysicsModel).PublishItemChanged(currentItem)
+									if currentItem := bakeState.PhysicsTreeView.CurrentItem(); currentItem != nil {
+										currentItem.(*domain.PhysicsItem).CalcTension(bakeState.TensionEdit.Value())
+										bakeState.PhysicsTreeView.Model().(*domain.PhysicsModel).PublishItemChanged(currentItem)
 									}
 								},
 								Value:              1,     // 初期値
@@ -467,18 +467,18 @@ func NewPhysicsPage(mWidgets *controller.MWidgets) declarative.TabPage {
 								ColumnSpan:    4,
 								StretchFactor: 30,
 								OnClicked: func() {
-									physicsState.SetWidgetEnabled(false)
+									bakeState.SetWidgetEnabled(false)
 
 									gravity := mWidgets.Window().Gravity()
-									gravity.Y = physicsState.GravityEdit.Value() // 重力のY成分を更新
+									gravity.Y = bakeState.GravityEdit.Value() // 重力のY成分を更新
 									mWidgets.Window().SetGravity(gravity)
 
-									mWidgets.Window().SetMaxSubSteps(int(physicsState.MaxSubStepsEdit.Value()))
-									mWidgets.Window().SetFixedTimeStep(int(physicsState.FixedTimeStepEdit.Value()))
+									mWidgets.Window().SetMaxSubSteps(int(bakeState.MaxSubStepsEdit.Value()))
+									mWidgets.Window().SetFixedTimeStep(int(bakeState.FixedTimeStepEdit.Value()))
 
-									model := physicsState.CurrentSet().OriginalModel
+									model := bakeState.CurrentSet().OriginalModel
 									model.RigidBodies.ForEach(func(rigidIndex int, rb *pmx.RigidBody) bool {
-										physicsItem := physicsState.PhysicsTreeView.Model().(*domain.PhysicsModel).AtByBoneIndex(rb.BoneIndex)
+										physicsItem := bakeState.PhysicsTreeView.Model().(*domain.PhysicsModel).AtByBoneIndex(rb.BoneIndex)
 
 										if physicsItem == nil {
 											return true
@@ -495,13 +495,13 @@ func NewPhysicsPage(mWidgets *controller.MWidgets) declarative.TabPage {
 
 										var physicsItemA, physicsItemB walk.TreeItem
 										if rigidBodyA != nil && rigidBodyA.BoneIndex >= 0 {
-											physicsItemA = physicsState.PhysicsTreeView.Model().(*domain.PhysicsModel).AtByBoneIndex(rigidBodyA.BoneIndex)
+											physicsItemA = bakeState.PhysicsTreeView.Model().(*domain.PhysicsModel).AtByBoneIndex(rigidBodyA.BoneIndex)
 										}
 										if physicsItemA == nil {
 											physicsItemA = domain.NewPhysicsItem(nil, nil)
 										}
 										if rigidBodyB != nil && rigidBodyB.BoneIndex >= 0 {
-											physicsItemB = physicsState.PhysicsTreeView.Model().(*domain.PhysicsModel).AtByBoneIndex(rigidBodyB.BoneIndex)
+											physicsItemB = bakeState.PhysicsTreeView.Model().(*domain.PhysicsModel).AtByBoneIndex(rigidBodyB.BoneIndex)
 										}
 										if physicsItemB == nil {
 											physicsItemB = domain.NewPhysicsItem(nil, nil)
@@ -532,16 +532,16 @@ func NewPhysicsPage(mWidgets *controller.MWidgets) declarative.TabPage {
 										return true
 									})
 
-									physicsState.CurrentSet().OriginalModel = model
-									mWidgets.Window().StoreModel(0, physicsState.CurrentIndex(), model)
-									physicsState.OutputModelPicker.ChangePath(physicsState.CurrentSet().CreateOutputModelPath())
+									bakeState.CurrentSet().OriginalModel = model
+									mWidgets.Window().StoreModel(0, bakeState.CurrentIndex(), model)
+									bakeState.OutputModelPicker.ChangePath(bakeState.CurrentSet().CreateOutputModelPath())
 									mWidgets.Window().TriggerPhysicsReset()
 
 									if mWidgets.Window().Playing() {
 										// 再生中は、調整系だけ有効にする
-										physicsState.SetWidgetPlayingEnabled(true)
+										bakeState.SetWidgetPlayingEnabled(true)
 									} else {
-										physicsState.SetWidgetEnabled(true)
+										bakeState.SetWidgetEnabled(true)
 									}
 
 									controller.Beep()
@@ -553,26 +553,26 @@ func NewPhysicsPage(mWidgets *controller.MWidgets) declarative.TabPage {
 								ColumnSpan:    2,
 								StretchFactor: 30,
 								OnClicked: func() {
-									physicsState.SetWidgetEnabled(false)
+									bakeState.SetWidgetEnabled(false)
 
 									// 物理ツリーをリセット
-									physicsState.PhysicsTreeView.Model().(*domain.PhysicsModel).Reset()
+									bakeState.PhysicsTreeView.Model().(*domain.PhysicsModel).Reset()
 
-									physicsState.MassEdit.SetValue(1.0)
-									physicsState.StiffnessEdit.SetValue(1.0)
-									physicsState.TensionEdit.SetValue(1.0)
+									bakeState.MassEdit.SetValue(1.0)
+									bakeState.StiffnessEdit.SetValue(1.0)
+									bakeState.TensionEdit.SetValue(1.0)
 
-									if err := physicsState.CurrentSet().LoadModel(physicsState.CurrentSet().OriginalModelPath); err == nil {
-										mWidgets.Window().StoreModel(0, physicsState.CurrentIndex(), physicsState.CurrentSet().OriginalModel)
-										physicsState.OutputModelPicker.ChangePath(physicsState.CurrentSet().CreateOutputModelPath())
+									if err := bakeState.CurrentSet().LoadModel(bakeState.CurrentSet().OriginalModelPath); err == nil {
+										mWidgets.Window().StoreModel(0, bakeState.CurrentIndex(), bakeState.CurrentSet().OriginalModel)
+										bakeState.OutputModelPicker.ChangePath(bakeState.CurrentSet().CreateOutputModelPath())
 										mWidgets.Window().TriggerPhysicsReset()
 									}
 
 									if mWidgets.Window().Playing() {
 										// 再生中は、調整系だけ有効にする
-										physicsState.SetWidgetPlayingEnabled(true)
+										bakeState.SetWidgetPlayingEnabled(true)
 									} else {
-										physicsState.SetWidgetEnabled(true)
+										bakeState.SetWidgetEnabled(true)
 									}
 
 									controller.Beep()
@@ -584,28 +584,28 @@ func NewPhysicsPage(mWidgets *controller.MWidgets) declarative.TabPage {
 						Layout: declarative.VBox{},
 						Children: []declarative.Widget{
 							declarative.TreeView{
-								AssignTo: &physicsState.PhysicsTreeView,
+								AssignTo: &bakeState.PhysicsTreeView,
 								Model:    domain.NewPhysicsModel(),
 								MinSize:  declarative.Size{Width: 230, Height: 200},
 								OnCurrentItemChanged: func() {
 									// 物理ボーンツリーの選択が変更されたときの処理
-									currentItem := physicsState.PhysicsTreeView.CurrentItem()
+									currentItem := bakeState.PhysicsTreeView.CurrentItem()
 									if currentItem == nil {
 										return
 									}
 
 									physicsItem := currentItem.(*domain.PhysicsItem)
-									physicsState.MassEdit.SetValue(physicsItem.MassRatio())
-									physicsState.StiffnessEdit.SetValue(physicsItem.StiffnessRatio())
-									physicsState.TensionEdit.SetValue(physicsItem.TensionRatio())
+									bakeState.MassEdit.SetValue(physicsItem.MassRatio())
+									bakeState.StiffnessEdit.SetValue(physicsItem.StiffnessRatio())
+									bakeState.TensionEdit.SetValue(physicsItem.TensionRatio())
 								},
 							},
 						},
 					},
-					physicsState.OutputModelPicker.Widgets(),
-					physicsState.OutputMotionPicker.Widgets(),
+					bakeState.OutputModelPicker.Widgets(),
+					bakeState.OutputMotionPicker.Widgets(),
 					declarative.VSeparator{},
-					physicsState.SaveModelButton.Widgets(),
+					bakeState.SaveModelButton.Widgets(),
 					declarative.Composite{
 						Layout: declarative.HBox{},
 						Children: []declarative.Widget{
@@ -615,15 +615,15 @@ func NewPhysicsPage(mWidgets *controller.MWidgets) declarative.TabPage {
 							},
 							declarative.NumberEdit{
 								SpinButtonsVisible: true,
-								AssignTo:           &physicsState.OutputMotionIndexEdit,
+								AssignTo:           &bakeState.OutputMotionIndexEdit,
 								Decimals:           0,
 								Increment:          1,
 								MinValue:           1,
 								MaxValue:           2,
 								OnValueChanged: func() {
 									// 出力モーションインデックスが変更されたときの処理
-									currentSet := physicsState.CurrentSet()
-									deltaIndex := int(physicsState.OutputMotionIndexEdit.Value() - 1)
+									currentSet := bakeState.CurrentSet()
+									deltaIndex := int(bakeState.OutputMotionIndexEdit.Value() - 1)
 									if deltaIndex < 0 ||
 										deltaIndex >= mWidgets.Window().GetDeltaMotionCount(0, currentSet.Index) {
 										// インデックスが範囲外の場合は、0に戻す
@@ -640,7 +640,7 @@ func NewPhysicsPage(mWidgets *controller.MWidgets) declarative.TabPage {
 									// 出力モーションを更新
 									currentSet.OutputMotion = outputMotion
 									currentSet.OutputMotionPath = currentSet.CreateOutputMotionPath()
-									physicsState.OutputMotionPicker.ChangePath(currentSet.OutputMotionPath)
+									bakeState.OutputMotionPicker.ChangePath(currentSet.OutputMotionPath)
 								},
 							},
 							declarative.TextLabel{
@@ -650,7 +650,7 @@ func NewPhysicsPage(mWidgets *controller.MWidgets) declarative.TabPage {
 							declarative.NumberEdit{
 								ToolTipText:        mi18n.T("開始フレーム説明"),
 								SpinButtonsVisible: true,
-								AssignTo:           &physicsState.StartFrameEdit,
+								AssignTo:           &bakeState.StartFrameEdit,
 								Decimals:           0,
 								Increment:          1,
 								MinValue:           0,
@@ -663,7 +663,7 @@ func NewPhysicsPage(mWidgets *controller.MWidgets) declarative.TabPage {
 							declarative.NumberEdit{
 								ToolTipText:        mi18n.T("終了フレーム説明"),
 								SpinButtonsVisible: true,
-								AssignTo:           &physicsState.EndFrameEdit,
+								AssignTo:           &bakeState.EndFrameEdit,
 								Decimals:           0,
 								Increment:          1,
 								MinValue:           0,
@@ -671,10 +671,10 @@ func NewPhysicsPage(mWidgets *controller.MWidgets) declarative.TabPage {
 							},
 						},
 					},
-					physicsState.SaveMotionButton.Widgets(),
+					bakeState.SaveMotionButton.Widgets(),
 				},
 			},
-			physicsState.Player.Widgets(),
+			bakeState.Player.Widgets(),
 		},
 	}
 }

@@ -18,7 +18,7 @@ import (
 	"golang.org/x/text/transform"
 )
 
-type PhysicsSet struct {
+type BakeSet struct {
 	Index       int  // インデックス
 	IsTerminate bool // 処理停止フラグ
 
@@ -31,43 +31,43 @@ type PhysicsSet struct {
 	OriginalModelName  string `json:"-"` // 元モーション名
 	OutputModelName    string `json:"-"` // 物理焼き込み先モデル名
 
-	OriginalMotion    *vmd.VmdMotion `json:"-"` // 元モデル
-	OriginalModel     *pmx.PmxModel  `json:"-"` // 元モデル
-	PhysicsBakedModel *pmx.PmxModel  `json:"-"` // 物理焼き込み先モデル
-	OutputMotion      *vmd.VmdMotion `json:"-"` // 出力結果モーション
+	OriginalMotion *vmd.VmdMotion `json:"-"` // 元モデル
+	OriginalModel  *pmx.PmxModel  `json:"-"` // 元モデル
+	BakedModel     *pmx.PmxModel  `json:"-"` // 物理焼き込み先モデル
+	OutputMotion   *vmd.VmdMotion `json:"-"` // 出力結果モーション
 
 	PhysicsTree *PhysicsModel `json:"-"` // 物理ボーンツリー
 }
 
-func NewPhysicsSet(index int) *PhysicsSet {
-	return &PhysicsSet{
+func NewPhysicsSet(index int) *BakeSet {
+	return &BakeSet{
 		Index:       index,
 		PhysicsTree: NewPhysicsModel(),
 	}
 }
 
-func (ss *PhysicsSet) CreateOutputModelPath() string {
+func (ss *BakeSet) CreateOutputModelPath() string {
 	if ss.OriginalModel == nil {
 		return ""
 	}
 
 	// 物理焼き込み先モデルが指定されている場合、ファイル名を含める
-	return mfile.CreateOutputPath(ss.OriginalModel.Path(), "PF")
+	return mfile.CreateOutputPath(ss.OriginalModel.Path(), "BB")
 }
 
-func (ss *PhysicsSet) CreateOutputMotionPath() string {
-	if ss.OriginalMotion == nil || ss.PhysicsBakedModel == nil {
+func (ss *BakeSet) CreateOutputMotionPath() string {
+	if ss.OriginalMotion == nil || ss.BakedModel == nil {
 		return ""
 	}
 
 	// 物理焼き込み先モデルが指定されている場合、ファイル名を含める
-	_, fileName, _ := mfile.SplitPath(ss.PhysicsBakedModel.Path())
+	_, fileName, _ := mfile.SplitPath(ss.BakedModel.Path())
 
 	return mfile.CreateOutputPath(
-		ss.OriginalMotion.Path(), fmt.Sprintf("PF_%s", fileName))
+		ss.OriginalMotion.Path(), fmt.Sprintf("BB_%s", fileName))
 }
 
-func (ss *PhysicsSet) setMotion(originalMotion, outputMotion *vmd.VmdMotion) {
+func (ss *BakeSet) setMotion(originalMotion, outputMotion *vmd.VmdMotion) {
 	if originalMotion == nil || outputMotion == nil {
 		ss.OriginalMotionPath = ""
 		ss.OriginalMotionName = ""
@@ -84,23 +84,23 @@ func (ss *PhysicsSet) setMotion(originalMotion, outputMotion *vmd.VmdMotion) {
 	ss.OutputMotion = outputMotion
 }
 
-func (ss *PhysicsSet) setModels(originalModel, physicsBakedModel *pmx.PmxModel) {
+func (ss *BakeSet) setModels(originalModel, physicsBakedModel *pmx.PmxModel) {
 	if originalModel == nil {
 		ss.OriginalModelPath = ""
 		ss.OriginalModelName = ""
 		ss.OriginalModel = nil
-		ss.PhysicsBakedModel = nil
+		ss.BakedModel = nil
 		return
 	}
 
 	ss.OriginalModelPath = originalModel.Path()
 	ss.OriginalModelName = originalModel.Name()
 	ss.OriginalModel = originalModel
-	ss.PhysicsBakedModel = physicsBakedModel
+	ss.BakedModel = physicsBakedModel
 }
 
 // LoadModel モデルを読み込む
-func (ss *PhysicsSet) LoadModel(path string) error {
+func (ss *BakeSet) LoadModel(path string) error {
 	if path == "" {
 		ss.setModels(nil, nil)
 		return nil
@@ -174,7 +174,7 @@ func (ss *PhysicsSet) LoadModel(path string) error {
 }
 
 // appendPhysicsBoneToDisplaySlots 物理ボーンを表示枠に追加
-func (ss *PhysicsSet) appendPhysicsBoneToDisplaySlots(model *pmx.PmxModel) {
+func (ss *BakeSet) appendPhysicsBoneToDisplaySlots(model *pmx.PmxModel) {
 	if model == nil {
 		return
 	}
@@ -224,7 +224,7 @@ func (ss *PhysicsSet) appendPhysicsBoneToDisplaySlots(model *pmx.PmxModel) {
 }
 
 // insertPhysicsBonePrefix 物理ボーンの名前に接頭辞を追加
-func (ss *PhysicsSet) insertPhysicsBonePrefix(model *pmx.PmxModel) {
+func (ss *BakeSet) insertPhysicsBonePrefix(model *pmx.PmxModel) {
 	if model == nil {
 		return
 	}
@@ -242,7 +242,7 @@ func (ss *PhysicsSet) insertPhysicsBonePrefix(model *pmx.PmxModel) {
 	})
 }
 
-func (ss *PhysicsSet) encodeName(name string, limit int) string {
+func (ss *BakeSet) encodeName(name string, limit int) string {
 	// Encode to CP932
 	cp932Encoder := japanese.ShiftJIS.NewEncoder()
 	cp932Encoded, err := cp932Encoder.String(name)
@@ -289,7 +289,7 @@ func (ss *PhysicsSet) encodeName(name string, limit int) string {
 	return decodedText
 }
 
-func (ss *PhysicsSet) fixPhysicsRigidBodies(model *pmx.PmxModel) {
+func (ss *BakeSet) fixPhysicsRigidBodies(model *pmx.PmxModel) {
 	if model == nil {
 		return
 	}
@@ -302,7 +302,7 @@ func (ss *PhysicsSet) fixPhysicsRigidBodies(model *pmx.PmxModel) {
 	})
 }
 
-func (ss *PhysicsSet) LoadMotion(path string) error {
+func (ss *BakeSet) LoadMotion(path string) error {
 
 	if path == "" {
 		ss.setMotion(nil, nil)
@@ -357,7 +357,7 @@ func (ss *PhysicsSet) LoadMotion(path string) error {
 	return nil
 }
 
-func (ss *PhysicsSet) Delete() {
+func (ss *BakeSet) Delete() {
 	ss.OriginalMotionPath = ""
 	ss.OriginalModelPath = ""
 	ss.OutputMotionPath = ""
@@ -373,7 +373,7 @@ func (ss *PhysicsSet) Delete() {
 }
 
 // 物理ボーンだけ残す
-func (ss *PhysicsSet) GetOutputMotionOnlyPhysics(startFrame, endFrame float64) (*vmd.VmdMotion, error) {
+func (ss *BakeSet) GetOutputMotionOnlyPhysics(startFrame, endFrame float64) (*vmd.VmdMotion, error) {
 	if ss.OriginalModel == nil || ss.OutputMotion == nil {
 		return nil, errors.New(mi18n.T("物理焼き込みセットの元モデルまたは出力モーションが設定されていません"))
 	}
