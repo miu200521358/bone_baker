@@ -60,6 +60,16 @@ func (pi *PhysicsItem) HasPhysicsChild() bool {
 	return hasPhysicsBone || pi.bone.HasPhysics()
 }
 
+func (pi *PhysicsItem) Reset() {
+	pi.massRatio = 1.0
+	pi.stiffnessRatio = 1.0
+	pi.tensionRatio = 1.0
+
+	for _, child := range pi.children {
+		child.(*PhysicsItem).Reset()
+	}
+}
+
 func (pi *PhysicsItem) CalcMass(massRatio float64) {
 	pi.massRatio = massRatio
 
@@ -206,5 +216,12 @@ func (pm *PhysicsModel) PublishItemChanged(item walk.TreeItem) {
 
 	for _, child := range item.(*PhysicsItem).children {
 		pm.PublishItemChanged(child)
+	}
+}
+
+func (pm *PhysicsModel) Reset() {
+	for _, node := range pm.nodes {
+		node.Reset()
+		pm.PublishItemChanged(node)
 	}
 }

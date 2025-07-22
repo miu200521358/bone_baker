@@ -35,6 +35,7 @@ type PhysicsState struct {
 	Player                *widget.MotionPlayer // モーションプレイヤー
 	GravityEdit           *walk.NumberEdit     // 重力値入力
 	MaxSubStepsEdit       *walk.NumberEdit     // 最大サブステップ数
+	FixedTimeStepEdit     *walk.NumberEdit     // 固定タイムステップ入力
 	PhysicsTreeView       *walk.TreeView       // 物理ボーン表示ツリー
 	MassEdit              *walk.NumberEdit     // 質量入力
 	StiffnessEdit         *walk.NumberEdit     // 硬さ入力
@@ -291,6 +292,10 @@ func (physicsState *PhysicsState) LoadMotion(
 
 // SetWidgetEnabled 物理焼き込み有効無効設定
 func (physicsState *PhysicsState) SetWidgetEnabled(enabled bool) {
+	physicsState.StartFrameEdit.SetEnabled(enabled)
+	physicsState.EndFrameEdit.SetEnabled(enabled)
+	physicsState.OutputMotionIndexEdit.SetEnabled(enabled)
+
 	physicsState.AddSetButton.SetEnabled(enabled)
 	physicsState.ResetSetButton.SetEnabled(enabled)
 	physicsState.SaveSetButton.SetEnabled(enabled)
@@ -301,19 +306,20 @@ func (physicsState *PhysicsState) SetWidgetEnabled(enabled bool) {
 	physicsState.OutputMotionPicker.SetEnabled(enabled)
 	physicsState.OutputModelPicker.SetEnabled(enabled)
 
-	physicsState.Player.SetEnabled(enabled)
-
 	physicsState.SaveModelButton.SetEnabled(enabled)
 	physicsState.SaveMotionButton.SetEnabled(enabled)
 
-	physicsState.SetPhysicsOptionEnabled(enabled)
+	physicsState.SetWidgetPlayingEnabled(enabled)
 }
 
-func (physicsState *PhysicsState) SetPhysicsOptionEnabled(enabled bool) {
+func (physicsState *PhysicsState) SetWidgetPlayingEnabled(enabled bool) {
+	physicsState.Player.SetEnabled(enabled)
+
 	physicsState.GravityEdit.SetEnabled(enabled)
 	physicsState.MaxSubStepsEdit.SetEnabled(enabled)
-
-	physicsState.StartFrameEdit.SetEnabled(enabled)
-	physicsState.EndFrameEdit.SetEnabled(enabled)
-	physicsState.OutputMotionIndexEdit.SetEnabled(enabled)
+	physicsState.FixedTimeStepEdit.SetEnabled(enabled)
+	physicsState.MassEdit.SetEnabled(enabled)
+	physicsState.StiffnessEdit.SetEnabled(enabled)
+	physicsState.TensionEdit.SetEnabled(enabled)
+	physicsState.PhysicsTreeView.SetEnabled(enabled)
 }

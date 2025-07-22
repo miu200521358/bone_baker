@@ -9,6 +9,7 @@ import (
 	"github.com/miu200521358/mlib_go/pkg/config/merr"
 	"github.com/miu200521358/mlib_go/pkg/config/mi18n"
 	"github.com/miu200521358/mlib_go/pkg/config/mlog"
+	"github.com/miu200521358/mlib_go/pkg/domain/pmx"
 	"github.com/miu200521358/mlib_go/pkg/infrastructure/repository"
 	"github.com/miu200521358/mlib_go/pkg/interface/controller"
 	"github.com/miu200521358/mlib_go/pkg/interface/controller/widget"
@@ -247,9 +248,14 @@ func NewPhysicsPage(mWidgets *controller.MWidgets) declarative.TabPage {
 	})
 	mWidgets.SetOnChangePlaying(func(playing bool) {
 		mWidgets.Window().SetSaveDelta(0, playing)
-		physicsState.SetPhysicsOptionEnabled(!playing)
+		physicsState.SetWidgetEnabled(!playing)
+
+		// フレームドロップ無効
+		mWidgets.Window().SetFrameDropEnabled(false)
 
 		if playing {
+			physicsState.SetWidgetPlayingEnabled(true)
+
 			// 焼き込み開始時にINDEX加算
 			deltaIndex := mWidgets.Window().GetDeltaMotionCount(0, physicsState.CurrentIndex())
 			deltaIndex += 1
@@ -337,17 +343,7 @@ func NewPhysicsPage(mWidgets *controller.MWidgets) declarative.TabPage {
 								StretchFactor: 1,
 							},
 							declarative.NumberEdit{
-								AssignTo: &physicsState.GravityEdit,
-								OnValueChanged: func() {
-									// 重力値変更時のコールバック
-									if mWidgets.Window() == nil {
-										return
-									}
-									gravity := mWidgets.Window().Gravity()
-									gravity.Y = physicsState.GravityEdit.Value() // 重力のY成分を更新
-									mWidgets.Window().SetGravity(gravity)
-									mWidgets.Window().TriggerPhysicsReset()
-								},
+								AssignTo:           &physicsState.GravityEdit,
 								Value:              -9.8,   // 初期値
 								MinValue:           -100.0, // 最小値
 								MaxValue:           100.0,  // 最大値
@@ -365,14 +361,7 @@ func NewPhysicsPage(mWidgets *controller.MWidgets) declarative.TabPage {
 								StretchFactor: 1,
 							},
 							declarative.NumberEdit{
-								AssignTo: &physicsState.MaxSubStepsEdit,
-								OnValueChanged: func() {
-									// 重力値変更時のコールバック
-									if mWidgets.Window() == nil {
-										return
-									}
-									mWidgets.Window().SetMaxSubSteps(int(physicsState.MaxSubStepsEdit.Value()))
-								},
+								AssignTo:           &physicsState.MaxSubStepsEdit,
 								Value:              2.0,   // 初期値
 								MinValue:           1.0,   // 最小値
 								MaxValue:           100.0, // 最大値
@@ -381,9 +370,23 @@ func NewPhysicsPage(mWidgets *controller.MWidgets) declarative.TabPage {
 								SpinButtonsVisible: true,  // スピンボタンを表示
 								StretchFactor:      20,
 							},
-							declarative.HSpacer{
-								ColumnSpan:    2,
-								StretchFactor: 30,
+							declarative.TextLabel{
+								Text:        mi18n.T("演算精度"),
+								ToolTipText: mi18n.T("演算精度説明"),
+								OnMouseDown: func(x, y int, button walk.MouseButton) {
+									mlog.IL("%s", mi18n.T("演算精度説明"))
+								},
+								StretchFactor: 1,
+							},
+							declarative.NumberEdit{
+								AssignTo:           &physicsState.FixedTimeStepEdit,
+								Value:              60.0,   // 初期値
+								MinValue:           10.0,   // 最小値
+								MaxValue:           4800.0, // 最大値
+								Decimals:           0,      // 小数点以下の桁数
+								Increment:          10.0,   // 増分
+								SpinButtonsVisible: true,   // スピンボタンを表示
+								StretchFactor:      20,
 							},
 							declarative.TextLabel{
 								Text:        mi18n.T("質量"),
@@ -457,6 +460,123 @@ func NewPhysicsPage(mWidgets *controller.MWidgets) declarative.TabPage {
 								SpinButtonsVisible: true, // スピンボタンを表示
 								StretchFactor:      20,
 							},
+							declarative.PushButton{
+								Text:          mi18n.T("物理設定変更"),
+								ToolTipText:   mi18n.T("物理設定変更説明"),
+								ColumnSpan:    4,
+								StretchFactor: 30,
+								OnClicked: func() {
+									physicsState.SetWidgetEnabled(false)
+
+									gravity := mWidgets.Window().Gravity()
+									gravity.Y = physicsState.GravityEdit.Value() // 重力のY成分を更新
+									mWidgets.Window().SetGravity(gravity)
+
+									mWidgets.Window().SetMaxSubSteps(int(physicsState.MaxSubStepsEdit.Value()))
+									mWidgets.Window().SetFixedTimeStep(int(physicsState.FixedTimeStepEdit.Value()))
+
+									model := physicsState.CurrentSet().OriginalModel
+									model.RigidBodies.ForEach(func(rigidIndex int, rb *pmx.RigidBody) bool {
+										physicsItem := physicsState.PhysicsTreeView.Model().(*domain.PhysicsModel).AtByBoneIndex(rb.BoneIndex)
+
+										if physicsItem == nil {
+											return true
+										}
+
+										// 質量、硬さ、張りを設定
+										rb.RigidBodyParam.Mass *= physicsItem.(*domain.PhysicsItem).MassRatio()
+
+										return true
+									})
+									model.Joints.ForEach(func(jointIndex int, joint *pmx.Joint) bool {
+										rigidBodyA, _ := model.RigidBodies.Get(joint.RigidbodyIndexA)
+										rigidBodyB, _ := model.RigidBodies.Get(joint.RigidbodyIndexB)
+
+										var physicsItemA, physicsItemB walk.TreeItem
+										if rigidBodyA != nil && rigidBodyA.BoneIndex >= 0 {
+											physicsItemA = physicsState.PhysicsTreeView.Model().(*domain.PhysicsModel).AtByBoneIndex(rigidBodyA.BoneIndex)
+										}
+										if physicsItemA == nil {
+											physicsItemA = domain.NewPhysicsItem(nil, nil)
+										}
+										if rigidBodyB != nil && rigidBodyB.BoneIndex >= 0 {
+											physicsItemB = physicsState.PhysicsTreeView.Model().(*domain.PhysicsModel).AtByBoneIndex(rigidBodyB.BoneIndex)
+										}
+										if physicsItemB == nil {
+											physicsItemB = domain.NewPhysicsItem(nil, nil)
+										}
+
+										// 質量、硬さ、張りを設定
+										joint.JointParam.TranslationLimitMin.MulScalar(max(
+											1/physicsItemA.(*domain.PhysicsItem).StiffnessRatio(),
+											1/physicsItemB.(*domain.PhysicsItem).StiffnessRatio()))
+										joint.JointParam.TranslationLimitMax.MulScalar(max(
+											1/physicsItemA.(*domain.PhysicsItem).StiffnessRatio(),
+											1/physicsItemB.(*domain.PhysicsItem).StiffnessRatio()))
+
+										joint.JointParam.RotationLimitMin.MulScalar(max(
+											1/physicsItemA.(*domain.PhysicsItem).StiffnessRatio(),
+											1/physicsItemB.(*domain.PhysicsItem).StiffnessRatio()))
+										joint.JointParam.RotationLimitMax.MulScalar(max(
+											1/physicsItemA.(*domain.PhysicsItem).StiffnessRatio(),
+											1/physicsItemB.(*domain.PhysicsItem).StiffnessRatio()))
+
+										joint.JointParam.SpringConstantTranslation.MulScalar(max(
+											physicsItemA.(*domain.PhysicsItem).StiffnessRatio(),
+											physicsItemB.(*domain.PhysicsItem).StiffnessRatio()))
+										joint.JointParam.SpringConstantRotation.MulScalar(max(
+											physicsItemA.(*domain.PhysicsItem).TensionRatio(),
+											physicsItemB.(*domain.PhysicsItem).TensionRatio()))
+
+										return true
+									})
+
+									physicsState.CurrentSet().OriginalModel = model
+									mWidgets.Window().StoreModel(0, physicsState.CurrentIndex(), model)
+									physicsState.OutputModelPicker.ChangePath(physicsState.CurrentSet().CreateOutputModelPath())
+									mWidgets.Window().TriggerPhysicsReset()
+
+									if mWidgets.Window().Playing() {
+										// 再生中は、調整系だけ有効にする
+										physicsState.SetWidgetPlayingEnabled(true)
+									} else {
+										physicsState.SetWidgetEnabled(true)
+									}
+
+									controller.Beep()
+								},
+							},
+							declarative.PushButton{
+								Text:          mi18n.T("物理リセット"),
+								ToolTipText:   mi18n.T("物理リセット説明"),
+								ColumnSpan:    2,
+								StretchFactor: 30,
+								OnClicked: func() {
+									physicsState.SetWidgetEnabled(false)
+
+									// 物理ツリーをリセット
+									physicsState.PhysicsTreeView.Model().(*domain.PhysicsModel).Reset()
+
+									physicsState.MassEdit.SetValue(1.0)
+									physicsState.StiffnessEdit.SetValue(1.0)
+									physicsState.TensionEdit.SetValue(1.0)
+
+									if err := physicsState.CurrentSet().LoadModel(physicsState.CurrentSet().OriginalModelPath); err == nil {
+										mWidgets.Window().StoreModel(0, physicsState.CurrentIndex(), physicsState.CurrentSet().OriginalModel)
+										physicsState.OutputModelPicker.ChangePath(physicsState.CurrentSet().CreateOutputModelPath())
+										mWidgets.Window().TriggerPhysicsReset()
+									}
+
+									if mWidgets.Window().Playing() {
+										// 再生中は、調整系だけ有効にする
+										physicsState.SetWidgetPlayingEnabled(true)
+									} else {
+										physicsState.SetWidgetEnabled(true)
+									}
+
+									controller.Beep()
+								},
+							},
 						},
 					},
 					declarative.Composite{
@@ -511,8 +631,10 @@ func NewPhysicsPage(mWidgets *controller.MWidgets) declarative.TabPage {
 
 									// 物理ありのモーションを取得
 									outputMotion := mWidgets.Window().LoadDeltaMotion(0, currentSet.Index, deltaIndex)
+									mlog.I("変形情報呼び出し: [motion(%d)] %p", deltaIndex, outputMotion)
 									// 物理確認用として設定
 									mWidgets.Window().StoreMotion(1, currentSet.Index, outputMotion)
+									mWidgets.Window().TriggerPhysicsReset()
 
 									// 出力モーションを更新
 									currentSet.OutputMotion = outputMotion
