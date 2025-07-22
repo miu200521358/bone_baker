@@ -399,17 +399,17 @@ func NewPhysicsPage(mWidgets *controller.MWidgets) declarative.TabPage {
 							declarative.NumberEdit{
 								AssignTo: &physicsState.MassEdit,
 								OnValueChanged: func() {
-									physicsState.PhysicsTreeView.CurrentItem().(*domain.PhysicsItem).CalcMass(
-										physicsState.MassEdit.Value(),
-									)
-									physicsState.PhysicsTreeView.Model().(*domain.PhysicsModel).PublishItemChanged(physicsState.PhysicsTreeView.CurrentItem())
+									if currentItem := physicsState.PhysicsTreeView.CurrentItem(); currentItem != nil {
+										currentItem.(*domain.PhysicsItem).CalcMass(physicsState.MassEdit.Value())
+										physicsState.PhysicsTreeView.Model().(*domain.PhysicsModel).PublishItemChanged(currentItem)
+									}
 								},
-								Value:              1,    // 初期値
-								MinValue:           0.0,  // 最小値
-								MaxValue:           10.0, // 最大値
-								Decimals:           2,    // 小数点以下の桁数
-								Increment:          0.01, // 増分
-								SpinButtonsVisible: true, // スピンボタンを表示
+								Value:              1,     // 初期値
+								MinValue:           0.01,  // 最小値
+								MaxValue:           100.0, // 最大値
+								Decimals:           2,     // 小数点以下の桁数
+								Increment:          0.01,  // 増分
+								SpinButtonsVisible: true,  // スピンボタンを表示
 								StretchFactor:      20,
 							},
 							declarative.TextLabel{
@@ -423,17 +423,18 @@ func NewPhysicsPage(mWidgets *controller.MWidgets) declarative.TabPage {
 							declarative.NumberEdit{
 								AssignTo: &physicsState.StiffnessEdit,
 								OnValueChanged: func() {
-									physicsState.PhysicsTreeView.CurrentItem().(*domain.PhysicsItem).CalcStiffness(
-										physicsState.StiffnessEdit.Value(),
-									)
-									physicsState.PhysicsTreeView.Model().(*domain.PhysicsModel).PublishItemChanged(physicsState.PhysicsTreeView.CurrentItem())
+									if currentItem := physicsState.PhysicsTreeView.CurrentItem(); currentItem != nil {
+										// 選択されている物理ボーンの硬さを更新
+										currentItem.(*domain.PhysicsItem).CalcStiffness(physicsState.StiffnessEdit.Value())
+										physicsState.PhysicsTreeView.Model().(*domain.PhysicsModel).PublishItemChanged(currentItem)
+									}
 								},
-								Value:              1,    // 初期値
-								MinValue:           0.0,  // 最小値
-								MaxValue:           10.0, // 最大値
-								Decimals:           2,    // 小数点以下の桁数
-								Increment:          0.01, // 増分
-								SpinButtonsVisible: true, // スピンボタンを表示
+								Value:              1,     // 初期値
+								MinValue:           0.01,  // 最小値
+								MaxValue:           100.0, // 最大値
+								Decimals:           2,     // 小数点以下の桁数
+								Increment:          0.01,  // 増分
+								SpinButtonsVisible: true,  // スピンボタンを表示
 								StretchFactor:      20,
 							},
 							declarative.TextLabel{
@@ -447,17 +448,17 @@ func NewPhysicsPage(mWidgets *controller.MWidgets) declarative.TabPage {
 							declarative.NumberEdit{
 								AssignTo: &physicsState.TensionEdit,
 								OnValueChanged: func() {
-									physicsState.PhysicsTreeView.CurrentItem().(*domain.PhysicsItem).CalcTension(
-										physicsState.TensionEdit.Value(),
-									)
-									physicsState.PhysicsTreeView.Model().(*domain.PhysicsModel).PublishItemChanged(physicsState.PhysicsTreeView.CurrentItem())
+									if currentItem := physicsState.PhysicsTreeView.CurrentItem(); currentItem != nil {
+										currentItem.(*domain.PhysicsItem).CalcTension(physicsState.TensionEdit.Value())
+										physicsState.PhysicsTreeView.Model().(*domain.PhysicsModel).PublishItemChanged(currentItem)
+									}
 								},
-								Value:              1,    // 初期値
-								MinValue:           0.0,  // 最小値
-								MaxValue:           10.0, // 最大値
-								Decimals:           2,    // 小数点以下の桁数
-								Increment:          0.01, // 増分
-								SpinButtonsVisible: true, // スピンボタンを表示
+								Value:              1,     // 初期値
+								MinValue:           0.01,  // 最小値
+								MaxValue:           100.0, // 最大値
+								Decimals:           2,     // 小数点以下の桁数
+								Increment:          0.01,  // 増分
+								SpinButtonsVisible: true,  // スピンボタンを表示
 								StretchFactor:      20,
 							},
 							declarative.PushButton{
@@ -631,7 +632,7 @@ func NewPhysicsPage(mWidgets *controller.MWidgets) declarative.TabPage {
 
 									// 物理ありのモーションを取得
 									outputMotion := mWidgets.Window().LoadDeltaMotion(0, currentSet.Index, deltaIndex)
-									mlog.I("変形情報呼び出し: [motion(%d)] %p", deltaIndex, outputMotion)
+									// mlog.I("変形情報呼び出し: [motion(%d)] %p", deltaIndex, outputMotion)
 									// 物理確認用として設定
 									mWidgets.Window().StoreMotion(1, currentSet.Index, outputMotion)
 									mWidgets.Window().TriggerPhysicsReset()
