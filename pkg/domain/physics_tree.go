@@ -1,27 +1,36 @@
 package domain
 
 import (
+	"fmt"
+
+	"github.com/miu200521358/mlib_go/pkg/config/mi18n"
 	"github.com/miu200521358/mlib_go/pkg/domain/pmx"
 	"github.com/miu200521358/walk/pkg/walk"
 )
 
 type PhysicsItem struct {
-	bone     *pmx.Bone
-	parent   walk.TreeItem
-	children []walk.TreeItem
+	bone           *pmx.Bone
+	parent         walk.TreeItem
+	children       []walk.TreeItem
+	massRatio      float64 // 質量比率
+	stiffnessRatio float64 // 硬さ比率
+	tensionRatio   float64 // 張り比率
 }
 
 func NewPhysicsItem(bone *pmx.Bone, parent walk.TreeItem) *PhysicsItem {
-
 	return &PhysicsItem{
-		bone:     bone,
-		parent:   parent,
-		children: make([]walk.TreeItem, 0),
+		bone:           bone,
+		parent:         parent,
+		children:       make([]walk.TreeItem, 0),
+		massRatio:      1.0, // 初期値
+		stiffnessRatio: 1.0, // 初期値
+		tensionRatio:   1.0, // 初期値
 	}
 }
 
 func (pi *PhysicsItem) Text() string {
-	return pi.bone.Name()
+	return fmt.Sprintf(mi18n.T("%s (質量: %.2f, 硬さ: %.2f, 張り: %.2f)"),
+		pi.bone.Name(), pi.massRatio, pi.stiffnessRatio, pi.tensionRatio)
 }
 
 func (pi *PhysicsItem) Parent() walk.TreeItem {
@@ -49,6 +58,42 @@ func (pi *PhysicsItem) HasPhysicsChild() bool {
 	}
 
 	return hasPhysicsBone || pi.bone.HasPhysics()
+}
+
+func (pi *PhysicsItem) CalcMass(massRatio float64) {
+	pi.massRatio = massRatio
+
+	for _, child := range pi.children {
+		child.(*PhysicsItem).CalcMass(massRatio)
+	}
+}
+
+func (pi *PhysicsItem) CalcStiffness(stiffnessRatio float64) {
+	pi.stiffnessRatio = stiffnessRatio
+
+	for _, child := range pi.children {
+		child.(*PhysicsItem).CalcStiffness(stiffnessRatio)
+	}
+}
+
+func (pi *PhysicsItem) CalcTension(tensionRatio float64) {
+	pi.tensionRatio = tensionRatio
+
+	for _, child := range pi.children {
+		child.(*PhysicsItem).CalcTension(tensionRatio)
+	}
+}
+
+func (pi *PhysicsItem) MassRatio() float64 {
+	return pi.massRatio
+}
+
+func (pi *PhysicsItem) StiffnessRatio() float64 {
+	return pi.stiffnessRatio
+}
+
+func (pi *PhysicsItem) TensionRatio() float64 {
+	return pi.tensionRatio
 }
 
 func (pi *PhysicsItem) SaveOnlyPhysicsItems() {
@@ -146,4 +191,20 @@ func (pm *PhysicsModel) SaveOnlyPhysicsItems() {
 		}
 	}
 	pm.nodes = newNodes
+}
+
+func (pm *PhysicsModel) PublishItemChanged(item walk.TreeItem) {
+	if item == nil {
+		return
+	}
+
+	if _, ok := item.(*PhysicsItem); !ok {
+		return
+	}
+
+	pm.TreeModelBase.PublishItemChanged(item)
+
+	for _, child := range item.(*PhysicsItem).children {
+		pm.PublishItemChanged(child)
+	}
 }

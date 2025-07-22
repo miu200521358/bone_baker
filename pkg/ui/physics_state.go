@@ -36,6 +36,9 @@ type PhysicsState struct {
 	GravityEdit           *walk.NumberEdit     // 重力値入力
 	MaxSubStepsEdit       *walk.NumberEdit     // 最大サブステップ数
 	PhysicsTreeView       *walk.TreeView       // 物理ボーン表示ツリー
+	MassEdit              *walk.NumberEdit     // 質量入力
+	StiffnessEdit         *walk.NumberEdit     // 硬さ入力
+	TensionEdit           *walk.NumberEdit     // 張り入力
 	PhysicsSets           []*domain.PhysicsSet `json:"physics_sets"` // 物理焼き込みセット
 }
 

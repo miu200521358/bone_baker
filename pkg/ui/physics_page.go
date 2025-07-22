@@ -326,7 +326,7 @@ func NewPhysicsPage(mWidgets *controller.MWidgets) declarative.TabPage {
 						},
 					},
 					declarative.Composite{
-						Layout: declarative.Grid{Columns: 6, SpacingZero: true},
+						Layout: declarative.Grid{Columns: 6},
 						Children: []declarative.Widget{
 							declarative.TextLabel{
 								Text:        mi18n.T("重力"),
@@ -381,6 +381,82 @@ func NewPhysicsPage(mWidgets *controller.MWidgets) declarative.TabPage {
 								SpinButtonsVisible: true,  // スピンボタンを表示
 								StretchFactor:      20,
 							},
+							declarative.HSpacer{
+								ColumnSpan:    2,
+								StretchFactor: 30,
+							},
+							declarative.TextLabel{
+								Text:        mi18n.T("質量"),
+								ToolTipText: mi18n.T("質量説明"),
+								OnMouseDown: func(x, y int, button walk.MouseButton) {
+									mlog.IL("%s", mi18n.T("質量説明"))
+								},
+								StretchFactor: 1,
+							},
+							declarative.NumberEdit{
+								AssignTo: &physicsState.MassEdit,
+								OnValueChanged: func() {
+									physicsState.PhysicsTreeView.CurrentItem().(*domain.PhysicsItem).CalcMass(
+										physicsState.MassEdit.Value(),
+									)
+									physicsState.PhysicsTreeView.Model().(*domain.PhysicsModel).PublishItemChanged(physicsState.PhysicsTreeView.CurrentItem())
+								},
+								Value:              1,    // 初期値
+								MinValue:           0.0,  // 最小値
+								MaxValue:           10.0, // 最大値
+								Decimals:           2,    // 小数点以下の桁数
+								Increment:          0.01, // 増分
+								SpinButtonsVisible: true, // スピンボタンを表示
+								StretchFactor:      20,
+							},
+							declarative.TextLabel{
+								Text:        mi18n.T("硬さ"),
+								ToolTipText: mi18n.T("硬さ説明"),
+								OnMouseDown: func(x, y int, button walk.MouseButton) {
+									mlog.IL("%s", mi18n.T("硬さ説明"))
+								},
+								StretchFactor: 1,
+							},
+							declarative.NumberEdit{
+								AssignTo: &physicsState.StiffnessEdit,
+								OnValueChanged: func() {
+									physicsState.PhysicsTreeView.CurrentItem().(*domain.PhysicsItem).CalcStiffness(
+										physicsState.StiffnessEdit.Value(),
+									)
+									physicsState.PhysicsTreeView.Model().(*domain.PhysicsModel).PublishItemChanged(physicsState.PhysicsTreeView.CurrentItem())
+								},
+								Value:              1,    // 初期値
+								MinValue:           0.0,  // 最小値
+								MaxValue:           10.0, // 最大値
+								Decimals:           2,    // 小数点以下の桁数
+								Increment:          0.01, // 増分
+								SpinButtonsVisible: true, // スピンボタンを表示
+								StretchFactor:      20,
+							},
+							declarative.TextLabel{
+								Text:        mi18n.T("張り"),
+								ToolTipText: mi18n.T("張り説明"),
+								OnMouseDown: func(x, y int, button walk.MouseButton) {
+									mlog.IL("%s", mi18n.T("張り説明"))
+								},
+								StretchFactor: 1,
+							},
+							declarative.NumberEdit{
+								AssignTo: &physicsState.TensionEdit,
+								OnValueChanged: func() {
+									physicsState.PhysicsTreeView.CurrentItem().(*domain.PhysicsItem).CalcTension(
+										physicsState.TensionEdit.Value(),
+									)
+									physicsState.PhysicsTreeView.Model().(*domain.PhysicsModel).PublishItemChanged(physicsState.PhysicsTreeView.CurrentItem())
+								},
+								Value:              1,    // 初期値
+								MinValue:           0.0,  // 最小値
+								MaxValue:           10.0, // 最大値
+								Decimals:           2,    // 小数点以下の桁数
+								Increment:          0.01, // 増分
+								SpinButtonsVisible: true, // スピンボタンを表示
+								StretchFactor:      20,
+							},
 						},
 					},
 					declarative.Composite{
@@ -390,6 +466,18 @@ func NewPhysicsPage(mWidgets *controller.MWidgets) declarative.TabPage {
 								AssignTo: &physicsState.PhysicsTreeView,
 								Model:    domain.NewPhysicsModel(),
 								MinSize:  declarative.Size{Width: 230, Height: 200},
+								OnCurrentItemChanged: func() {
+									// 物理ボーンツリーの選択が変更されたときの処理
+									currentItem := physicsState.PhysicsTreeView.CurrentItem()
+									if currentItem == nil {
+										return
+									}
+
+									physicsItem := currentItem.(*domain.PhysicsItem)
+									physicsState.MassEdit.SetValue(physicsItem.MassRatio())
+									physicsState.StiffnessEdit.SetValue(physicsItem.StiffnessRatio())
+									physicsState.TensionEdit.SetValue(physicsItem.TensionRatio())
+								},
 							},
 						},
 					},

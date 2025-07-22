@@ -178,5 +178,33 @@
     {
         "id": "サブステップ数説明",
         "translation": "サブステップ数説明"
+    },
+    {
+        "id": "質量",
+        "translation": "質量"
+    },
+    {
+        "id": "質量説明",
+        "translation": "質量説明"
+    },
+    {
+        "id": "硬さ",
+        "translation": "硬さ"
+    },
+    {
+        "id": "硬さ説明",
+        "translation": "硬さ説明"
+    },
+    {
+        "id": "張り",
+        "translation": "張り"
+    },
+    {
+        "id": "張り説明",
+        "translation": "張り説明"
+    },
+    {
+        "id": "%s (質量: %.2f, 硬さ: %.2f, 張り: %.2f)",
+        "translation": "%s (質量: %.2f, 硬さ: %.2f, 張り: %.2f)"
     }
 ]
