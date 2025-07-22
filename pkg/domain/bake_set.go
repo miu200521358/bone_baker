@@ -37,6 +37,7 @@ type BakeSet struct {
 	OutputMotion   *vmd.VmdMotion `json:"-"` // 出力結果モーション
 
 	PhysicsTree *PhysicsModel `json:"-"` // 物理ボーンツリー
+	OutputTree  *OutputModel  `json:"-"` // 出力ボーンツリー
 }
 
 func NewPhysicsSet(index int) *BakeSet {

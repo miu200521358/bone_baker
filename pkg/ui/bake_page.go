@@ -671,6 +671,29 @@ func NewBakePage(mWidgets *controller.MWidgets) declarative.TabPage {
 							},
 						},
 					},
+					declarative.Composite{
+						Layout: declarative.VBox{},
+						Children: []declarative.Widget{
+							declarative.TreeView{
+								AssignTo:  &bakeState.OutputTreeView,
+								Model:     domain.NewOutputModel(),
+								MinSize:   declarative.Size{Width: 230, Height: 200},
+								Checkable: true,
+								OnItemChecked: func(item walk.TreeItem) {
+									// 無限ループを防ぐためのフラグチェック
+									treeModel := bakeState.OutputTreeView.Model()
+									if treeModel == nil || item == nil || bakeState.IsOutputUpdatingChildren {
+										return
+									}
+
+									checked := bakeState.OutputTreeView.Checked(item)
+
+									// 子どもアイテムも同じチェック状態に設定
+									bakeState.SetOutputChildrenChecked(item, checked)
+								},
+							},
+						},
+					},
 					bakeState.SaveMotionButton.Widgets(),
 				},
 			},

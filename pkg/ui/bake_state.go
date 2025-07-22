@@ -17,30 +17,32 @@ import (
 )
 
 type BakeState struct {
-	AddSetButton          *widget.MPushButton  // セット追加ボタン
-	ResetSetButton        *widget.MPushButton  // セットリセットボタン
-	SaveSetButton         *widget.MPushButton  // セット保存ボタン
-	LoadSetButton         *widget.MPushButton  // セット読込ボタン
-	NavToolBar            *walk.ToolBar        // セットツールバー
-	currentIndex          int                  // 現在のインデックス
-	OriginalMotionPicker  *widget.FilePicker   // 元モーション
-	OriginalModelPicker   *widget.FilePicker   // 物理焼き込み先モデル
-	OutputMotionPicker    *widget.FilePicker   // 出力モーション
-	OutputModelPicker     *widget.FilePicker   // 出力モデル
-	OutputMotionIndexEdit *walk.NumberEdit     // 出力モーションインデックスプルダウン
-	SaveModelButton       *widget.MPushButton  // モデル保存ボタン
-	StartFrameEdit        *walk.NumberEdit     // 開始フレーム
-	EndFrameEdit          *walk.NumberEdit     // 終了フレーム
-	SaveMotionButton      *widget.MPushButton  // モーション保存ボタン
-	Player                *widget.MotionPlayer // モーションプレイヤー
-	GravityEdit           *walk.NumberEdit     // 重力値入力
-	MaxSubStepsEdit       *walk.NumberEdit     // 最大サブステップ数
-	FixedTimeStepEdit     *walk.NumberEdit     // 固定タイムステップ入力
-	PhysicsTreeView       *walk.TreeView       // 物理ボーン表示ツリー
-	MassEdit              *walk.NumberEdit     // 質量入力
-	StiffnessEdit         *walk.NumberEdit     // 硬さ入力
-	TensionEdit           *walk.NumberEdit     // 張り入力
-	BakeSets              []*domain.BakeSet    `json:"bake_sets"` // ボーン焼き込みセット
+	AddSetButton             *widget.MPushButton  // セット追加ボタン
+	ResetSetButton           *widget.MPushButton  // セットリセットボタン
+	SaveSetButton            *widget.MPushButton  // セット保存ボタン
+	LoadSetButton            *widget.MPushButton  // セット読込ボタン
+	NavToolBar               *walk.ToolBar        // セットツールバー
+	currentIndex             int                  // 現在のインデックス
+	OriginalMotionPicker     *widget.FilePicker   // 元モーション
+	OriginalModelPicker      *widget.FilePicker   // 物理焼き込み先モデル
+	OutputMotionPicker       *widget.FilePicker   // 出力モーション
+	OutputModelPicker        *widget.FilePicker   // 出力モデル
+	OutputMotionIndexEdit    *walk.NumberEdit     // 出力モーションインデックスプルダウン
+	SaveModelButton          *widget.MPushButton  // モデル保存ボタン
+	StartFrameEdit           *walk.NumberEdit     // 開始フレーム
+	EndFrameEdit             *walk.NumberEdit     // 終了フレーム
+	SaveMotionButton         *widget.MPushButton  // モーション保存ボタン
+	Player                   *widget.MotionPlayer // モーションプレイヤー
+	GravityEdit              *walk.NumberEdit     // 重力値入力
+	MaxSubStepsEdit          *walk.NumberEdit     // 最大サブステップ数
+	FixedTimeStepEdit        *walk.NumberEdit     // 固定タイムステップ入力
+	PhysicsTreeView          *walk.TreeView       // 物理ボーン表示ツリー
+	OutputTreeView           *walk.TreeView       // 出力ボーン表示ツリー
+	IsOutputUpdatingChildren bool                 // 子どもアイテム更新中フラグ
+	MassEdit                 *walk.NumberEdit     // 質量入力
+	StiffnessEdit            *walk.NumberEdit     // 硬さ入力
+	TensionEdit              *walk.NumberEdit     // 張り入力
+	BakeSets                 []*domain.BakeSet    `json:"bake_sets"` // ボーン焼き込みセット
 }
 
 func (ss *BakeState) AddAction() {
@@ -101,6 +103,12 @@ func (ss *BakeState) ChangeCurrentAction(index int) {
 		ss.CurrentSet().PhysicsTree = domain.NewPhysicsModel()
 	}
 	ss.PhysicsTreeView.SetModel(ss.CurrentSet().PhysicsTree)
+
+	// 出力ツリーのモデル変更
+	if ss.CurrentSet().OutputTree == nil {
+		ss.CurrentSet().OutputTree = domain.NewOutputModel()
+	}
+	ss.OutputTreeView.SetModel(ss.CurrentSet().OutputTree)
 }
 
 func (ss *BakeState) ClearOptions() {
@@ -200,6 +208,8 @@ func (bakeState *BakeState) LoadModel(
 
 	// 物理ツリーモデ作成
 	bakeState.createPhysicsTree()
+	// 出力ツリーモデル作成
+	bakeState.createOutputTree()
 
 	for n := range bakeState.BakeSets {
 		cw.ClearDeltaMotion(0, n)
@@ -215,6 +225,30 @@ func (bakeState *BakeState) LoadModel(
 	bakeState.SetWidgetEnabled(true)
 
 	return nil
+}
+
+func (bakeState *BakeState) createOutputTree() {
+	// 出力ツリーのモデル変更
+	tree := bakeState.CurrentSet().OutputTree
+	if tree == nil {
+		tree = domain.NewOutputModel()
+	}
+
+	for _, boneIndex := range bakeState.CurrentSet().OriginalModel.Bones.LayerSortedIndexes {
+		if bone, err := bakeState.CurrentSet().OriginalModel.Bones.Get(boneIndex); err == nil {
+			parent := tree.AtByBoneIndex(bone.ParentIndex)
+			item := domain.NewOutputItem(bone, parent)
+			if parent == nil {
+				tree.AddNode(item)
+			} else {
+				parent.(*domain.OutputItem).AddChild(item)
+			}
+		}
+	}
+
+	if err := bakeState.OutputTreeView.SetModel(tree); err != nil {
+		mlog.E(mi18n.T("出力ボーンツリー設定失敗エラー"), err, "")
+	}
 }
 
 func (bakeState *BakeState) createPhysicsTree() {
@@ -322,4 +356,34 @@ func (bakeState *BakeState) SetWidgetPlayingEnabled(enabled bool) {
 	bakeState.StiffnessEdit.SetEnabled(enabled)
 	bakeState.TensionEdit.SetEnabled(enabled)
 	bakeState.PhysicsTreeView.SetEnabled(enabled)
+	bakeState.OutputTreeView.SetEnabled(enabled)
+}
+
+// SetOutputChildrenChecked は指定されたアイテムの子どもを再帰的にチェック状態を設定する
+func (bakeState *BakeState) SetOutputChildrenChecked(item walk.TreeItem, checked bool) {
+	if item == nil || bakeState.IsOutputUpdatingChildren {
+		return
+	}
+
+	// 無限ループを防ぐためのフラグ
+	bakeState.IsOutputUpdatingChildren = true
+	defer func() {
+		bakeState.IsOutputUpdatingChildren = false
+	}()
+
+	// 子どもの数を取得
+	for i := range item.ChildCount() {
+		child := item.ChildAt(i)
+		if child == nil {
+			continue
+		}
+
+		// 子どものチェック状態を設定（モデル側のみ）
+		if outputItem, ok := child.(*domain.OutputItem); ok {
+			bakeState.OutputTreeView.SetChecked(outputItem, checked)
+		}
+
+		// 再帰的に孫も処理
+		bakeState.SetOutputChildrenChecked(child, checked)
+	}
 }
