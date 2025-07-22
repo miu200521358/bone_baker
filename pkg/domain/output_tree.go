@@ -20,6 +20,14 @@ func NewOutputItem(bone *pmx.Bone, parent walk.TreeItem) *OutputItem {
 	}
 }
 
+func (pi *OutputItem) AsIk() bool {
+	return pi.bone.IsIK() || len(pi.bone.IkLinkBoneIndexes) > 0 || len(pi.bone.IkTargetBoneIndexes) > 0
+}
+
+func (pi *OutputItem) AsPhysics() bool {
+	return pi.bone.HasPhysics()
+}
+
 func (pi *OutputItem) SetChecked(checked bool) {
 	pi.checked = checked
 }

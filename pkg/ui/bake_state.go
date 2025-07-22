@@ -34,14 +34,18 @@ type BakeState struct {
 	SaveMotionButton         *widget.MPushButton  // モーション保存ボタン
 	Player                   *widget.MotionPlayer // モーションプレイヤー
 	GravityEdit              *walk.NumberEdit     // 重力値入力
+	MassEdit                 *walk.NumberEdit     // 質量入力
+	StiffnessEdit            *walk.NumberEdit     // 硬さ入力
+	TensionEdit              *walk.NumberEdit     // 張り入力
 	MaxSubStepsEdit          *walk.NumberEdit     // 最大サブステップ数
 	FixedTimeStepEdit        *walk.NumberEdit     // 固定タイムステップ入力
 	PhysicsTreeView          *walk.TreeView       // 物理ボーン表示ツリー
 	OutputTreeView           *walk.TreeView       // 出力ボーン表示ツリー
 	IsOutputUpdatingChildren bool                 // 子どもアイテム更新中フラグ
-	MassEdit                 *walk.NumberEdit     // 質量入力
-	StiffnessEdit            *walk.NumberEdit     // 硬さ入力
-	TensionEdit              *walk.NumberEdit     // 張り入力
+	OutputIkCheckBox         *walk.CheckBox       // 出力IKチェックボックス
+	IsOutputUpdatingIk       bool                 // 出力IK更新中フラグ
+	OutputPhysicsCheckBox    *walk.CheckBox       // 出力物理チェックボックス
+	IsOutputUpdatingPhysics  bool                 // 出力物理更新中フラグ
 	BakeSets                 []*domain.BakeSet    `json:"bake_sets"` // ボーン焼き込みセット
 }
 
@@ -361,7 +365,8 @@ func (bakeState *BakeState) SetWidgetPlayingEnabled(enabled bool) {
 
 // SetOutputChildrenChecked は指定されたアイテムの子どもを再帰的にチェック状態を設定する
 func (bakeState *BakeState) SetOutputChildrenChecked(item walk.TreeItem, checked bool) {
-	if item == nil || bakeState.IsOutputUpdatingChildren {
+	if item == nil || bakeState.IsOutputUpdatingChildren ||
+		bakeState.IsOutputUpdatingPhysics || bakeState.IsOutputUpdatingIk {
 		return
 	}
 
@@ -372,18 +377,101 @@ func (bakeState *BakeState) SetOutputChildrenChecked(item walk.TreeItem, checked
 	}()
 
 	// 子どもの数を取得
+	childCount := item.ChildCount()
+	for i := range childCount {
+		child := item.ChildAt(i)
+		if child == nil {
+			continue
+		}
+
+		// 子どものチェック状態を設定
+		if outputItem, ok := child.(*domain.OutputItem); ok {
+			outputItem.SetChecked(checked)
+			// TreeViewのチェック状態も更新
+			bakeState.OutputTreeView.SetChecked(outputItem, checked)
+		}
+
+		// 再帰的に孫も処理（フラグを一時的にクリアして再帰呼び出し）
+		bakeState.IsOutputUpdatingChildren = false
+		bakeState.SetOutputChildrenChecked(child, checked)
+		bakeState.IsOutputUpdatingChildren = true
+	}
+}
+
+// SetOutputPhysicsChecked は物理関連ボーンのチェック状態を設定する
+func (bakeState *BakeState) SetOutputPhysicsChecked(item walk.TreeItem, checked bool) {
+	// if bakeState.IsOutputUpdatingPhysics {
+	// 	return
+	// }
+
+	// 無限ループを防ぐためのフラグ
+	bakeState.IsOutputUpdatingPhysics = true
+	defer func() {
+		bakeState.IsOutputUpdatingPhysics = false
+	}()
+
+	if item == nil {
+		for i := range bakeState.OutputTreeView.Model().RootCount() {
+			item := bakeState.OutputTreeView.Model().RootAt(i)
+			bakeState.SetOutputPhysicsChecked(item, checked)
+		}
+		return
+	}
+
+	// 子どもの数を取得
 	for i := range item.ChildCount() {
 		child := item.ChildAt(i)
 		if child == nil {
 			continue
 		}
 
-		// 子どものチェック状態を設定（モデル側のみ）
+		// 出力IKボーンのチェック状態を設定
 		if outputItem, ok := child.(*domain.OutputItem); ok {
-			bakeState.OutputTreeView.SetChecked(outputItem, checked)
+			if outputItem.AsPhysics() {
+				bakeState.OutputTreeView.SetChecked(outputItem, checked)
+			}
 		}
 
-		// 再帰的に孫も処理
-		bakeState.SetOutputChildrenChecked(child, checked)
+		// 子どもアイテムのチェック状態を設定
+		bakeState.SetOutputPhysicsChecked(child, checked)
+	}
+}
+
+// SetOutputIkChecked はIK関連ボーンのチェック状態を設定する
+func (bakeState *BakeState) SetOutputIkChecked(item walk.TreeItem, checked bool) {
+	// if bakeState.IsOutputUpdatingIk {
+	// 	return
+	// }
+
+	if item == nil {
+		for i := range bakeState.OutputTreeView.Model().RootCount() {
+			item := bakeState.OutputTreeView.Model().RootAt(i)
+			bakeState.SetOutputIkChecked(item, checked)
+		}
+		return
+	}
+
+	// 無限ループを防ぐためのフラグ
+	bakeState.IsOutputUpdatingIk = true
+	defer func() {
+		bakeState.IsOutputUpdatingIk = false
+	}()
+
+	// 子どもの数を取得
+	for i := range item.ChildCount() {
+		child := item.ChildAt(i)
+		if child == nil {
+			continue
+		}
+
+		// 出力IKボーンのチェック状態を設定
+		if outputItem, ok := child.(*domain.OutputItem); ok {
+			if outputItem.AsIk() {
+				bakeState.OutputTreeView.SetChecked(outputItem, checked)
+			}
+		}
+
+		// 子どもアイテムのチェック状態を設定
+		bakeState.SetOutputIkChecked(child, checked)
 	}
 }

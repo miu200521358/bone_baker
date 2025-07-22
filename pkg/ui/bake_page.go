@@ -607,7 +607,7 @@ func NewBakePage(mWidgets *controller.MWidgets) declarative.TabPage {
 					declarative.VSeparator{},
 					bakeState.SaveModelButton.Widgets(),
 					declarative.Composite{
-						Layout: declarative.HBox{},
+						Layout: declarative.Grid{Columns: 6},
 						Children: []declarative.Widget{
 							declarative.TextLabel{
 								Text:        mi18n.T("焼き込みIndex"),
@@ -668,6 +668,40 @@ func NewBakePage(mWidgets *controller.MWidgets) declarative.TabPage {
 								Increment:          1,
 								MinValue:           0,
 								MaxValue:           1,
+							},
+							declarative.CheckBox{
+								AssignTo:    &bakeState.OutputIkCheckBox,
+								Text:        mi18n.T("IK焼き込み対象"),
+								ToolTipText: mi18n.T("IK焼き込み対象説明"),
+								ColumnSpan:  2,
+								OnCheckedChanged: func() {
+									// IK焼き込み対象のチェックボックスが変更されたときの処理
+									// 無限ループを防ぐためのフラグチェック
+									treeModel := bakeState.OutputTreeView.Model()
+									if treeModel == nil || bakeState.IsOutputUpdatingChildren {
+										return
+									}
+
+									// IK出力のチェック状態を更新
+									checked := bakeState.OutputIkCheckBox.Checked()
+									bakeState.SetOutputIkChecked(nil, checked)
+								},
+							},
+							declarative.CheckBox{
+								AssignTo:    &bakeState.OutputPhysicsCheckBox,
+								Text:        mi18n.T("物理焼き込み対象"),
+								ToolTipText: mi18n.T("物理焼き込み対象説明"),
+								ColumnSpan:  2,
+								OnCheckedChanged: func() {
+									treeModel := bakeState.OutputTreeView.Model()
+									if treeModel == nil || bakeState.IsOutputUpdatingChildren {
+										return
+									}
+
+									// 物理焼き込み対象のチェック状態を更新
+									checked := bakeState.OutputPhysicsCheckBox.Checked()
+									bakeState.SetOutputPhysicsChecked(nil, checked)
+								},
 							},
 						},
 					},
