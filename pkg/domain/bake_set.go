@@ -398,6 +398,7 @@ func (ss *BakeSet) GetOutputMotionOnlyChecked(startFrame, endFrame float64) ([]*
 	})
 
 	nextFrameCount := 0
+	logFrameCount := 0
 
 	motion := vmd.NewVmdMotion(ss.OutputMotionPath)
 	dirPath, fileName, ext := mfile.SplitPath(ss.OutputMotionPath)
@@ -417,6 +418,12 @@ func (ss *BakeSet) GetOutputMotionOnlyChecked(startFrame, endFrame float64) ([]*
 			dirPath, fileName, ext := mfile.SplitPath(ss.OutputMotionPath)
 			motion = vmd.NewVmdMotion(fmt.Sprintf("%s/%s_%04.0f%s", dirPath, fileName, index, ext))
 			nextFrameCount = boneCount
+			logFrameCount = boneCount
+		}
+
+		if nextFrameCount/10000 > logFrameCount/10000 {
+			mlog.I(fmt.Sprintf(mi18n.T("物理焼き込み中[%04.0fF] %dキーフレーム"), index, nextFrameCount))
+			logFrameCount = nextFrameCount
 		}
 
 		ss.OriginalModel.Bones.ForEach(func(boneIndex int, bone *pmx.Bone) bool {
