@@ -214,7 +214,7 @@ func NewBakePage(mWidgets *controller.MWidgets) declarative.TabPage {
 		for _, physicsSet := range bakeState.BakeSets {
 			if physicsSet.OutputMotionPath != "" && physicsSet.OutputMotion != nil {
 				// チェックボーンのみ残す
-				motion, err := physicsSet.GetOutputMotionOnlyChecked(
+				motions, err := physicsSet.GetOutputMotionOnlyChecked(
 					bakeState.StartFrameEdit.Value(),
 					bakeState.EndFrameEdit.Value(),
 				)
@@ -223,11 +223,13 @@ func NewBakePage(mWidgets *controller.MWidgets) declarative.TabPage {
 					return
 				}
 
-				rep := repository.NewVmdRepository(true)
-				if err := rep.Save(physicsSet.OutputMotionPath, motion, false); err != nil {
-					mlog.ET(mi18n.T("保存失敗"), err, "")
-					if ok := merr.ShowErrorDialog(cw.AppConfig(), err); ok {
-						bakeState.SetWidgetEnabled(true)
+				for _, motion := range motions {
+					rep := repository.NewVmdRepository(true)
+					if err := rep.Save(motion.Path(), motion, false); err != nil {
+						mlog.ET(mi18n.T("保存失敗"), err, "")
+						if ok := merr.ShowErrorDialog(cw.AppConfig(), err); ok {
+							bakeState.SetWidgetEnabled(true)
+						}
 					}
 				}
 			}
@@ -340,7 +342,7 @@ func NewBakePage(mWidgets *controller.MWidgets) declarative.TabPage {
 								OnMouseDown: func(x, y int, button walk.MouseButton) {
 									mlog.IL("%s", mi18n.T("重力説明"))
 								},
-								StretchFactor: 1,
+								MinSize: declarative.Size{Width: 80, Height: 20},
 							},
 							declarative.NumberEdit{
 								AssignTo:           &bakeState.GravityEdit,
@@ -350,7 +352,8 @@ func NewBakePage(mWidgets *controller.MWidgets) declarative.TabPage {
 								Decimals:           1,      // 小数点以下の桁数
 								Increment:          0.1,    // 増分
 								SpinButtonsVisible: true,   // スピンボタンを表示
-								StretchFactor:      20,
+								MinSize:            declarative.Size{Width: 60, Height: 20},
+								MaxSize:            declarative.Size{Width: 60, Height: 20},
 							},
 							declarative.TextLabel{
 								Text:        mi18n.T("サブステップ数"),
@@ -358,7 +361,7 @@ func NewBakePage(mWidgets *controller.MWidgets) declarative.TabPage {
 								OnMouseDown: func(x, y int, button walk.MouseButton) {
 									mlog.IL("%s", mi18n.T("サブステップ数説明"))
 								},
-								StretchFactor: 1,
+								MinSize: declarative.Size{Width: 80, Height: 20},
 							},
 							declarative.NumberEdit{
 								AssignTo:           &bakeState.MaxSubStepsEdit,
@@ -368,7 +371,8 @@ func NewBakePage(mWidgets *controller.MWidgets) declarative.TabPage {
 								Decimals:           0,     // 小数点以下の桁数
 								Increment:          1.0,   // 増分
 								SpinButtonsVisible: true,  // スピンボタンを表示
-								StretchFactor:      20,
+								MinSize:            declarative.Size{Width: 60, Height: 20},
+								MaxSize:            declarative.Size{Width: 60, Height: 20},
 							},
 							declarative.TextLabel{
 								Text:        mi18n.T("演算精度"),
@@ -376,7 +380,7 @@ func NewBakePage(mWidgets *controller.MWidgets) declarative.TabPage {
 								OnMouseDown: func(x, y int, button walk.MouseButton) {
 									mlog.IL("%s", mi18n.T("演算精度説明"))
 								},
-								StretchFactor: 1,
+								MinSize: declarative.Size{Width: 80, Height: 20},
 							},
 							declarative.NumberEdit{
 								AssignTo:           &bakeState.FixedTimeStepEdit,
@@ -387,6 +391,8 @@ func NewBakePage(mWidgets *controller.MWidgets) declarative.TabPage {
 								Increment:          10.0,   // 増分
 								SpinButtonsVisible: true,   // スピンボタンを表示
 								StretchFactor:      20,
+								MinSize:            declarative.Size{Width: 60, Height: 20},
+								MaxSize:            declarative.Size{Width: 60, Height: 20},
 							},
 							declarative.TextLabel{
 								Text:        mi18n.T("質量"),
@@ -394,7 +400,7 @@ func NewBakePage(mWidgets *controller.MWidgets) declarative.TabPage {
 								OnMouseDown: func(x, y int, button walk.MouseButton) {
 									mlog.IL("%s", mi18n.T("質量説明"))
 								},
-								StretchFactor: 1,
+								MinSize: declarative.Size{Width: 80, Height: 20},
 							},
 							declarative.NumberEdit{
 								AssignTo: &bakeState.MassEdit,
@@ -410,7 +416,8 @@ func NewBakePage(mWidgets *controller.MWidgets) declarative.TabPage {
 								Decimals:           2,     // 小数点以下の桁数
 								Increment:          0.01,  // 増分
 								SpinButtonsVisible: true,  // スピンボタンを表示
-								StretchFactor:      20,
+								MinSize:            declarative.Size{Width: 60, Height: 20},
+								MaxSize:            declarative.Size{Width: 60, Height: 20},
 							},
 							declarative.TextLabel{
 								Text:        mi18n.T("硬さ"),
@@ -418,7 +425,7 @@ func NewBakePage(mWidgets *controller.MWidgets) declarative.TabPage {
 								OnMouseDown: func(x, y int, button walk.MouseButton) {
 									mlog.IL("%s", mi18n.T("硬さ説明"))
 								},
-								StretchFactor: 1,
+								MinSize: declarative.Size{Width: 80, Height: 20},
 							},
 							declarative.NumberEdit{
 								AssignTo: &bakeState.StiffnessEdit,
@@ -435,7 +442,8 @@ func NewBakePage(mWidgets *controller.MWidgets) declarative.TabPage {
 								Decimals:           2,     // 小数点以下の桁数
 								Increment:          0.01,  // 増分
 								SpinButtonsVisible: true,  // スピンボタンを表示
-								StretchFactor:      20,
+								MinSize:            declarative.Size{Width: 60, Height: 20},
+								MaxSize:            declarative.Size{Width: 60, Height: 20},
 							},
 							declarative.TextLabel{
 								Text:        mi18n.T("張り"),
@@ -443,7 +451,7 @@ func NewBakePage(mWidgets *controller.MWidgets) declarative.TabPage {
 								OnMouseDown: func(x, y int, button walk.MouseButton) {
 									mlog.IL("%s", mi18n.T("張り説明"))
 								},
-								StretchFactor: 1,
+								MinSize: declarative.Size{Width: 80, Height: 20},
 							},
 							declarative.NumberEdit{
 								AssignTo: &bakeState.TensionEdit,
@@ -459,13 +467,13 @@ func NewBakePage(mWidgets *controller.MWidgets) declarative.TabPage {
 								Decimals:           2,     // 小数点以下の桁数
 								Increment:          0.01,  // 増分
 								SpinButtonsVisible: true,  // スピンボタンを表示
-								StretchFactor:      20,
+								MinSize:            declarative.Size{Width: 60, Height: 20},
+								MaxSize:            declarative.Size{Width: 60, Height: 20},
 							},
 							declarative.PushButton{
-								Text:          mi18n.T("物理設定変更"),
-								ToolTipText:   mi18n.T("物理設定変更説明"),
-								ColumnSpan:    4,
-								StretchFactor: 30,
+								Text:        mi18n.T("物理設定変更"),
+								ToolTipText: mi18n.T("物理設定変更説明"),
+								ColumnSpan:  4,
 								OnClicked: func() {
 									bakeState.SetWidgetEnabled(false)
 
@@ -548,10 +556,9 @@ func NewBakePage(mWidgets *controller.MWidgets) declarative.TabPage {
 								},
 							},
 							declarative.PushButton{
-								Text:          mi18n.T("物理リセット"),
-								ToolTipText:   mi18n.T("物理リセット説明"),
-								ColumnSpan:    2,
-								StretchFactor: 30,
+								Text:        mi18n.T("物理リセット"),
+								ToolTipText: mi18n.T("物理リセット説明"),
+								ColumnSpan:  2,
 								OnClicked: func() {
 									bakeState.SetWidgetEnabled(false)
 

@@ -374,7 +374,9 @@ func (ss *BakeSet) Delete() {
 }
 
 // 物理ボーンだけ残す
-func (ss *BakeSet) GetOutputMotionOnlyChecked(startFrame, endFrame float64) (*vmd.VmdMotion, error) {
+func (ss *BakeSet) GetOutputMotionOnlyChecked(startFrame, endFrame float64) ([]*vmd.VmdMotion, error) {
+	motions := make([]*vmd.VmdMotion, 0)
+
 	if ss.OriginalModel == nil || ss.OutputMotion == nil {
 		return nil, errors.New(mi18n.T("物理焼き込みセットの元モデルまたは出力モーションが設定されていません"))
 	}
@@ -392,12 +394,27 @@ func (ss *BakeSet) GetOutputMotionOnlyChecked(startFrame, endFrame float64) (*vm
 			return true
 		}
 
+		nextFrameCount := motion.BoneFrames.Length() + int(endFrame-startFrame+2)
+
+		if nextFrameCount > vmd.MAX_BONE_FRAMES {
+			// キーフレーム数が上限を超える場合は切り替える
+			motions = append(motions, motion)
+
+			mlog.I(fmt.Sprintf(mi18n.T("キーフレーム数が上限を超えるため、モーションを切り替えます[%d]: %d -> %d"),
+				len(motions), nextFrameCount, vmd.MAX_BONE_FRAMES))
+
+			dirPath, fileName, ext := mfile.SplitPath(ss.OutputMotionPath)
+			motion = vmd.NewVmdMotion(fmt.Sprintf("%s/%s_%d%s", dirPath, fileName, len(motions), ext))
+		}
+
 		for index := startFrame; index <= endFrame; index++ {
 			bf := ss.OutputMotion.BoneFrames.Get(bone.Name()).Get(float32(index))
 			if bf == nil {
 				continue
 			}
-			bf.DisablePhysics = true // 物理演算を無効にする
+			if bone.HasPhysics() {
+				bf.DisablePhysics = true // 物理演算を無効にする
+			}
 			motion.AppendBoneFrame(bone.Name(), bf)
 		}
 
@@ -413,5 +430,6 @@ func (ss *BakeSet) GetOutputMotionOnlyChecked(startFrame, endFrame float64) (*vm
 		return true
 	})
 
-	return motion, nil
+	motions = append(motions, motion)
+	return motions, nil
 }
