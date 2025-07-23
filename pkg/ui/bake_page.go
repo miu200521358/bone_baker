@@ -253,22 +253,31 @@ func NewBakePage(mWidgets *controller.MWidgets) declarative.TabPage {
 		bakeState.SetWidgetEnabled(!playing)
 
 		// フレームドロップ無効
-		mWidgets.Window().SetFrameDropEnabled(false)
+		mWidgets.Window().SetCheckedFrameDropEnabled(!playing)
+
+		// 情報表示
+		mWidgets.Window().SetCheckedShowInfoEnabled(playing)
 
 		if playing {
+			// FPS無制限
+			mWidgets.Window().TriggerUnLimitFps()
+
 			bakeState.SetWidgetPlayingEnabled(true)
 
 			// 焼き込み開始時にINDEX加算
 			deltaIndex := mWidgets.Window().GetDeltaMotionCount(0, bakeState.CurrentIndex())
-			deltaIndex += 1
-
-			for _, physicsSet := range bakeState.BakeSets {
-				if physicsSet.OriginalMotion != nil {
-					if copiedOriginalMotion, err := physicsSet.OriginalMotion.Copy(); err == nil {
-						mWidgets.Window().StoreDeltaMotion(0, physicsSet.Index, deltaIndex, copiedOriginalMotion)
-					}
-				}
+			if deltaIndex > 0 {
+				// 既に焼き込みが1回以上行われている場合はインクリメント
+				deltaIndex += 1
 			}
+
+			// for _, physicsSet := range bakeState.BakeSets {
+			// 	if physicsSet.OriginalMotion != nil {
+			// 		if copiedOriginalMotion, err := physicsSet.OriginalMotion.Copy(); err == nil {
+			// 			mWidgets.Window().StoreDeltaMotion(0, physicsSet.Index, deltaIndex, copiedOriginalMotion)
+			// 		}
+			// 	}
+			// }
 
 			mWidgets.Window().SetSaveDeltaIndex(0, deltaIndex)
 		} else {
@@ -276,6 +285,9 @@ func NewBakePage(mWidgets *controller.MWidgets) declarative.TabPage {
 			deltaCnt := mWidgets.Window().GetDeltaMotionCount(0, bakeState.CurrentIndex())
 			bakeState.OutputMotionIndexEdit.SetRange(1, float64(deltaCnt))
 			bakeState.OutputMotionIndexEdit.SetValue(float64(deltaCnt))
+
+			// 30FPS制限
+			mWidgets.Window().TriggerFps30Limit()
 		}
 	})
 
@@ -384,12 +396,12 @@ func NewBakePage(mWidgets *controller.MWidgets) declarative.TabPage {
 							},
 							declarative.NumberEdit{
 								AssignTo:           &bakeState.FixedTimeStepEdit,
-								Value:              60.0,   // 初期値
-								MinValue:           10.0,   // 最小値
-								MaxValue:           4800.0, // 最大値
-								Decimals:           0,      // 小数点以下の桁数
-								Increment:          10.0,   // 増分
-								SpinButtonsVisible: true,   // スピンボタンを表示
+								Value:              60.0,    // 初期値
+								MinValue:           10.0,    // 最小値
+								MaxValue:           48000.0, // 最大値
+								Decimals:           0,       // 小数点以下の桁数
+								Increment:          10.0,    // 増分
+								SpinButtonsVisible: true,    // スピンボタンを表示
 								StretchFactor:      20,
 								MinSize:            declarative.Size{Width: 60, Height: 20},
 								MaxSize:            declarative.Size{Width: 60, Height: 20},
@@ -618,8 +630,8 @@ func NewBakePage(mWidgets *controller.MWidgets) declarative.TabPage {
 						Layout: declarative.Grid{Columns: 6},
 						Children: []declarative.Widget{
 							declarative.TextLabel{
-								Text:        mi18n.T("焼き込みIndex"),
-								ToolTipText: mi18n.T("焼き込みIndex説明"),
+								Text:        mi18n.T("焼き込み履歴"),
+								ToolTipText: mi18n.T("焼き込み履歴説明"),
 							},
 							declarative.NumberEdit{
 								SpinButtonsVisible: true,
@@ -652,11 +664,11 @@ func NewBakePage(mWidgets *controller.MWidgets) declarative.TabPage {
 								},
 							},
 							declarative.TextLabel{
-								Text:        mi18n.T("開始"),
-								ToolTipText: mi18n.T("開始フレーム説明"),
+								Text:        mi18n.T("出力開始"),
+								ToolTipText: mi18n.T("出力開始説明"),
 							},
 							declarative.NumberEdit{
-								ToolTipText:        mi18n.T("開始フレーム説明"),
+								ToolTipText:        mi18n.T("出力開始説明"),
 								SpinButtonsVisible: true,
 								AssignTo:           &bakeState.StartFrameEdit,
 								Decimals:           0,
@@ -665,11 +677,11 @@ func NewBakePage(mWidgets *controller.MWidgets) declarative.TabPage {
 								MaxValue:           1,
 							},
 							declarative.TextLabel{
-								Text:        mi18n.T("終了"),
-								ToolTipText: mi18n.T("終了フレーム説明"),
+								Text:        mi18n.T("出力終了"),
+								ToolTipText: mi18n.T("出力終了説明"),
 							},
 							declarative.NumberEdit{
-								ToolTipText:        mi18n.T("終了フレーム説明"),
+								ToolTipText:        mi18n.T("出力終了説明"),
 								SpinButtonsVisible: true,
 								AssignTo:           &bakeState.EndFrameEdit,
 								Decimals:           0,
