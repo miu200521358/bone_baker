@@ -385,8 +385,7 @@ func (ss *BakeSet) GetOutputMotionOnlyChecked(startFrame, endFrame float64) ([]*
 		return nil, errors.New(mi18n.T("開始フレームより終了フレームが小さいか、負の値が設定されています"))
 	}
 
-	motion := vmd.NewVmdMotion(ss.OutputMotionPath)
-
+	boneCount := 0
 	ss.OriginalModel.Bones.ForEach(func(boneIndex int, bone *pmx.Bone) bool {
 		item := ss.OutputTree.AtByBoneIndex(boneIndex)
 		if item == nil || !item.(*OutputItem).Checked() {
@@ -394,37 +393,69 @@ func (ss *BakeSet) GetOutputMotionOnlyChecked(startFrame, endFrame float64) ([]*
 			return true
 		}
 
-		nextFrameCount := motion.BoneFrames.Length() + int(endFrame-startFrame+2)
+		boneCount++
+		return true
+	})
+
+	nextFrameCount := 0
+
+	motion := vmd.NewVmdMotion(ss.OutputMotionPath)
+	dirPath, fileName, ext := mfile.SplitPath(ss.OutputMotionPath)
+	motion = vmd.NewVmdMotion(fmt.Sprintf("%s/%s_%04.0f%s", dirPath, fileName, startFrame, ext))
+
+	// ボーン焼き込み
+	for index := startFrame; index <= endFrame; index++ {
+		nextFrameCount += boneCount
 
 		if nextFrameCount > vmd.MAX_BONE_FRAMES {
 			// キーフレーム数が上限を超える場合は切り替える
 			motions = append(motions, motion)
 
-			mlog.I(fmt.Sprintf(mi18n.T("キーフレーム数が上限を超えるため、モーションを切り替えます[%d]: %d -> %d"),
-				len(motions), nextFrameCount, vmd.MAX_BONE_FRAMES))
+			mlog.I(fmt.Sprintf(mi18n.T("キーフレーム数が上限を超えるため、モーションを切り替えます[%04.0fF]: %d -> %d"),
+				index, nextFrameCount, vmd.MAX_BONE_FRAMES))
 
 			dirPath, fileName, ext := mfile.SplitPath(ss.OutputMotionPath)
-			motion = vmd.NewVmdMotion(fmt.Sprintf("%s/%s_%d%s", dirPath, fileName, len(motions), ext))
+			motion = vmd.NewVmdMotion(fmt.Sprintf("%s/%s_%04.0f%s", dirPath, fileName, index, ext))
+			nextFrameCount = boneCount
 		}
 
-		for index := startFrame; index <= endFrame; index++ {
+		ss.OriginalModel.Bones.ForEach(func(boneIndex int, bone *pmx.Bone) bool {
+			item := ss.OutputTree.AtByBoneIndex(boneIndex)
+			if item == nil || !item.(*OutputItem).Checked() {
+				// チェックされていないボーンはスキップ
+				return true
+			}
+
 			bf := ss.OutputMotion.BoneFrames.Get(bone.Name()).Get(float32(index))
 			if bf == nil {
-				continue
+				return true
 			}
+
 			if bone.HasPhysics() {
 				bf.DisablePhysics = true // 物理演算を無効にする
 			}
 			motion.AppendBoneFrame(bone.Name(), bf)
+
+			return true
+		})
+	}
+
+	// 最後に物理演算を有効にする
+	ss.OriginalModel.Bones.ForEach(func(boneIndex int, bone *pmx.Bone) bool {
+		item := ss.OutputTree.AtByBoneIndex(boneIndex)
+		if item == nil || !item.(*OutputItem).Checked() {
+			// チェックされていないボーンはスキップ
+			return true
 		}
 
 		if bone.HasPhysics() {
 			// 最後に物理有効化を入れる
 			lastBf := ss.OutputMotion.BoneFrames.Get(bone.Name()).Get(float32(endFrame + 1))
-			if lastBf != nil {
-				lastBf.DisablePhysics = false // 物理演算を有効にする
-				motion.AppendBoneFrame(bone.Name(), lastBf)
+			if lastBf == nil {
+				return true
 			}
+			lastBf.DisablePhysics = false // 物理演算を有効にする
+			motion.AppendBoneFrame(bone.Name(), lastBf)
 		}
 
 		return true
