@@ -421,8 +421,8 @@ func (ss *BakeSet) GetOutputMotionOnlyChecked(startFrame, endFrame float64) ([]*
 			logFrameCount = boneCount
 		}
 
-		if nextFrameCount/10000 > logFrameCount/10000 {
-			mlog.I(fmt.Sprintf(mi18n.T("物理焼き込み中[%04.0fF] %dキーフレーム"), index, nextFrameCount))
+		if nextFrameCount/100000 > logFrameCount/100000 {
+			mlog.I(fmt.Sprintf(mi18n.T("- 物理焼き込み中... [%04.0fF] %dキーフレーム"), index, nextFrameCount))
 			logFrameCount = nextFrameCount
 		}
 
