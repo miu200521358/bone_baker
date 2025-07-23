@@ -233,10 +233,7 @@ func (bakeState *BakeState) LoadModel(
 
 func (bakeState *BakeState) createOutputTree() {
 	// 出力ツリーのモデル変更
-	tree := bakeState.CurrentSet().OutputTree
-	if tree == nil {
-		tree = domain.NewOutputModel()
-	}
+	tree := domain.NewOutputModel()
 
 	for _, boneIndex := range bakeState.CurrentSet().OriginalModel.Bones.LayerSortedIndexes {
 		if bone, err := bakeState.CurrentSet().OriginalModel.Bones.Get(boneIndex); err == nil {
@@ -250,6 +247,8 @@ func (bakeState *BakeState) createOutputTree() {
 		}
 	}
 
+	bakeState.CurrentSet().OutputTree = tree
+
 	if err := bakeState.OutputTreeView.SetModel(tree); err != nil {
 		mlog.E(mi18n.T("出力ボーンツリー設定失敗エラー"), err, "")
 	}
@@ -257,10 +256,7 @@ func (bakeState *BakeState) createOutputTree() {
 
 func (bakeState *BakeState) createPhysicsTree() {
 	// 物理ツリーのモデル変更
-	tree := bakeState.CurrentSet().PhysicsTree
-	if tree == nil {
-		tree = domain.NewPhysicsModel()
-	}
+	tree := domain.NewPhysicsModel()
 
 	for _, boneIndex := range bakeState.CurrentSet().OriginalModel.Bones.LayerSortedIndexes {
 		if bone, err := bakeState.CurrentSet().OriginalModel.Bones.Get(boneIndex); err == nil {
@@ -276,6 +272,9 @@ func (bakeState *BakeState) createPhysicsTree() {
 
 	// 物理ボーンを持つアイテムのみを保存
 	tree.SaveOnlyPhysicsItems()
+
+	bakeState.CurrentSet().PhysicsTree = tree
+
 	if err := bakeState.PhysicsTreeView.SetModel(tree); err != nil {
 		mlog.E(mi18n.T("物理ボーンツリー設定失敗エラー"), err, "")
 	}
@@ -344,6 +343,10 @@ func (bakeState *BakeState) SetWidgetEnabled(enabled bool) {
 	bakeState.OutputMotionPicker.SetEnabled(enabled)
 	bakeState.OutputModelPicker.SetEnabled(enabled)
 
+	bakeState.OutputIkCheckBox.SetEnabled(enabled)
+	bakeState.OutputPhysicsCheckBox.SetEnabled(enabled)
+	bakeState.OutputTreeView.SetEnabled(enabled)
+
 	bakeState.SaveModelButton.SetEnabled(enabled)
 	bakeState.SaveMotionButton.SetEnabled(enabled)
 
@@ -360,7 +363,6 @@ func (bakeState *BakeState) SetWidgetPlayingEnabled(enabled bool) {
 	bakeState.StiffnessEdit.SetEnabled(enabled)
 	bakeState.TensionEdit.SetEnabled(enabled)
 	bakeState.PhysicsTreeView.SetEnabled(enabled)
-	bakeState.OutputTreeView.SetEnabled(enabled)
 }
 
 // SetOutputChildrenChecked は指定されたアイテムの子どもを再帰的にチェック状態を設定する
