@@ -4,20 +4,29 @@ import (
 	"sync"
 
 	"github.com/miu200521358/bone_baker/pkg/domain"
-	"github.com/miu200521358/mlib_go/pkg/config/mi18n"
-	"github.com/miu200521358/mlib_go/pkg/config/mlog"
-	"github.com/miu200521358/mlib_go/pkg/domain/pmx"
+	"github.com/miu200521358/bone_baker/pkg/domain/repository"
 	"github.com/miu200521358/mlib_go/pkg/domain/vmd"
-	"github.com/miu200521358/mlib_go/pkg/infrastructure/repository"
 )
 
 type BakeUsecase struct {
-	pmxRepo repository.PmxRepository
-	vmdRepo repository.VmdRepository
+	modelRepo      repository.ModelRepository
+	motionRepo     repository.MotionRepository
+	bakeSetRepo    repository.BakeSetRepository
+	bakeSetService *domain.BakeSetService
 }
 
-func NewBakeUsecase() *BakeUsecase {
-	return &BakeUsecase{}
+func NewBakeUsecase(
+	modelRepo repository.ModelRepository,
+	motionRepo repository.MotionRepository,
+	bakeSetRepo repository.BakeSetRepository,
+	bakeSetService *domain.BakeSetService,
+) *BakeUsecase {
+	return &BakeUsecase{
+		modelRepo:      modelRepo,
+		motionRepo:     motionRepo,
+		bakeSetRepo:    bakeSetRepo,
+		bakeSetService: bakeSetService,
+	}
 }
 
 // LoadModel モデル読み込みのビジネスロジック
@@ -28,18 +37,23 @@ func (uc *BakeUsecase) LoadModel(bakeSet *domain.BakeSet, path string) error {
 	}
 
 	// 元モデル読み込み（物理有効）
-	originalModel, err := uc.loadModelWithPhysics(path, true)
+	originalModel, err := uc.modelRepo.LoadWithPhysics(path, true)
 	if err != nil {
 		return err
 	}
 
 	// 焼き込み用モデル読み込み（物理無効）
-	bakedModel, err := uc.loadModelWithPhysics(path, false)
+	bakedModel, err := uc.modelRepo.LoadWithPhysics(path, false)
 	if err != nil {
 		return err
 	}
 
-	// ドメインロジックを使ってモデルを設定
+	// ドメインサービスを使ってビジネスロジックを実行
+	if err := uc.bakeSetService.ProcessPhysicsModel(originalModel, bakedModel); err != nil {
+		return err
+	}
+
+	// モデルを設定
 	return bakeSet.SetModels(originalModel, bakedModel)
 }
 
@@ -58,11 +72,9 @@ func (uc *BakeUsecase) LoadMotion(bakeSet *domain.BakeSet, path string) error {
 	go func() {
 		defer wg.Done()
 
-		vmdRep := repository.NewVmdVpdRepository(false)
-		if data, err := vmdRep.Load(path); err == nil {
-			originalMotion = data.(*vmd.VmdMotion)
+		if motion, err := uc.motionRepo.Load(path, false); err == nil {
+			originalMotion = motion
 		} else {
-			mlog.ET(mi18n.T("読み込み失敗"), err, "")
 			errChan <- err
 		}
 	}()
@@ -71,11 +83,9 @@ func (uc *BakeUsecase) LoadMotion(bakeSet *domain.BakeSet, path string) error {
 	go func() {
 		defer wg.Done()
 
-		vmdRep := repository.NewVmdVpdRepository(true)
-		if data, err := vmdRep.Load(path); err == nil {
-			outputMotion = data.(*vmd.VmdMotion)
+		if motion, err := uc.motionRepo.Load(path, true); err == nil {
+			outputMotion = motion
 		} else {
-			mlog.ET(mi18n.T("読み込み失敗"), err, "")
 			errChan <- err
 		}
 	}()
@@ -94,12 +104,12 @@ func (uc *BakeUsecase) LoadMotion(bakeSet *domain.BakeSet, path string) error {
 
 // SaveBakeSet セット保存のビジネスロジック
 func (uc *BakeUsecase) SaveBakeSet(bakeSets []*domain.BakeSet, jsonPath string) error {
-	return domain.SaveBakeSets(bakeSets, jsonPath)
+	return uc.bakeSetRepo.Save(bakeSets, jsonPath)
 }
 
 // LoadBakeSet セット読み込みのビジネスロジック
 func (uc *BakeUsecase) LoadBakeSet(jsonPath string) ([]*domain.BakeSet, error) {
-	return domain.LoadBakeSets(jsonPath)
+	return uc.bakeSetRepo.Load(jsonPath)
 }
 
 // ExportMotions モーション出力のビジネスロジック
@@ -110,28 +120,10 @@ func (uc *BakeUsecase) ExportMotions(bakeSet *domain.BakeSet, startFrame, endFra
 	}
 
 	for _, motion := range motions {
-		vmdRep := repository.NewVmdVpdRepository(false)
-		if err := vmdRep.Save(motion.Path(), motion, false); err != nil {
+		if err := uc.motionRepo.Save(motion.Path(), motion); err != nil {
 			return err
 		}
 	}
 
 	return nil
-}
-
-func (uc *BakeUsecase) loadModelWithPhysics(path string, enablePhysics bool) (*pmx.PmxModel, error) {
-	pmxRep := repository.NewPmxRepository(enablePhysics)
-	data, err := pmxRep.Load(path)
-	if err != nil {
-		mlog.ET(mi18n.T("読み込み失敗"), err, "")
-		return nil, err
-	}
-
-	model := data.(*pmx.PmxModel)
-	if err := model.Bones.InsertShortageOverrideBones(); err != nil {
-		mlog.ET(mi18n.T("システム用ボーン追加失敗"), err, "")
-		return nil, err
-	}
-
-	return model, nil
 }
