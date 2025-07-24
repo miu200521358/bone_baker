@@ -3,8 +3,10 @@ package ui
 import (
 	"path/filepath"
 
-	"github.com/miu200521358/bone_baker/pkg/di"
 	"github.com/miu200521358/bone_baker/pkg/domain"
+	"github.com/miu200521358/bone_baker/pkg/infrastructure/repository"
+	bakeController "github.com/miu200521358/bone_baker/pkg/interface/controller"
+	"github.com/miu200521358/bone_baker/pkg/usecase"
 	"github.com/miu200521358/mlib_go/pkg/config/mconfig"
 	"github.com/miu200521358/mlib_go/pkg/config/merr"
 	"github.com/miu200521358/mlib_go/pkg/config/mi18n"
@@ -20,15 +22,15 @@ import (
 func NewBakePage(mWidgets *controller.MWidgets) declarative.TabPage {
 	var bakeTab *walk.TabPage
 
-	// 依存性注入コンテナを使用
-	container := di.NewContainer()
+	// 依存性の組み立て
+	modelRepo := repository.NewModelRepository()
+	motionRepo := repository.NewMotionRepository()
+	bakeSetRepo := repository.NewBakeSetRepository()
+	bakeSetService := domain.NewBakeSetService()
 
-	// BakeStateを作成
-	bakeState := NewBakeState(
-		container.PhysicsController,
-		container.OutputController,
-		container.BakeController,
-	)
+	bakeUsecase := usecase.NewBakeUsecase(modelRepo, motionRepo, bakeSetRepo, bakeSetService)
+	bakeCtrl := bakeController.NewBakeController(bakeUsecase)
+	bakeState := NewBakeState(bakeCtrl)
 
 	bakeState.Player = widget.NewMotionPlayer()
 	bakeState.Player.SetLabelTexts(mi18n.T("焼き込み停止"), mi18n.T("焼き込み再生"))
