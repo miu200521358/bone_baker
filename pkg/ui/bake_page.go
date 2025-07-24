@@ -4,7 +4,7 @@ import (
 	"path/filepath"
 
 	"github.com/miu200521358/bone_baker/pkg/domain"
-
+	"github.com/miu200521358/bone_baker/pkg/usecase"
 	"github.com/miu200521358/mlib_go/pkg/config/mconfig"
 	"github.com/miu200521358/mlib_go/pkg/config/merr"
 	"github.com/miu200521358/mlib_go/pkg/config/mi18n"
@@ -19,7 +19,10 @@ import (
 
 func NewBakePage(mWidgets *controller.MWidgets) declarative.TabPage {
 	var bakeTab *walk.TabPage
-	bakeState := new(BakeState)
+
+	// Usecaseの依存性注入
+	bakeUsecase := usecase.NewBakeUsecase()
+	bakeState := NewBakeState(bakeUsecase)
 
 	bakeState.Player = widget.NewMotionPlayer()
 	bakeState.Player.SetLabelTexts(mi18n.T("焼き込み停止"), mi18n.T("焼き込み再生"))
@@ -581,7 +584,7 @@ func NewBakePage(mWidgets *controller.MWidgets) declarative.TabPage {
 									bakeState.StiffnessEdit.SetValue(1.0)
 									bakeState.TensionEdit.SetValue(1.0)
 
-									if err := bakeState.CurrentSet().LoadModel(bakeState.CurrentSet().OriginalModelPath); err == nil {
+									if err := bakeState.bakeUsecase.LoadModel(bakeState.CurrentSet(), bakeState.CurrentSet().OriginalModelPath); err == nil {
 										mWidgets.Window().StoreModel(0, bakeState.CurrentIndex(), bakeState.CurrentSet().OriginalModel)
 										bakeState.OutputModelPicker.ChangePath(bakeState.CurrentSet().CreateOutputModelPath())
 										mWidgets.Window().TriggerPhysicsReset()

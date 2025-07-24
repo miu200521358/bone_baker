@@ -2,18 +2,20 @@ package domain
 
 import (
 	"bytes"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"io"
 	"math"
-	"sync"
+	"os"
+	"path/filepath"
+	"strings"
 
 	"github.com/miu200521358/mlib_go/pkg/config/mi18n"
 	"github.com/miu200521358/mlib_go/pkg/config/mlog"
 	"github.com/miu200521358/mlib_go/pkg/domain/pmx"
 	"github.com/miu200521358/mlib_go/pkg/domain/vmd"
 	"github.com/miu200521358/mlib_go/pkg/infrastructure/mfile"
-	"github.com/miu200521358/mlib_go/pkg/infrastructure/repository"
 	"golang.org/x/text/encoding/japanese"
 	"golang.org/x/text/transform"
 )
@@ -100,78 +102,54 @@ func (ss *BakeSet) setModels(originalModel, physicsBakedModel *pmx.PmxModel) {
 	ss.BakedModel = physicsBakedModel
 }
 
-// LoadModel モデルを読み込む
-func (ss *BakeSet) LoadModel(path string) error {
-	if path == "" {
+// SetModels ドメインロジックでモデルを設定（公開メソッド）
+func (ss *BakeSet) SetModels(originalModel, bakedModel *pmx.PmxModel) error {
+	if originalModel == nil {
 		ss.setModels(nil, nil)
 		return nil
 	}
 
-	var wg sync.WaitGroup
-	var originalModel, physicsBakedModel *pmx.PmxModel
+	// ドメインルールの適用
+	ss.processPhysicsBones(originalModel)
+	ss.processPhysicsBones(bakedModel)
 
-	errChan := make(chan error, 2)
-
-	wg.Add(1)
-	go func() {
-		defer wg.Done()
-
-		pmxRep := repository.NewPmxRepository(true)
-		if data, err := pmxRep.Load(path); err == nil {
-			originalModel = data.(*pmx.PmxModel)
-			if err := originalModel.Bones.InsertShortageOverrideBones(); err != nil {
-				mlog.ET(mi18n.T("システム用ボーン追加失敗"), err, "")
-				errChan <- err
-			} else {
-				// 物理ボーンの名前に接頭辞を追加
-				ss.insertPhysicsBonePrefix(originalModel)
-				// 物理ボーンを表示枠に追加
-				ss.appendPhysicsBoneToDisplaySlots(originalModel)
-			}
-		} else {
-			mlog.ET(mi18n.T("読み込み失敗"), err, "")
-			errChan <- err
-		}
-	}()
-
-	wg.Add(1)
-	go func() {
-		defer wg.Done()
-
-		pmxRep := repository.NewPmxRepository(false)
-		if data, err := pmxRep.Load(path); err == nil {
-			physicsBakedModel = data.(*pmx.PmxModel)
-			if err := physicsBakedModel.Bones.InsertShortageOverrideBones(); err != nil {
-				mlog.ET(mi18n.T("システム用ボーン追加失敗"), err, "")
-				errChan <- err
-			} else {
-				// 物理ボーンの名前に接頭辞を追加
-				ss.insertPhysicsBonePrefix(physicsBakedModel)
-				// 物理ボーンを表示枠に追加
-				ss.appendPhysicsBoneToDisplaySlots(physicsBakedModel)
-				// 物理ボーンの物理剛体を無効化
-				ss.fixPhysicsRigidBodies(physicsBakedModel)
-			}
-		} else {
-			mlog.ET(mi18n.T("読み込み失敗"), err, "")
-			errChan <- err
-		}
-	}()
-
-	wg.Wait()
-	close(errChan)
-
-	for err := range errChan {
-		if err != nil {
-			ss.setModels(nil, nil)
-			return err
-		}
+	if bakedModel != nil {
+		ss.fixPhysicsRigidBodies(bakedModel)
 	}
 
-	ss.setModels(originalModel, physicsBakedModel)
+	ss.setModels(originalModel, bakedModel)
 	ss.OutputModelPath = ss.CreateOutputModelPath()
 
 	return nil
+}
+
+// ClearModels モデルをクリア（公開メソッド）
+func (ss *BakeSet) ClearModels() {
+	ss.setModels(nil, nil)
+}
+
+// SetMotions ドメインロジックでモーションを設定（公開メソッド）
+func (ss *BakeSet) SetMotions(originalMotion, outputMotion *vmd.VmdMotion) error {
+	ss.setMotion(originalMotion, outputMotion)
+	ss.OutputMotionPath = ss.CreateOutputMotionPath()
+	return nil
+}
+
+// ClearMotions モーションをクリア（公開メソッド）
+func (ss *BakeSet) ClearMotions() {
+	ss.setMotion(nil, nil)
+}
+
+// processPhysicsBones 物理ボーンの処理（ドメインロジック）
+func (ss *BakeSet) processPhysicsBones(model *pmx.PmxModel) {
+	if model == nil {
+		return
+	}
+
+	// 物理ボーンの名前に接頭辞を追加
+	ss.insertPhysicsBonePrefix(model)
+	// 物理ボーンを表示枠に追加
+	ss.appendPhysicsBoneToDisplaySlots(model)
 }
 
 // appendPhysicsBoneToDisplaySlots 物理ボーンを表示枠に追加
@@ -303,61 +281,6 @@ func (ss *BakeSet) fixPhysicsRigidBodies(model *pmx.PmxModel) {
 	})
 }
 
-func (ss *BakeSet) LoadMotion(path string) error {
-
-	if path == "" {
-		ss.setMotion(nil, nil)
-
-		return nil
-	}
-
-	var wg sync.WaitGroup
-	var originalMotion, outputMotion *vmd.VmdMotion
-	errChan := make(chan error, 2)
-
-	wg.Add(1)
-	go func() {
-		defer wg.Done()
-
-		vmdRep := repository.NewVmdVpdRepository(false)
-		if data, err := vmdRep.Load(path); err == nil {
-			originalMotion = data.(*vmd.VmdMotion)
-		} else {
-			mlog.ET(mi18n.T("読み込み失敗"), err, "")
-			errChan <- err
-		}
-	}()
-
-	wg.Add(1)
-	go func() {
-		defer wg.Done()
-
-		vmdRep := repository.NewVmdVpdRepository(true)
-		if data, err := vmdRep.Load(path); err == nil {
-			outputMotion = data.(*vmd.VmdMotion)
-		} else {
-			mlog.ET(mi18n.T("読み込み失敗"), err, "")
-			errChan <- err
-		}
-	}()
-
-	wg.Wait()
-	close(errChan)
-
-	for err := range errChan {
-		if err != nil {
-			return err
-		}
-	}
-
-	ss.setMotion(originalMotion, outputMotion)
-
-	// 出力パスを設定
-	ss.OutputMotionPath = ss.CreateOutputMotionPath()
-
-	return nil
-}
-
 func (ss *BakeSet) Delete() {
 	ss.OriginalMotionPath = ""
 	ss.OriginalModelPath = ""
@@ -470,4 +393,43 @@ func (ss *BakeSet) GetOutputMotionOnlyChecked(startFrame, endFrame float64) ([]*
 
 	motions = append(motions, motion)
 	return motions, nil
+}
+
+// SaveBakeSets セット保存用のドメインサービス
+func SaveBakeSets(bakeSets []*BakeSet, jsonPath string) error {
+	if strings.ToLower(filepath.Ext(jsonPath)) != ".json" {
+		jsonPath += ".json"
+	}
+
+	output, err := json.Marshal(bakeSets)
+	if err != nil {
+		mlog.E(mi18n.T("物理焼き込みセット保存失敗エラー"), err, "")
+		return err
+	}
+
+	if err := os.WriteFile(jsonPath, output, 0644); err != nil {
+		mlog.E(mi18n.T("物理焼き込みセット保存失敗エラー"), err, "")
+		return err
+	}
+
+	mlog.I(mi18n.T("物理焼き込みセット保存成功", map[string]any{"Path": jsonPath}))
+	return nil
+}
+
+// LoadBakeSets セット読み込み用のドメインサービス
+func LoadBakeSets(jsonPath string) ([]*BakeSet, error) {
+	input, err := os.ReadFile(jsonPath)
+	if err != nil {
+		mlog.E(mi18n.T("物理焼き込みセット読込失敗エラー"), err, "")
+		return nil, err
+	}
+
+	var bakeSets []*BakeSet
+	if err := json.Unmarshal(input, &bakeSets); err != nil {
+		mlog.E(mi18n.T("物理焼き込みセット読込失敗エラー"), err, "")
+		return nil, err
+	}
+
+	mlog.I(mi18n.T("物理焼き込みセット読込成功", map[string]any{"Path": jsonPath}))
+	return bakeSets, nil
 }

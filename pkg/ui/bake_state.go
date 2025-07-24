@@ -1,14 +1,10 @@
 package ui
 
 import (
-	"encoding/json"
 	"fmt"
-	"os"
-	"path/filepath"
-	"strings"
 
 	"github.com/miu200521358/bone_baker/pkg/domain"
-
+	"github.com/miu200521358/bone_baker/pkg/usecase"
 	"github.com/miu200521358/mlib_go/pkg/config/mi18n"
 	"github.com/miu200521358/mlib_go/pkg/config/mlog"
 	"github.com/miu200521358/mlib_go/pkg/interface/controller"
@@ -47,6 +43,17 @@ type BakeState struct {
 	OutputPhysicsCheckBox    *walk.CheckBox       // 出力物理チェックボックス
 	IsOutputUpdatingPhysics  bool                 // 出力物理更新中フラグ
 	BakeSets                 []*domain.BakeSet    `json:"bake_sets"` // ボーン焼き込みセット
+
+	// Usecase（依存性注入）
+	bakeUsecase *usecase.BakeUsecase
+}
+
+func NewBakeState(bakeUsecase *usecase.BakeUsecase) *BakeState {
+	return &BakeState{
+		bakeUsecase:  bakeUsecase,
+		BakeSets:     make([]*domain.BakeSet, 0),
+		currentIndex: -1,
+	}
 }
 
 func (ss *BakeState) AddAction() {
@@ -148,42 +155,17 @@ func (ss *BakeState) CurrentSet() *domain.BakeSet {
 
 // SaveSet セット情報を保存
 func (ss *BakeState) SaveSet(jsonPath string) error {
-	if strings.ToLower(filepath.Ext(jsonPath)) != ".json" {
-		// 拡張子が.jsonでない場合は付与
-		jsonPath += ".json"
-	}
-
-	// セット情報をJSONに変換してファイルダイアログで選択した箇所に保存
-	if output, err := json.Marshal(ss.BakeSets); err == nil && len(output) > 0 {
-		if err := os.WriteFile(jsonPath, output, 0644); err == nil {
-			mlog.I(mi18n.T("物理焼き込みセット保存成功", map[string]any{"Path": jsonPath}))
-		} else {
-			mlog.E(mi18n.T("物理焼き込みセット保存失敗エラー"), err, "")
-			return err
-		}
-	} else {
-		mlog.E(mi18n.T("物理焼き込みセット保存失敗エラー"), err, "")
-		return err
-	}
-
-	return nil
+	return ss.bakeUsecase.SaveBakeSet(ss.BakeSets, jsonPath)
 }
 
 // LoadSet セット情報を読み込む
 func (ss *BakeState) LoadSet(jsonPath string) error {
-	// セット情報をJSONから読み込んでセット情報を更新
-	if input, err := os.ReadFile(jsonPath); err == nil && len(input) > 0 {
-		if err := json.Unmarshal(input, &ss.BakeSets); err == nil {
-			mlog.I(mi18n.T("物理焼き込みセット読込成功", map[string]any{"Path": jsonPath}))
-		} else {
-			mlog.E(mi18n.T("物理焼き込みセット読込失敗エラー"), err, "")
-			return err
-		}
-	} else {
-		mlog.E(mi18n.T("物理焼き込みセット読込失敗エラー"), err, "")
+	bakeSets, err := ss.bakeUsecase.LoadBakeSet(jsonPath)
+	if err != nil {
 		return err
 	}
 
+	ss.BakeSets = bakeSets
 	return nil
 }
 
@@ -196,7 +178,7 @@ func (bakeState *BakeState) LoadModel(
 	// オプションクリア
 	bakeState.ClearOptions()
 
-	if err := bakeState.CurrentSet().LoadModel(path); err != nil {
+	if err := bakeState.bakeUsecase.LoadModel(bakeState.CurrentSet(), path); err != nil {
 		return err
 	}
 
@@ -291,7 +273,7 @@ func (bakeState *BakeState) LoadMotion(
 		bakeState.ClearOptions()
 	}
 
-	if err := bakeState.CurrentSet().LoadMotion(path); err != nil {
+	if err := bakeState.bakeUsecase.LoadMotion(bakeState.CurrentSet(), path); err != nil {
 		return err
 	}
 
