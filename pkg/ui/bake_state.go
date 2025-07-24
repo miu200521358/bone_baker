@@ -4,7 +4,7 @@ import (
 	"fmt"
 
 	"github.com/miu200521358/bone_baker/pkg/domain"
-	bakeController "github.com/miu200521358/bone_baker/pkg/interface/controller"
+	"github.com/miu200521358/bone_baker/pkg/usecase"
 	"github.com/miu200521358/mlib_go/pkg/config/mi18n"
 	"github.com/miu200521358/mlib_go/pkg/config/mlog"
 	"github.com/miu200521358/mlib_go/pkg/interface/controller"
@@ -44,15 +44,15 @@ type BakeState struct {
 	IsOutputUpdatingPhysics  bool                 // 出力物理更新中フラグ
 	BakeSets                 []*domain.BakeSet    `json:"bake_sets"` // ボーン焼き込みセット
 
-	// Controller（依存性注入）
-	bakeController *bakeController.BakeController
+	// Usecase（依存性注入）
+	bakeUsecase *usecase.BakeUsecase
 }
 
-func NewBakeState(bakeController *bakeController.BakeController) *BakeState {
+func NewBakeState(bakeUsecase *usecase.BakeUsecase) *BakeState {
 	return &BakeState{
-		bakeController: bakeController,
-		BakeSets:       make([]*domain.BakeSet, 0),
-		currentIndex:   -1,
+		bakeUsecase:  bakeUsecase,
+		BakeSets:     make([]*domain.BakeSet, 0),
+		currentIndex: -1,
 	}
 }
 
@@ -155,12 +155,12 @@ func (ss *BakeState) CurrentSet() *domain.BakeSet {
 
 // SaveSet セット情報を保存
 func (ss *BakeState) SaveSet(jsonPath string) error {
-	return ss.bakeController.SaveBakeSet(ss.BakeSets, jsonPath)
+	return ss.bakeUsecase.SaveBakeSet(ss.BakeSets, jsonPath)
 }
 
 // LoadSet セット情報を読み込む
 func (ss *BakeState) LoadSet(jsonPath string) error {
-	bakeSets, err := ss.bakeController.LoadBakeSet(jsonPath)
+	bakeSets, err := ss.bakeUsecase.LoadBakeSet(jsonPath)
 	if err != nil {
 		return err
 	}
@@ -178,7 +178,7 @@ func (bakeState *BakeState) LoadModel(
 	// オプションクリア
 	bakeState.ClearOptions()
 
-	if err := bakeState.bakeController.LoadModel(bakeState.CurrentSet(), path); err != nil {
+	if err := bakeState.bakeUsecase.LoadModel(bakeState.CurrentSet(), path); err != nil {
 		return err
 	}
 
@@ -273,7 +273,7 @@ func (bakeState *BakeState) LoadMotion(
 		bakeState.ClearOptions()
 	}
 
-	if err := bakeState.bakeController.LoadMotion(bakeState.CurrentSet(), path); err != nil {
+	if err := bakeState.bakeUsecase.LoadMotion(bakeState.CurrentSet(), path); err != nil {
 		return err
 	}
 

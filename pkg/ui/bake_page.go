@@ -4,15 +4,13 @@ import (
 	"path/filepath"
 
 	"github.com/miu200521358/bone_baker/pkg/domain"
-	"github.com/miu200521358/bone_baker/pkg/infrastructure/repository"
-	bakeController "github.com/miu200521358/bone_baker/pkg/interface/controller"
 	"github.com/miu200521358/bone_baker/pkg/usecase"
 	"github.com/miu200521358/mlib_go/pkg/config/mconfig"
 	"github.com/miu200521358/mlib_go/pkg/config/merr"
 	"github.com/miu200521358/mlib_go/pkg/config/mi18n"
 	"github.com/miu200521358/mlib_go/pkg/config/mlog"
 	"github.com/miu200521358/mlib_go/pkg/domain/pmx"
-	mlibRepo "github.com/miu200521358/mlib_go/pkg/infrastructure/repository"
+	"github.com/miu200521358/mlib_go/pkg/infrastructure/repository"
 	"github.com/miu200521358/mlib_go/pkg/interface/controller"
 	"github.com/miu200521358/mlib_go/pkg/interface/controller/widget"
 	"github.com/miu200521358/walk/pkg/declarative"
@@ -22,15 +20,9 @@ import (
 func NewBakePage(mWidgets *controller.MWidgets) declarative.TabPage {
 	var bakeTab *walk.TabPage
 
-	// 依存性の組み立て
-	modelRepo := repository.NewModelRepository()
-	motionRepo := repository.NewMotionRepository()
-	bakeSetRepo := repository.NewBakeSetRepository()
-	bakeSetService := domain.NewBakeSetService()
-
-	bakeUsecase := usecase.NewBakeUsecase(modelRepo, motionRepo, bakeSetRepo, bakeSetService)
-	bakeCtrl := bakeController.NewBakeController(bakeUsecase)
-	bakeState := NewBakeState(bakeCtrl)
+	// Usecaseの依存性注入
+	bakeUsecase := usecase.NewBakeUsecase()
+	bakeState := NewBakeState(bakeUsecase)
 
 	bakeState.Player = widget.NewMotionPlayer()
 	bakeState.Player.SetLabelTexts(mi18n.T("焼き込み停止"), mi18n.T("焼き込み再生"))
@@ -38,14 +30,14 @@ func NewBakePage(mWidgets *controller.MWidgets) declarative.TabPage {
 	bakeState.OutputMotionPicker = widget.NewVmdSaveFilePicker(
 		mi18n.T("焼き込み後モーション(Vmd)"),
 		mi18n.T("焼き込み後モーションツールチップ"),
-		func(cw *controller.ControlWindow, rep mlibRepo.IRepository, path string) {
+		func(cw *controller.ControlWindow, rep repository.IRepository, path string) {
 		},
 	)
 
 	bakeState.OutputModelPicker = widget.NewPmxSaveFilePicker(
 		mi18n.T("変更後モデル(Pmx)"),
 		mi18n.T("変更後モデルツールチップ"),
-		func(cw *controller.ControlWindow, rep mlibRepo.IRepository, path string) {
+		func(cw *controller.ControlWindow, rep repository.IRepository, path string) {
 			// 実際に保存するのは、物理有効な元モデル
 			model := bakeState.CurrentSet().OriginalModel
 			if model == nil {
@@ -65,7 +57,7 @@ func NewBakePage(mWidgets *controller.MWidgets) declarative.TabPage {
 		"vmd",
 		mi18n.T("モーション(Vmd/Vpd)"),
 		mi18n.T("モーションツールチップ"),
-		func(cw *controller.ControlWindow, rep mlibRepo.IRepository, path string) {
+		func(cw *controller.ControlWindow, rep repository.IRepository, path string) {
 			if err := bakeState.LoadMotion(cw, path, true); err != nil {
 				if ok := merr.ShowErrorDialog(cw.AppConfig(), err); ok {
 					bakeState.SetWidgetEnabled(true)
@@ -78,7 +70,7 @@ func NewBakePage(mWidgets *controller.MWidgets) declarative.TabPage {
 		"pmx",
 		mi18n.T("モデル(Pmx)"),
 		mi18n.T("モデルツールチップ"),
-		func(cw *controller.ControlWindow, rep mlibRepo.IRepository, path string) {
+		func(cw *controller.ControlWindow, rep repository.IRepository, path string) {
 			if err := bakeState.LoadModel(cw, path); err != nil {
 				if ok := merr.ShowErrorDialog(cw.AppConfig(), err); ok {
 					bakeState.SetWidgetEnabled(true)
@@ -200,7 +192,7 @@ func NewBakePage(mWidgets *controller.MWidgets) declarative.TabPage {
 		for _, physicsSet := range bakeState.BakeSets {
 			if physicsSet.OutputModelPath != "" && physicsSet.OriginalModel != nil {
 				// 保存するのは物理が有効になっている元モデル
-				rep := mlibRepo.NewPmxRepository(true)
+				rep := repository.NewPmxRepository(true)
 				if err := rep.Save(physicsSet.OutputModelPath, physicsSet.OriginalModel, false); err != nil {
 					mlog.ET(mi18n.T("保存失敗"), err, "")
 					if ok := merr.ShowErrorDialog(cw.AppConfig(), err); ok {
@@ -235,7 +227,7 @@ func NewBakePage(mWidgets *controller.MWidgets) declarative.TabPage {
 				}
 
 				for _, motion := range motions {
-					rep := mlibRepo.NewVmdRepository(true)
+					rep := repository.NewVmdRepository(true)
 					if err := rep.Save(motion.Path(), motion, false); err != nil {
 						mlog.ET(mi18n.T("保存失敗"), err, "")
 						if ok := merr.ShowErrorDialog(cw.AppConfig(), err); ok {
@@ -592,7 +584,7 @@ func NewBakePage(mWidgets *controller.MWidgets) declarative.TabPage {
 									bakeState.StiffnessEdit.SetValue(1.0)
 									bakeState.TensionEdit.SetValue(1.0)
 
-									if err := bakeState.bakeController.LoadModel(bakeState.CurrentSet(), bakeState.CurrentSet().OriginalModelPath); err == nil {
+									if err := bakeState.bakeUsecase.LoadModel(bakeState.CurrentSet(), bakeState.CurrentSet().OriginalModelPath); err == nil {
 										mWidgets.Window().StoreModel(0, bakeState.CurrentIndex(), bakeState.CurrentSet().OriginalModel)
 										bakeState.OutputModelPicker.ChangePath(bakeState.CurrentSet().CreateOutputModelPath())
 										mWidgets.Window().TriggerPhysicsReset()
