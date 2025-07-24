@@ -5,6 +5,7 @@ import (
 
 	"github.com/miu200521358/bone_baker/pkg/domain"
 	bakeController "github.com/miu200521358/bone_baker/pkg/interface/controller"
+	"github.com/miu200521358/bone_baker/pkg/ui/view_model"
 	"github.com/miu200521358/mlib_go/pkg/config/mi18n"
 	"github.com/miu200521358/mlib_go/pkg/config/mlog"
 	"github.com/miu200521358/mlib_go/pkg/interface/controller"
@@ -44,15 +45,29 @@ type BakeState struct {
 	IsOutputUpdatingPhysics  bool                 // 出力物理更新中フラグ
 	BakeSets                 []*domain.BakeSet    `json:"bake_sets"` // ボーン焼き込みセット
 
-	// Controller（依存性注入）
-	bakeController *bakeController.BakeController
+	// ViewModels
+	physicsViewModel *view_model.PhysicsViewModel
+	outputViewModel  *view_model.OutputViewModel
+
+	// Controllers（依存性注入）
+	physicsController *bakeController.PhysicsController
+	outputController  *bakeController.OutputController
+	bakeController    *bakeController.BakeController
 }
 
-func NewBakeState(bakeController *bakeController.BakeController) *BakeState {
+func NewBakeState(
+	physicsController *bakeController.PhysicsController,
+	outputController *bakeController.OutputController,
+	bakeController *bakeController.BakeController,
+) *BakeState {
 	return &BakeState{
-		bakeController: bakeController,
-		BakeSets:       make([]*domain.BakeSet, 0),
-		currentIndex:   -1,
+		physicsViewModel:  view_model.NewPhysicsViewModel(),
+		outputViewModel:   view_model.NewOutputViewModel(),
+		physicsController: physicsController,
+		outputController:  outputController,
+		bakeController:    bakeController,
+		BakeSets:          make([]*domain.BakeSet, 0),
+		currentIndex:      -1,
 	}
 }
 

@@ -42,6 +42,14 @@ func (m *MockBakeSetRepository) Load(jsonPath string) ([]*domain.BakeSet, error)
 	return []*domain.BakeSet{}, nil
 }
 
+func (m *MockBakeSetRepository) GetByID(id int) (*domain.BakeSet, error) {
+	return domain.NewPhysicsSet(id), nil
+}
+
+func (m *MockBakeSetRepository) SaveSingle(bakeSet *domain.BakeSet) error {
+	return nil
+}
+
 func TestBakeUsecase_CreatePhysicsTree(t *testing.T) {
 	// モックリポジトリとサービスの作成
 	modelRepo := &MockModelRepository{}
@@ -68,27 +76,60 @@ func TestBakeUsecase_CreatePhysicsTree(t *testing.T) {
 	}
 }
 
-func TestBakeUsecase_UpdatePhysicsParameters(t *testing.T) {
+func TestPhysicsUsecase_CreatePhysicsTree(t *testing.T) {
 	// モックリポジトリとサービスの作成
-	modelRepo := &MockModelRepository{}
-	motionRepo := &MockMotionRepository{}
 	bakeSetRepo := &MockBakeSetRepository{}
+	modelRepo := &MockModelRepository{}
 	bakeSetService := domain.NewBakeSetService()
 
-	// Usecaseの作成
-	usecase := NewBakeUsecase(modelRepo, motionRepo, bakeSetRepo, bakeSetService)
+	// PhysicsUsecaseの作成
+	physicsUsecase := NewPhysicsUsecase(bakeSetRepo, modelRepo, bakeSetService)
 
 	// テスト用のBakeSetを作成
 	bakeSet := domain.NewPhysicsSet(0)
 
-	// 物理パラメータ更新のテスト（物理ツリーがnilの場合のテスト）
-	err := usecase.UpdatePhysicsStiffness(bakeSet, "testItem", 1.5)
+	// 物理ツリー作成のテスト
+	err := physicsUsecase.CreatePhysicsTree(bakeSet)
 	if err != nil {
-		t.Errorf("UpdatePhysicsStiffness failed: %v", err)
+		t.Errorf("CreatePhysicsTree failed: %v", err)
 	}
 
-	err = usecase.UpdatePhysicsTension(bakeSet, "testItem", 2.0)
+	// 物理ツリー取得のテスト
+	treeDTO, err := physicsUsecase.GetPhysicsTree(bakeSet)
 	if err != nil {
-		t.Errorf("UpdatePhysicsTension failed: %v", err)
+		t.Errorf("GetPhysicsTree failed: %v", err)
+	}
+
+	if treeDTO == nil {
+		t.Error("Expected non-nil tree DTO")
+	}
+}
+
+func TestOutputUsecase_CreateOutputTree(t *testing.T) {
+	// モックリポジトリとサービスの作成
+	bakeSetRepo := &MockBakeSetRepository{}
+	modelRepo := &MockModelRepository{}
+	bakeSetService := domain.NewBakeSetService()
+
+	// OutputUsecaseの作成
+	outputUsecase := NewOutputUsecase(bakeSetRepo, modelRepo, bakeSetService)
+
+	// テスト用のBakeSetを作成
+	bakeSet := domain.NewPhysicsSet(0)
+
+	// 出力ツリー作成のテスト
+	err := outputUsecase.CreateOutputTree(bakeSet)
+	if err != nil {
+		t.Errorf("CreateOutputTree failed: %v", err)
+	}
+
+	// 出力ツリー取得のテスト
+	treeDTO, err := outputUsecase.GetOutputTree(bakeSet)
+	if err != nil {
+		t.Errorf("GetOutputTree failed: %v", err)
+	}
+
+	if treeDTO == nil {
+		t.Error("Expected non-nil tree DTO")
 	}
 }

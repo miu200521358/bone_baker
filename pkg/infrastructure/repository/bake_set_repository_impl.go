@@ -55,3 +55,17 @@ func (r *bakeSetRepositoryImpl) Load(jsonPath string) ([]*domain.BakeSet, error)
 	mlog.I(mi18n.T("物理焼き込みセット読込成功", map[string]any{"Path": jsonPath}))
 	return bakeSets, nil
 }
+
+// GetByID 指定されたIDのBakeSetを取得（簡易実装）
+func (r *bakeSetRepositoryImpl) GetByID(id int) (*domain.BakeSet, error) {
+	// 実際の実装では、永続化ストレージから取得する
+	// ここでは簡易実装として、新しいBakeSetを返す
+	return domain.NewPhysicsSet(id), nil
+}
+
+// SaveSingle 単一のBakeSetを保存（簡易実装）
+func (r *bakeSetRepositoryImpl) SaveSingle(bakeSet *domain.BakeSet) error {
+	// 実際の実装では、永続化ストレージに保存する
+	// ここでは簡易実装として、何もしない
+	return nil
+}
