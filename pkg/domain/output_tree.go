@@ -132,3 +132,38 @@ func (pm *OutputModel) PublishItemChecked(item walk.TreeItem) {
 
 	pm.TreeModelBase.PublishItemChecked(item)
 }
+
+// GetByID IDでアイテムを取得
+func (pm *OutputModel) GetByID(id string) walk.TreeItem {
+	for _, node := range pm.nodes {
+		if found := pm.findByID(node, id); found != nil {
+			return found
+		}
+	}
+	return nil
+}
+
+// findByID 再帰的にIDでアイテムを検索
+func (pm *OutputModel) findByID(item *OutputItem, id string) walk.TreeItem {
+	if item.bone.Name() == id {
+		return item
+	}
+
+	for _, child := range item.children {
+		if found := pm.findByID(child.(*OutputItem), id); found != nil {
+			return found
+		}
+	}
+
+	return nil
+}
+
+// Children 子要素を取得
+func (oi *OutputItem) Children() []walk.TreeItem {
+	return oi.children
+}
+
+// GetAllNodes すべてのノードを取得
+func (om *OutputModel) GetAllNodes() []*OutputItem {
+	return om.nodes
+}

@@ -225,3 +225,33 @@ func (pm *PhysicsModel) Reset() {
 		pm.PublishItemChanged(node)
 	}
 }
+
+// GetByID IDでアイテムを取得
+func (pm *PhysicsModel) GetByID(id string) walk.TreeItem {
+	for _, node := range pm.nodes {
+		if found := pm.findByID(node, id); found != nil {
+			return found
+		}
+	}
+	return nil
+}
+
+// findByID 再帰的にIDでアイテムを検索
+func (pm *PhysicsModel) findByID(item *PhysicsItem, id string) walk.TreeItem {
+	if item.bone.Name() == id {
+		return item
+	}
+
+	for _, child := range item.children {
+		if found := pm.findByID(child.(*PhysicsItem), id); found != nil {
+			return found
+		}
+	}
+
+	return nil
+}
+
+// Children 子要素を取得
+func (pi *PhysicsItem) Children() []walk.TreeItem {
+	return pi.children
+}

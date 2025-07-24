@@ -181,3 +181,54 @@ func (s *BakeSetService) fixPhysicsRigidBodies(model *pmx.PmxModel) {
 		return true
 	})
 }
+
+// UpdateIkBoneChecked IKボーンのチェック状態を更新
+func (s *BakeSetService) UpdateIkBoneChecked(bakeSet *BakeSet, checked bool) error {
+	if bakeSet.OutputTree == nil {
+		return nil
+	}
+
+	s.updateIkBoneCheckedRecursive(bakeSet.OutputTree.nodes, checked)
+	return nil
+}
+
+// updateIkBoneCheckedRecursive 再帰的にIKボーンのチェック状態を更新
+func (s *BakeSetService) updateIkBoneCheckedRecursive(items []*OutputItem, checked bool) {
+	for _, item := range items {
+		if item.AsIk() {
+			item.SetChecked(checked)
+		}
+		s.updateIkBoneCheckedRecursive(s.getOutputChildren(item), checked)
+	}
+}
+
+// UpdatePhysicsBoneChecked 物理ボーンのチェック状態を更新
+func (s *BakeSetService) UpdatePhysicsBoneChecked(bakeSet *BakeSet, checked bool) error {
+	if bakeSet.OutputTree == nil {
+		return nil
+	}
+
+	s.updatePhysicsBoneCheckedRecursive(bakeSet.OutputTree.nodes, checked)
+	return nil
+}
+
+// updatePhysicsBoneCheckedRecursive 再帰的に物理ボーンのチェック状態を更新
+func (s *BakeSetService) updatePhysicsBoneCheckedRecursive(items []*OutputItem, checked bool) {
+	for _, item := range items {
+		if item.AsPhysics() {
+			item.SetChecked(checked)
+		}
+		s.updatePhysicsBoneCheckedRecursive(s.getOutputChildren(item), checked)
+	}
+}
+
+// getOutputChildren OutputItemの子要素を取得
+func (s *BakeSetService) getOutputChildren(item *OutputItem) []*OutputItem {
+	children := make([]*OutputItem, 0, len(item.children))
+	for _, child := range item.children {
+		if outputChild, ok := child.(*OutputItem); ok {
+			children = append(children, outputChild)
+		}
+	}
+	return children
+}

@@ -429,8 +429,11 @@ func NewBakePage(mWidgets *controller.MWidgets) declarative.TabPage {
 								AssignTo: &bakeState.MassEdit,
 								OnValueChanged: func() {
 									if currentItem := bakeState.PhysicsTreeView.CurrentItem(); currentItem != nil {
-										currentItem.(*domain.PhysicsItem).CalcMass(bakeState.MassEdit.Value())
-										bakeState.PhysicsTreeView.Model().(*domain.PhysicsModel).PublishItemChanged(currentItem)
+										// Controller経由で質量を更新
+										if physicsItem, ok := currentItem.(*domain.PhysicsItem); ok {
+											physicsItem.CalcMass(bakeState.MassEdit.Value())
+											bakeState.PhysicsTreeView.Model().(*domain.PhysicsModel).PublishItemChanged(currentItem)
+										}
 									}
 								},
 								Value:              1,     // 初期値
@@ -454,9 +457,16 @@ func NewBakePage(mWidgets *controller.MWidgets) declarative.TabPage {
 								AssignTo: &bakeState.StiffnessEdit,
 								OnValueChanged: func() {
 									if currentItem := bakeState.PhysicsTreeView.CurrentItem(); currentItem != nil {
-										// 選択されている物理ボーンの硬さを更新
-										currentItem.(*domain.PhysicsItem).CalcStiffness(bakeState.StiffnessEdit.Value())
-										bakeState.PhysicsTreeView.Model().(*domain.PhysicsModel).PublishItemChanged(currentItem)
+										// Controller経由で硬さを更新
+										if physicsItem, ok := currentItem.(*domain.PhysicsItem); ok {
+											if err := bakeState.bakeController.UpdatePhysicsStiffness(
+												bakeState.CurrentSet(),
+												physicsItem.Text(),
+												bakeState.StiffnessEdit.Value(),
+											); err == nil {
+												bakeState.PhysicsTreeView.Model().(*domain.PhysicsModel).PublishItemChanged(currentItem)
+											}
+										}
 									}
 								},
 								Value:              1,     // 初期値
@@ -480,8 +490,16 @@ func NewBakePage(mWidgets *controller.MWidgets) declarative.TabPage {
 								AssignTo: &bakeState.TensionEdit,
 								OnValueChanged: func() {
 									if currentItem := bakeState.PhysicsTreeView.CurrentItem(); currentItem != nil {
-										currentItem.(*domain.PhysicsItem).CalcTension(bakeState.TensionEdit.Value())
-										bakeState.PhysicsTreeView.Model().(*domain.PhysicsModel).PublishItemChanged(currentItem)
+										// Controller経由で張りを更新
+										if physicsItem, ok := currentItem.(*domain.PhysicsItem); ok {
+											if err := bakeState.bakeController.UpdatePhysicsTension(
+												bakeState.CurrentSet(),
+												physicsItem.Text(),
+												bakeState.TensionEdit.Value(),
+											); err == nil {
+												bakeState.PhysicsTreeView.Model().(*domain.PhysicsModel).PublishItemChanged(currentItem)
+											}
+										}
 									}
 								},
 								Value:              1,     // 初期値

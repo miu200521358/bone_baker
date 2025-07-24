@@ -41,3 +41,38 @@ func (c *BakeController) LoadBakeSet(jsonPath string) ([]*domain.BakeSet, error)
 func (c *BakeController) ExportMotions(bakeSet *domain.BakeSet, startFrame, endFrame float64) error {
 	return c.bakeUsecase.ExportMotions(bakeSet, startFrame, endFrame)
 }
+
+// CreatePhysicsTree 物理ツリー作成
+func (c *BakeController) CreatePhysicsTree(bakeSet *domain.BakeSet) error {
+	return c.bakeUsecase.CreatePhysicsTree(bakeSet)
+}
+
+// CreateOutputTree 出力ツリー作成
+func (c *BakeController) CreateOutputTree(bakeSet *domain.BakeSet) error {
+	return c.bakeUsecase.CreateOutputTree(bakeSet)
+}
+
+// UpdatePhysicsStiffness 物理パラメータ更新（硬さ）
+func (c *BakeController) UpdatePhysicsStiffness(bakeSet *domain.BakeSet, itemID string, stiffnessRatio float64) error {
+	return c.bakeUsecase.UpdatePhysicsStiffness(bakeSet, itemID, stiffnessRatio)
+}
+
+// UpdatePhysicsTension 物理パラメータ更新（張り）
+func (c *BakeController) UpdatePhysicsTension(bakeSet *domain.BakeSet, itemID string, tensionRatio float64) error {
+	return c.bakeUsecase.UpdatePhysicsTension(bakeSet, itemID, tensionRatio)
+}
+
+// SetOutputChildrenChecked 出力ツリーの子要素チェック状態更新
+func (c *BakeController) SetOutputChildrenChecked(bakeSet *domain.BakeSet, itemID string, checked bool) error {
+	return c.bakeUsecase.SetOutputChildrenChecked(bakeSet, itemID, checked)
+}
+
+// SetOutputIkChecked 出力ツリーのIKチェック状態更新
+func (c *BakeController) SetOutputIkChecked(bakeSet *domain.BakeSet, checked bool) error {
+	return c.bakeUsecase.SetOutputIkChecked(bakeSet, checked)
+}
+
+// SetOutputPhysicsChecked 出力ツリーの物理チェック状態更新
+func (c *BakeController) SetOutputPhysicsChecked(bakeSet *domain.BakeSet, checked bool) error {
+	return c.bakeUsecase.SetOutputPhysicsChecked(bakeSet, checked)
+}
