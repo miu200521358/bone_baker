@@ -5,8 +5,6 @@ import (
 
 	"github.com/miu200521358/bone_baker/pkg/domain"
 	"github.com/miu200521358/bone_baker/pkg/usecase"
-	"github.com/miu200521358/mlib_go/pkg/config/mi18n"
-	"github.com/miu200521358/mlib_go/pkg/config/mlog"
 	"github.com/miu200521358/mlib_go/pkg/interface/controller"
 	"github.com/miu200521358/mlib_go/pkg/interface/controller/widget"
 	"github.com/miu200521358/walk/pkg/walk"
@@ -23,19 +21,21 @@ type BakeState struct {
 	OriginalModelPicker   *widget.FilePicker   // 物理焼き込み先モデル
 	OutputMotionPicker    *widget.FilePicker   // 出力モーション
 	OutputModelPicker     *widget.FilePicker   // 出力モデル
-	OutputMotionIndexEdit *walk.NumberEdit     // 出力モーションインデックスプルダウン
+	BakedHistoryIndexEdit *walk.NumberEdit     // 出力モーションインデックスプルダウン
 	SaveModelButton       *widget.MPushButton  // モデル保存ボタン
 	SaveMotionButton      *widget.MPushButton  // モーション保存ボタン
 	Player                *widget.MotionPlayer // モーションプレイヤー
-	GravityEdit           *walk.NumberEdit     // 重力値入力
-	MassEdit              *walk.NumberEdit     // 質量入力
-	StiffnessEdit         *walk.NumberEdit     // 硬さ入力
-	TensionEdit           *walk.NumberEdit     // 張り入力
-	MaxSubStepsEdit       *walk.NumberEdit     // 最大最大演算回数
-	FixedTimeStepEdit     *walk.NumberEdit     // 固定タイムステップ入力
-	PhysicsTreeView       *walk.TreeView       // 物理ボーン表示ツリー
+	PhysicsTableView      *walk.TableView      // 物理ボーン表示テーブル
 	OutputTableView       *walk.TableView      // 出力定義テーブル
 	BakeSets              []*domain.BakeSet    `json:"bake_sets"` // ボーン焼き込みセット
+
+	// GravityEdit           *walk.NumberEdit     // 重力値入力
+	// MassEdit              *walk.NumberEdit     // 質量入力
+	// StiffnessEdit         *walk.NumberEdit     // 硬さ入力
+	// TensionEdit           *walk.NumberEdit     // 張り入力
+	// MaxSubStepsEdit       *walk.NumberEdit     // 最大最大演算回数
+	// FixedTimeStepEdit     *walk.NumberEdit     // 固定タイムステップ入力
+	// PhysicsTreeView       *walk.TreeView       // 物理ボーン表示ツリー
 
 	// Usecase（依存性注入）
 	bakeUsecase *usecase.BakeUsecase
@@ -102,11 +102,11 @@ func (ss *BakeState) ChangeCurrentAction(index int) {
 	ss.OutputModelPicker.ChangePath(ss.CurrentSet().OutputModelPath)
 	ss.OutputMotionPicker.ChangePath(ss.CurrentSet().OutputMotionPath)
 
-	// 物理ツリーのモデル変更
-	if ss.CurrentSet().PhysicsBoneTreeModel == nil {
-		ss.CurrentSet().PhysicsBoneTreeModel = domain.NewPhysicsBoneTreeModel()
-	}
-	ss.PhysicsTreeView.SetModel(ss.CurrentSet().PhysicsBoneTreeModel)
+	// // 物理ツリーのモデル変更
+	// if ss.CurrentSet().PhysicsBoneTreeModel == nil {
+	// 	ss.CurrentSet().PhysicsBoneTreeModel = domain.NewPhysicsBoneTreeModel()
+	// }
+	// ss.PhysicsTreeView.SetModel(ss.CurrentSet().PhysicsBoneTreeModel)
 }
 
 func (ss *BakeState) ClearOptions() {
@@ -179,9 +179,6 @@ func (bakeState *BakeState) LoadModel(
 		}
 	}
 
-	// 物理ツリーモデ作成
-	bakeState.createPhysicsTree()
-
 	for n := range bakeState.BakeSets {
 		cw.ClearDeltaMotion(0, n)
 		cw.ClearDeltaMotion(1, n)
@@ -189,39 +186,13 @@ func (bakeState *BakeState) LoadModel(
 		cw.SetSaveDeltaIndex(1, 0)
 	}
 
-	bakeState.OutputMotionIndexEdit.SetValue(1.0)
-	bakeState.OutputMotionIndexEdit.SetRange(1.0, 2.0)
+	bakeState.BakedHistoryIndexEdit.SetValue(1.0)
+	bakeState.BakedHistoryIndexEdit.SetRange(1.0, 2.0)
 
 	bakeState.OutputModelPicker.ChangePath(bakeState.CurrentSet().OutputModelPath)
 	bakeState.SetWidgetEnabled(true)
 
 	return nil
-}
-
-func (bakeState *BakeState) createPhysicsTree() {
-	// 物理ツリーのモデル変更
-	tree := domain.NewPhysicsBoneTreeModel()
-
-	for _, boneIndex := range bakeState.CurrentSet().OriginalModel.Bones.LayerSortedIndexes {
-		if bone, err := bakeState.CurrentSet().OriginalModel.Bones.Get(boneIndex); err == nil {
-			parent := tree.AtByBoneIndex(bone.ParentIndex)
-			item := domain.NewPhysicsItem(bone, parent)
-			if parent == nil {
-				tree.AddNode(item)
-			} else {
-				parent.(*domain.PhysicsItem).AddChild(item)
-			}
-		}
-	}
-
-	// 物理ボーンを持つアイテムのみを保存
-	tree.SaveOnlyPhysicsItems()
-
-	bakeState.CurrentSet().PhysicsBoneTreeModel = tree
-
-	if err := bakeState.PhysicsTreeView.SetModel(tree); err != nil {
-		mlog.E(mi18n.T("物理ボーンツリー設定失敗エラー"), err, "")
-	}
 }
 
 // LoadMotion 物理焼き込みモーションを読み込む
@@ -254,8 +225,8 @@ func (bakeState *BakeState) LoadMotion(
 		cw.SetSaveDeltaIndex(1, 0)
 	}
 
-	bakeState.OutputMotionIndexEdit.SetValue(1.0)
-	bakeState.OutputMotionIndexEdit.SetRange(1.0, 2.0)
+	bakeState.BakedHistoryIndexEdit.SetValue(1.0)
+	bakeState.BakedHistoryIndexEdit.SetRange(1.0, 2.0)
 
 	if bakeState.CurrentSet().OriginalMotion != nil {
 		// モーションプレイヤーのリセット
@@ -266,6 +237,12 @@ func (bakeState *BakeState) LoadMotion(
 			0,
 			bakeState.CurrentSet().OriginalMotion.MaxFrame())
 		bakeState.OutputTableView.SetModel(bakeState.CurrentSet().OutputTableModel)
+		// 物理定義に行追加
+		bakeState.CurrentSet().PhysicsTableModel.AddRecord(
+			bakeState.CurrentSet().OriginalModel,
+			0,
+			bakeState.CurrentSet().OriginalMotion.MaxFrame())
+		bakeState.PhysicsTableView.SetModel(bakeState.CurrentSet().PhysicsTableModel)
 	}
 
 	bakeState.OutputMotionPicker.SetPath(bakeState.CurrentSet().OutputMotionPath)
@@ -297,11 +274,13 @@ func (bakeState *BakeState) SetWidgetEnabled(enabled bool) {
 func (bakeState *BakeState) SetWidgetPlayingEnabled(enabled bool) {
 	bakeState.Player.SetEnabled(enabled)
 
-	bakeState.GravityEdit.SetEnabled(enabled)
-	bakeState.MaxSubStepsEdit.SetEnabled(enabled)
-	bakeState.FixedTimeStepEdit.SetEnabled(enabled)
-	bakeState.MassEdit.SetEnabled(enabled)
-	bakeState.StiffnessEdit.SetEnabled(enabled)
-	bakeState.TensionEdit.SetEnabled(enabled)
-	bakeState.PhysicsTreeView.SetEnabled(enabled)
+	bakeState.PhysicsTableView.SetEnabled(enabled)
+
+	// bakeState.GravityEdit.SetEnabled(enabled)
+	// bakeState.MaxSubStepsEdit.SetEnabled(enabled)
+	// bakeState.FixedTimeStepEdit.SetEnabled(enabled)
+	// bakeState.MassEdit.SetEnabled(enabled)
+	// bakeState.StiffnessEdit.SetEnabled(enabled)
+	// bakeState.TensionEdit.SetEnabled(enabled)
+	// bakeState.PhysicsTreeView.SetEnabled(enabled)
 }

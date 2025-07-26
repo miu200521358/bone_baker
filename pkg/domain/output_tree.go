@@ -91,19 +91,6 @@ func (pi *OutputItem) GetCheckedBoneNames() []string {
 	return names
 }
 
-func (pi *OutputItem) SetCheckedByBoneName(boneNames []string) {
-	for _, name := range boneNames {
-		if pi.Text() == name {
-			pi.SetChecked(true)
-		} else {
-			pi.SetChecked(false)
-		}
-	}
-	for _, child := range pi.children {
-		child.(*OutputItem).SetCheckedByBoneName(boneNames)
-	}
-}
-
 type OutputBoneTreeModel struct {
 	*walk.TreeModelBase
 	nodes []*OutputItem

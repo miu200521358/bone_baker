@@ -39,15 +39,15 @@ type BakeSet struct {
 	BakedModel     *pmx.PmxModel  `json:"-"` // 物理焼き込み先モデル
 	OutputMotion   *vmd.VmdMotion `json:"-"` // 出力結果モーション
 
-	PhysicsBoneTreeModel *PhysicsBoneTreeModel `json:"-"` // 物理ボーンツリー
-	OutputTableModel     *OutputTableModel     `json:"-"` // 出力定義テーブル
+	PhysicsTableModel *PhysicsTableModel `json:"physics_table"` // 物理ボーンツリー
+	OutputTableModel  *OutputTableModel  `json:"output_table"`  // 出力定義テーブル
 }
 
 func NewPhysicsSet(index int) *BakeSet {
 	return &BakeSet{
-		Index:                index,
-		PhysicsBoneTreeModel: NewPhysicsBoneTreeModel(),
-		OutputTableModel:     NewOutputTableModel(),
+		Index:             index,
+		PhysicsTableModel: NewPhysicsTableModel(),
+		OutputTableModel:  NewOutputTableModel(),
 	}
 }
 
@@ -221,9 +221,9 @@ func (ss *BakeSet) insertPhysicsBonePrefix(model *pmx.PmxModel) {
 
 	// 物理ボーンの名前に接頭辞を追加
 	model.Bones.ForEach(func(boneIndex int, bone *pmx.Bone) bool {
-		if bone.HasPhysics() {
+		if bone.HasDynamicPhysics() {
 			// ボーンINDEXを0埋めして設定
-			formattedBoneName := fmt.Sprintf("PF%0*d_%s", digits, boneIndex, bone.Name())
+			formattedBoneName := fmt.Sprintf("BB%0*d_%s", digits, boneIndex, bone.Name())
 			bone.SetName(ss.encodeName(formattedBoneName, 15))
 		}
 		return true
