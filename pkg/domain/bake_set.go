@@ -16,7 +16,6 @@ import (
 	"github.com/miu200521358/mlib_go/pkg/domain/pmx"
 	"github.com/miu200521358/mlib_go/pkg/domain/vmd"
 	"github.com/miu200521358/mlib_go/pkg/infrastructure/mfile"
-	"github.com/miu200521358/walk/pkg/walk"
 	"golang.org/x/text/encoding/japanese"
 	"golang.org/x/text/transform"
 )
@@ -42,13 +41,6 @@ type BakeSet struct {
 	PhysicsBoneTreeModel *PhysicsBoneTreeModel `json:"-"` // 物理ボーンツリー
 	OutputBoneTreeModel  *OutputBoneTreeModel  `json:"-"` // 出力ボーンツリー
 	OutputTableModel     *OutputTableModel     `json:"-"` // 出力定義テーブル
-
-	OutputIkCheckBox         *walk.CheckBox // 出力IKチェックボックス
-	IsOutputUpdatingIk       bool           // 出力IK更新中フラグ
-	OutputPhysicsCheckBox    *walk.CheckBox // 出力物理チェックボックス
-	IsOutputUpdatingPhysics  bool           // 出力物理更新中フラグ
-	IsOutputUpdatingChildren bool           // 子どもアイテム更新中フラグ
-
 }
 
 func NewPhysicsSet(index int) *BakeSet {
@@ -60,12 +52,12 @@ func NewPhysicsSet(index int) *BakeSet {
 	}
 }
 
-func (ss *BakeSet) MaxFrame() float64 {
+func (ss *BakeSet) MaxFrame() float32 {
 	if ss.OriginalMotion == nil {
 		return 0
 	}
 
-	return float64(ss.OriginalMotion.MaxFrame())
+	return ss.OriginalMotion.MaxFrame()
 }
 func (ss *BakeSet) CreateOutputModelPath() string {
 	if ss.OriginalModel == nil {
@@ -492,82 +484,82 @@ func LoadBakeSets(jsonPath string) ([]*BakeSet, error) {
 // 	}
 // }
 
-// SetOutputPhysicsChecked は物理関連ボーンのチェック状態を設定する
-func (ss *BakeSet) SetOutputPhysicsChecked(treeView *walk.TreeView, item walk.TreeItem, checked bool) {
-	// if ss.IsOutputUpdatingPhysics {
-	// 	return
-	// }
+// // SetOutputPhysicsChecked は物理関連ボーンのチェック状態を設定する
+// func (ss *BakeSet) SetOutputPhysicsChecked(treeView *walk.TreeView, item walk.TreeItem, checked bool) {
+// 	// if ss.IsOutputUpdatingPhysics {
+// 	// 	return
+// 	// }
 
-	// 無限ループを防ぐためのフラグ
-	ss.IsOutputUpdatingPhysics = true
-	defer func() {
-		ss.IsOutputUpdatingPhysics = false
-	}()
+// 	// 無限ループを防ぐためのフラグ
+// 	ss.IsOutputUpdatingPhysics = true
+// 	defer func() {
+// 		ss.IsOutputUpdatingPhysics = false
+// 	}()
 
-	if item == nil {
-		for i := range treeView.Model().RootCount() {
-			item := treeView.Model().RootAt(i)
-			ss.SetOutputPhysicsChecked(treeView, item, checked)
-		}
-		return
-	}
+// 	if item == nil {
+// 		for i := range treeView.Model().RootCount() {
+// 			item := treeView.Model().RootAt(i)
+// 			ss.SetOutputPhysicsChecked(treeView, item, checked)
+// 		}
+// 		return
+// 	}
 
-	// 子どもの数を取得
-	for i := range item.ChildCount() {
-		child := item.ChildAt(i)
-		if child == nil {
-			continue
-		}
+// 	// 子どもの数を取得
+// 	for i := range item.ChildCount() {
+// 		child := item.ChildAt(i)
+// 		if child == nil {
+// 			continue
+// 		}
 
-		// 出力IKボーンのチェック状態を設定
-		if outputItem, ok := child.(*OutputItem); ok {
-			if outputItem.AsPhysics() {
-				outputItem.SetChecked(checked)
-				treeView.SetChecked(outputItem, checked)
-			}
-		}
+// 		// 出力IKボーンのチェック状態を設定
+// 		if outputItem, ok := child.(*OutputItem); ok {
+// 			if outputItem.AsPhysics() {
+// 				outputItem.SetChecked(checked)
+// 				treeView.SetChecked(outputItem, checked)
+// 			}
+// 		}
 
-		// 子どもアイテムのチェック状態を設定
-		ss.SetOutputPhysicsChecked(treeView, child, checked)
-	}
-}
+// 		// 子どもアイテムのチェック状態を設定
+// 		ss.SetOutputPhysicsChecked(treeView, child, checked)
+// 	}
+// }
 
-// SetOutputIkChecked はIK関連ボーンのチェック状態を設定する
-func (ss *BakeSet) SetOutputIkChecked(treeView *walk.TreeView, item walk.TreeItem, checked bool) {
-	// if ss.IsOutputUpdatingIk {
-	// 	return
-	// }
+// // SetOutputIkChecked はIK関連ボーンのチェック状態を設定する
+// func (ss *BakeSet) SetOutputIkChecked(treeView *walk.TreeView, item walk.TreeItem, checked bool) {
+// 	// if ss.IsOutputUpdatingIk {
+// 	// 	return
+// 	// }
 
-	if item == nil {
-		for i := range treeView.Model().RootCount() {
-			item := treeView.Model().RootAt(i)
-			ss.SetOutputIkChecked(treeView, item, checked)
-		}
-		return
-	}
+// 	if item == nil {
+// 		for i := range treeView.Model().RootCount() {
+// 			item := treeView.Model().RootAt(i)
+// 			ss.SetOutputIkChecked(treeView, item, checked)
+// 		}
+// 		return
+// 	}
 
-	// 無限ループを防ぐためのフラグ
-	ss.IsOutputUpdatingIk = true
-	defer func() {
-		ss.IsOutputUpdatingIk = false
-	}()
+// 	// 無限ループを防ぐためのフラグ
+// 	ss.IsOutputUpdatingIk = true
+// 	defer func() {
+// 		ss.IsOutputUpdatingIk = false
+// 	}()
 
-	// 子どもの数を取得
-	for i := range item.ChildCount() {
-		child := item.ChildAt(i)
-		if child == nil {
-			continue
-		}
+// 	// 子どもの数を取得
+// 	for i := range item.ChildCount() {
+// 		child := item.ChildAt(i)
+// 		if child == nil {
+// 			continue
+// 		}
 
-		// 出力IKボーンのチェック状態を設定
-		if outputItem, ok := child.(*OutputItem); ok {
-			if outputItem.AsIk() {
-				outputItem.SetChecked(checked)
-				treeView.SetChecked(outputItem, checked)
-			}
-		}
+// 		// 出力IKボーンのチェック状態を設定
+// 		if outputItem, ok := child.(*OutputItem); ok {
+// 			if outputItem.AsIk() {
+// 				outputItem.SetChecked(checked)
+// 				treeView.SetChecked(outputItem, checked)
+// 			}
+// 		}
 
-		// 子どもアイテムのチェック状態を設定
-		ss.SetOutputIkChecked(treeView, child, checked)
-	}
-}
+// 		// 子どもアイテムのチェック状態を設定
+// 		ss.SetOutputIkChecked(treeView, child, checked)
+// 	}
+// }

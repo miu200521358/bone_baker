@@ -732,13 +732,19 @@ func NewBakePage(mWidgets *controller.MWidgets) declarative.TabPage {
 						Layout: declarative.VBox{},
 						Children: []declarative.Widget{
 							declarative.TableView{
-								AssignTo:         &bakeState.OutputTableView,
-								AlternatingRowBG: true,
-								MultiSelection:   true,
-								Model:            domain.NewOutputTableModel(),
-								MinSize:          declarative.Size{Width: 230, Height: 150},
+								AssignTo: &bakeState.OutputTableView,
+								Model:    domain.NewOutputTableModel(),
+								MinSize:  declarative.Size{Width: 230, Height: 150},
+								StyleCell: func(style *walk.CellStyle) {
+									if bakeState.CurrentSet().OutputTableModel.Checked(style.Row()) {
+										// 水色(追加データで処理対象)
+										style.BackgroundColor = walk.RGB(159, 255, 243)
+									} else {
+										style.BackgroundColor = walk.RGB(255, 255, 255)
+									}
+								},
 								Columns: []declarative.TableViewColumn{
-									{Title: "#", Width: 20},
+									{Title: "#", Width: 30},
 									{Title: mi18n.T("開始F"), Width: 60},
 									{Title: mi18n.T("終了F"), Width: 60},
 									{Title: mi18n.T("リセットF"), Width: 60},
@@ -752,6 +758,8 @@ func NewBakePage(mWidgets *controller.MWidgets) declarative.TabPage {
 									var okBtn *walk.PushButton
 									var db *walk.DataBinder
 									var treeView *walk.TreeView
+									var ikCheckBox *walk.CheckBox
+									var physicsCheckBox *walk.CheckBox
 
 									builder := declarative.NewBuilder(bakeTab)
 
@@ -780,7 +788,7 @@ func NewBakePage(mWidgets *controller.MWidgets) declarative.TabPage {
 														Decimals:           0,
 														Increment:          1,
 														MinValue:           0,
-														MaxValue:           bakeState.CurrentSet().MaxFrame() + 1,
+														MaxValue:           float64(bakeState.CurrentSet().MaxFrame() + 1),
 													},
 													declarative.Label{
 														Text: mi18n.T("出力終了フレーム"),
@@ -792,7 +800,7 @@ func NewBakePage(mWidgets *controller.MWidgets) declarative.TabPage {
 														Decimals:           0,
 														Increment:          1,
 														MinValue:           0,
-														MaxValue:           bakeState.CurrentSet().MaxFrame() + 1,
+														MaxValue:           float64(bakeState.CurrentSet().MaxFrame() + 1),
 													},
 													declarative.Label{
 														Text: mi18n.T("リセットフレーム"),
@@ -810,7 +818,23 @@ func NewBakePage(mWidgets *controller.MWidgets) declarative.TabPage {
 														Text: mi18n.T("焼き込み対象ボーン"),
 													},
 													declarative.HSpacer{
-														ColumnSpan: 5,
+														ColumnSpan: 1,
+													},
+													declarative.CheckBox{
+														AssignTo: &ikCheckBox,
+														Text:     mi18n.T("IK焼き込み対象"),
+														OnClicked: func() {
+															treeView.Model().(*domain.OutputBoneTreeModel).SetOutputIkChecked(treeView, nil, ikCheckBox.Checked())
+														},
+														ColumnSpan: 2,
+													},
+													declarative.CheckBox{
+														AssignTo: &physicsCheckBox,
+														Text:     mi18n.T("物理焼き込み対象"),
+														OnClicked: func() {
+															treeView.Model().(*domain.OutputBoneTreeModel).SetOutputPhysicsChecked(treeView, nil, physicsCheckBox.Checked())
+														},
+														ColumnSpan: 2,
 													},
 													declarative.TreeView{
 														AssignTo:   &treeView,
@@ -818,18 +842,6 @@ func NewBakePage(mWidgets *controller.MWidgets) declarative.TabPage {
 														MinSize:    declarative.Size{Width: 230, Height: 200},
 														Checkable:  true,
 														ColumnSpan: 6,
-														// OnItemChecked: func(item walk.TreeItem) {
-														// 	// 無限ループを防ぐためのフラグチェック
-														// 	treeModel := treeView.Model()
-														// 	if treeModel == nil || item == nil || bakeState.CurrentSet().IsOutputUpdatingChildren {
-														// 		return
-														// 	}
-
-														// 	checked := treeView.Checked(item)
-
-														// 	// // 子どもアイテムも同じチェック状態に設定
-														// 	// bakeState.CurrentSet().SetOutputChildrenChecked(treeView, item, checked)
-														// },
 													},
 												},
 											},
@@ -840,8 +852,21 @@ func NewBakePage(mWidgets *controller.MWidgets) declarative.TabPage {
 												Children: []declarative.Widget{
 													declarative.PushButton{
 														AssignTo: &okBtn,
-														Text:     mi18n.T("設定"),
+														Text:     mi18n.T("登録"),
 														OnClicked: func() {
+															if err := db.Submit(); err != nil {
+																mlog.ET(mi18n.T("焼き込み設定変更エラー"), err, "")
+																return
+															}
+															dlg.Accept()
+														},
+													},
+													declarative.PushButton{
+														AssignTo: &cancelBtn,
+														Text:     mi18n.T("削除"),
+														OnClicked: func() {
+															// 削除処理
+															bakeState.CurrentSet().OutputTableModel.RemoveRow(bakeState.OutputTableView.CurrentIndex())
 															if err := db.Submit(); err != nil {
 																mlog.ET(mi18n.T("焼き込み設定変更エラー"), err, "")
 																return
@@ -878,7 +903,9 @@ func NewBakePage(mWidgets *controller.MWidgets) declarative.TabPage {
 										bakeState.CurrentSet().OutputTableModel.Records[currentIndex].TargetBoneNames = bakeState.CurrentSet().OutputBoneTreeModel.GetCheckedBoneNames()
 										if currentIndex == len(bakeState.CurrentSet().OutputTableModel.Records)-1 {
 											// 最後の行が選択されている場合は、新しい行を追加
-											bakeState.CurrentSet().OutputTableModel.AddRecord()
+											bakeState.CurrentSet().OutputTableModel.AddRecord(
+												0,
+												bakeState.CurrentSet().MaxFrame())
 										}
 										bakeState.OutputTableView.SetModel(bakeState.CurrentSet().OutputTableModel)
 									}

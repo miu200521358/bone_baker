@@ -124,13 +124,6 @@ func (pm *OutputBoneTreeModel) GetCheckedBoneNames() []string {
 	return names
 }
 
-func (pm *OutputBoneTreeModel) SetCheckedByBoneNames(boneNames []string) {
-	for _, node := range pm.nodes {
-		node.SetCheckedByBoneName(boneNames)
-		pm.PublishItemChecked(node)
-	}
-}
-
 func (pm *OutputBoneTreeModel) AddNode(node *OutputItem) {
 	pm.nodes = append(pm.nodes, node)
 }
@@ -172,4 +165,60 @@ func (pm *OutputBoneTreeModel) PublishItemChecked(item walk.TreeItem) {
 	}
 
 	pm.TreeModelBase.PublishItemChecked(item)
+}
+
+func (pm *OutputBoneTreeModel) SetOutputIkChecked(treeView *walk.TreeView, item walk.TreeItem, checked bool) {
+	if item == nil {
+		for _, node := range pm.nodes {
+			pm.SetOutputIkChecked(treeView, node, checked)
+		}
+		return
+	}
+
+	// 子どもの数を取得
+	for i := range item.ChildCount() {
+		child := item.ChildAt(i)
+		if child == nil {
+			continue
+		}
+
+		// 出力IKボーンのチェック状態を設定
+		if outputItem, ok := child.(*OutputItem); ok {
+			if outputItem.AsIk() {
+				outputItem.SetChecked(checked)
+				treeView.SetChecked(outputItem, checked)
+			}
+		}
+
+		// 子どもアイテムのチェック状態を設定
+		pm.SetOutputIkChecked(treeView, child, checked)
+	}
+}
+
+func (pm *OutputBoneTreeModel) SetOutputPhysicsChecked(treeView *walk.TreeView, item walk.TreeItem, checked bool) {
+	if item == nil {
+		for _, node := range pm.nodes {
+			pm.SetOutputPhysicsChecked(treeView, node, checked)
+		}
+		return
+	}
+
+	// 子どもの数を取得
+	for i := range item.ChildCount() {
+		child := item.ChildAt(i)
+		if child == nil {
+			continue
+		}
+
+		// 出力物理ボーンのチェック状態を設定
+		if outputItem, ok := child.(*OutputItem); ok {
+			if outputItem.AsPhysics() {
+				outputItem.SetChecked(checked)
+				treeView.SetChecked(outputItem, checked)
+			}
+		}
+
+		// 子どもアイテムのチェック状態を設定
+		pm.SetOutputPhysicsChecked(treeView, child, checked)
+	}
 }

@@ -283,9 +283,12 @@ func (bakeState *BakeState) LoadMotion(
 	bakeState.OutputMotionIndexEdit.SetValue(1.0)
 	bakeState.OutputMotionIndexEdit.SetRange(1.0, 2.0)
 
-	// モーションプレイヤーのリセット
 	if bakeState.CurrentSet().OriginalMotion != nil {
+		// モーションプレイヤーのリセット
 		bakeState.Player.Reset(bakeState.CurrentSet().OriginalMotion.MaxFrame())
+		// 出力ボーン定義に行追加
+		bakeState.CurrentSet().OutputTableModel.AddRecord(0, bakeState.CurrentSet().OriginalMotion.MaxFrame())
+		bakeState.OutputTableView.SetModel(bakeState.CurrentSet().OutputTableModel)
 	}
 
 	bakeState.OutputMotionPicker.SetPath(bakeState.CurrentSet().OutputMotionPath)

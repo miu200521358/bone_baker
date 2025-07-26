@@ -15,7 +15,6 @@ type OutputTableModel struct {
 func NewOutputTableModel() *OutputTableModel {
 	m := new(OutputTableModel)
 	m.Records = make([]*OutputBoneRecord, 0)
-	m.AddRecord() // 初期行を追加
 	return m
 }
 
@@ -34,9 +33,9 @@ func (m *OutputTableModel) Value(row, col int) any {
 	case 0:
 		return row + 1 // 行番号
 	case 1:
-		return item.StartFrame
+		return int(item.StartFrame)
 	case 2:
-		return item.EndFrame
+		return int(item.EndFrame)
 	case 3:
 		return item.ResetFrame
 	case 4:
@@ -48,16 +47,34 @@ func (m *OutputTableModel) Value(row, col int) any {
 	panic("unexpected col")
 }
 
-func (m *OutputTableModel) AddRecord() {
+func (m *OutputTableModel) AddRecord(startFrame, endFrame float32) {
 	item := &OutputBoneRecord{
+		Checked:    false,
+		StartFrame: startFrame,
+		EndFrame:   endFrame,
 		ResetFrame: -5, // 初期値として5F前のリセットを入れる
 	}
 	m.Records = append(m.Records, item)
 }
 
+func (m *OutputTableModel) Checked(row int) bool {
+	return m.Records[row].Checked
+}
+
+func (m *OutputTableModel) RemoveRow(index int) {
+	if index < 0 || index >= len(m.Records) {
+		return
+	}
+	m.Records = append(m.Records[:index], m.Records[index+1:]...)
+	if m.tv != nil {
+		m.tv.SetModel(m) // モデルを更新
+	}
+}
+
 type OutputBoneRecord struct {
-	StartFrame      int
-	EndFrame        int
+	Checked         bool
+	StartFrame      float32
+	EndFrame        float32
 	ResetFrame      int
 	TargetBoneNames []string
 }
