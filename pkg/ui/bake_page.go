@@ -228,7 +228,7 @@ func NewBakePage(mWidgets *controller.MWidgets) declarative.TabPage {
 
 				for _, motion := range motions {
 					rep := repository.NewVmdRepository(true)
-					if err := rep.Save(motion.Path(), motion, false); err != nil {
+					if err := rep.Save("", motion, false); err != nil {
 						mlog.ET(mi18n.T("モーション保存失敗"), err, "")
 						if ok := merr.ShowErrorDialog(cw.AppConfig(), err); ok {
 							bakeState.SetWidgetEnabled(true)

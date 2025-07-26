@@ -376,9 +376,10 @@ func (ss *BakeSet) GetOutputMotionOnlyChecked(records []*OutputBoneRecord) ([]*v
 	for f := 0; f <= len(keyCounts); f++ {
 		if f < len(keyCounts)-1 && frameCount+keyCounts[int(f+1)] > vmd.MAX_BONE_FRAMES {
 			// キーフレーム数が上限を超える場合は切り替える
+			motions = append(motions, motion)
+
 			dirPath, fileName, ext := mfile.SplitPath(ss.OutputMotionPath)
 			motion = vmd.NewVmdMotion(fmt.Sprintf("%s%s_%04d%s", dirPath, fileName, f, ext))
-			motions = append(motions, motion)
 			motion.MorphFrames, _ = ss.OriginalMotion.MorphFrames.Copy()
 
 			mlog.I(fmt.Sprintf(mi18n.T("キーフレーム数が上限を超えるため、モーションを切り替えます[%04dF]: %d -> %d"),
@@ -389,7 +390,7 @@ func (ss *BakeSet) GetOutputMotionOnlyChecked(records []*OutputBoneRecord) ([]*v
 		}
 
 		if frameCount/100000 > logFrameCount/100000 {
-			mlog.I(fmt.Sprintf(mi18n.T("- 物理焼き込み中... [%04.0fF] %dキーフレーム"), f, frameCount))
+			mlog.I(fmt.Sprintf(mi18n.T("- 物理焼き込み中... [%04dF] %dキーフレーム"), f, frameCount))
 			logFrameCount = frameCount
 		}
 
