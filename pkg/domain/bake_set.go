@@ -16,6 +16,7 @@ import (
 	"github.com/miu200521358/mlib_go/pkg/domain/pmx"
 	"github.com/miu200521358/mlib_go/pkg/domain/vmd"
 	"github.com/miu200521358/mlib_go/pkg/infrastructure/mfile"
+	"github.com/miu200521358/walk/pkg/walk"
 	"golang.org/x/text/encoding/japanese"
 	"golang.org/x/text/transform"
 )
@@ -38,18 +39,34 @@ type BakeSet struct {
 	BakedModel     *pmx.PmxModel  `json:"-"` // 物理焼き込み先モデル
 	OutputMotion   *vmd.VmdMotion `json:"-"` // 出力結果モーション
 
-	PhysicsTree      *PhysicsModel     `json:"-"` // 物理ボーンツリー
-	OutputTree       *OutputModel      `json:"-"` // 出力ボーンツリー
-	OutputTableModel *OutputTableModel `json:"-"` // 出力定義テーブル
+	PhysicsBoneTreeModel *PhysicsBoneTreeModel `json:"-"` // 物理ボーンツリー
+	OutputBoneTreeModel  *OutputBoneTreeModel  `json:"-"` // 出力ボーンツリー
+	OutputTableModel     *OutputTableModel     `json:"-"` // 出力定義テーブル
+
+	OutputIkCheckBox         *walk.CheckBox // 出力IKチェックボックス
+	IsOutputUpdatingIk       bool           // 出力IK更新中フラグ
+	OutputPhysicsCheckBox    *walk.CheckBox // 出力物理チェックボックス
+	IsOutputUpdatingPhysics  bool           // 出力物理更新中フラグ
+	IsOutputUpdatingChildren bool           // 子どもアイテム更新中フラグ
+
 }
 
 func NewPhysicsSet(index int) *BakeSet {
 	return &BakeSet{
-		Index:       index,
-		PhysicsTree: NewPhysicsModel(),
+		Index:                index,
+		PhysicsBoneTreeModel: NewPhysicsBoneTreeModel(),
+		OutputBoneTreeModel:  NewOutputBoneTreeModel(),
+		OutputTableModel:     NewOutputTableModel(),
 	}
 }
 
+func (ss *BakeSet) MaxFrame() float64 {
+	if ss.OriginalMotion == nil {
+		return 0
+	}
+
+	return float64(ss.OriginalMotion.MaxFrame())
+}
 func (ss *BakeSet) CreateOutputModelPath() string {
 	if ss.OriginalModel == nil {
 		return ""
@@ -298,20 +315,16 @@ func (ss *BakeSet) Delete() {
 }
 
 // 物理ボーンだけ残す
-func (ss *BakeSet) GetOutputMotionOnlyChecked(startFrame, endFrame float64) ([]*vmd.VmdMotion, error) {
+func (ss *BakeSet) GetOutputMotionOnlyChecked(records []*OutputBoneRecord) ([]*vmd.VmdMotion, error) {
 	motions := make([]*vmd.VmdMotion, 0)
 
-	if ss.OriginalModel == nil || ss.OutputMotion == nil {
+	if ss.OriginalModel == nil || ss.OutputMotion == nil || len(records) == 0 {
 		return nil, errors.New(mi18n.T("物理焼き込みセットの元モデルまたは出力モーションが設定されていません"))
-	}
-
-	if startFrame < 0 || endFrame < 0 || startFrame > endFrame {
-		return nil, errors.New(mi18n.T("開始フレームより終了フレームが小さいか、負の値が設定されています"))
 	}
 
 	boneCount := 0
 	ss.OriginalModel.Bones.ForEach(func(boneIndex int, bone *pmx.Bone) bool {
-		item := ss.OutputTree.AtByBoneIndex(boneIndex)
+		item := ss.OutputBoneTreeModel.AtByBoneIndex(boneIndex)
 		if item == nil || !item.(*OutputItem).Checked() {
 			// チェックされていないボーンはスキップ
 			return true
@@ -334,10 +347,10 @@ func (ss *BakeSet) GetOutputMotionOnlyChecked(startFrame, endFrame float64) ([]*
 	}
 
 	dirPath, fileName, ext := mfile.SplitPath(ss.OutputMotionPath)
-	motion.SetPath(fmt.Sprintf("%s/%s_%04.0f%s", dirPath, fileName, startFrame, ext))
+	motion.SetPath(fmt.Sprintf("%s/%s_%04.0f%s", dirPath, fileName, 0, ext))
 
 	// ボーン焼き込み
-	for index := startFrame; index <= endFrame; index++ {
+	for index := 0; index <= 1000; index++ {
 		nextFrameCount += boneCount
 
 		if nextFrameCount > vmd.MAX_BONE_FRAMES {
@@ -359,7 +372,7 @@ func (ss *BakeSet) GetOutputMotionOnlyChecked(startFrame, endFrame float64) ([]*
 		}
 
 		ss.OriginalModel.Bones.ForEach(func(boneIndex int, bone *pmx.Bone) bool {
-			item := ss.OutputTree.AtByBoneIndex(boneIndex)
+			item := ss.OutputBoneTreeModel.AtByBoneIndex(boneIndex)
 			if item == nil || !item.(*OutputItem).Checked() {
 				// チェックされていないボーンはスキップ
 				return true
@@ -381,7 +394,7 @@ func (ss *BakeSet) GetOutputMotionOnlyChecked(startFrame, endFrame float64) ([]*
 
 	// 最後に物理演算を有効にする
 	ss.OriginalModel.Bones.ForEach(func(boneIndex int, bone *pmx.Bone) bool {
-		item := ss.OutputTree.AtByBoneIndex(boneIndex)
+		item := ss.OutputBoneTreeModel.AtByBoneIndex(boneIndex)
 		if item == nil || !item.(*OutputItem).Checked() {
 			// チェックされていないボーンはスキップ
 			return true
@@ -389,7 +402,7 @@ func (ss *BakeSet) GetOutputMotionOnlyChecked(startFrame, endFrame float64) ([]*
 
 		if bone.HasPhysics() {
 			// 最後に物理有効化を入れる
-			lastBf := ss.OutputMotion.BoneFrames.Get(bone.Name()).Get(float32(endFrame + 1))
+			lastBf := ss.OutputMotion.BoneFrames.Get(bone.Name()).Get(float32(1000 + 1))
 			if lastBf == nil {
 				return true
 			}
@@ -441,4 +454,120 @@ func LoadBakeSets(jsonPath string) ([]*BakeSet, error) {
 
 	mlog.I(mi18n.T("物理焼き込みセット読込成功", map[string]any{"Path": jsonPath}))
 	return bakeSets, nil
+}
+
+// // SetOutputChildrenChecked は指定されたアイテムの子どもを再帰的にチェック状態を設定する
+// func (ss *BakeSet) SetOutputChildrenChecked(treeView *walk.TreeView, item walk.TreeItem, checked bool) {
+// 	if item == nil || ss.IsOutputUpdatingChildren ||
+// 		ss.IsOutputUpdatingPhysics || ss.IsOutputUpdatingIk {
+// 		return
+// 	}
+
+// 	// 無限ループを防ぐためのフラグ
+// 	ss.IsOutputUpdatingChildren = true
+// 	defer func() {
+// 		ss.IsOutputUpdatingChildren = false
+// 	}()
+
+// 	item.(*OutputItem).SetChecked(checked)
+
+// 	// 子どもの数を取得
+// 	childCount := item.ChildCount()
+// 	for i := range childCount {
+// 		child := item.ChildAt(i)
+// 		if child == nil {
+// 			continue
+// 		}
+
+// 		// 子どものチェック状態を設定
+// 		if outputItem, ok := child.(*OutputItem); ok {
+// 			outputItem.SetChecked(checked)
+// 			treeView.SetChecked(outputItem, checked)
+// 		}
+
+// 		// 再帰的に孫も処理（フラグを一時的にクリアして再帰呼び出し）
+// 		ss.IsOutputUpdatingChildren = false
+// 		ss.SetOutputChildrenChecked(treeView, child, checked)
+// 		ss.IsOutputUpdatingChildren = true
+// 	}
+// }
+
+// SetOutputPhysicsChecked は物理関連ボーンのチェック状態を設定する
+func (ss *BakeSet) SetOutputPhysicsChecked(treeView *walk.TreeView, item walk.TreeItem, checked bool) {
+	// if ss.IsOutputUpdatingPhysics {
+	// 	return
+	// }
+
+	// 無限ループを防ぐためのフラグ
+	ss.IsOutputUpdatingPhysics = true
+	defer func() {
+		ss.IsOutputUpdatingPhysics = false
+	}()
+
+	if item == nil {
+		for i := range treeView.Model().RootCount() {
+			item := treeView.Model().RootAt(i)
+			ss.SetOutputPhysicsChecked(treeView, item, checked)
+		}
+		return
+	}
+
+	// 子どもの数を取得
+	for i := range item.ChildCount() {
+		child := item.ChildAt(i)
+		if child == nil {
+			continue
+		}
+
+		// 出力IKボーンのチェック状態を設定
+		if outputItem, ok := child.(*OutputItem); ok {
+			if outputItem.AsPhysics() {
+				outputItem.SetChecked(checked)
+				treeView.SetChecked(outputItem, checked)
+			}
+		}
+
+		// 子どもアイテムのチェック状態を設定
+		ss.SetOutputPhysicsChecked(treeView, child, checked)
+	}
+}
+
+// SetOutputIkChecked はIK関連ボーンのチェック状態を設定する
+func (ss *BakeSet) SetOutputIkChecked(treeView *walk.TreeView, item walk.TreeItem, checked bool) {
+	// if ss.IsOutputUpdatingIk {
+	// 	return
+	// }
+
+	if item == nil {
+		for i := range treeView.Model().RootCount() {
+			item := treeView.Model().RootAt(i)
+			ss.SetOutputIkChecked(treeView, item, checked)
+		}
+		return
+	}
+
+	// 無限ループを防ぐためのフラグ
+	ss.IsOutputUpdatingIk = true
+	defer func() {
+		ss.IsOutputUpdatingIk = false
+	}()
+
+	// 子どもの数を取得
+	for i := range item.ChildCount() {
+		child := item.ChildAt(i)
+		if child == nil {
+			continue
+		}
+
+		// 出力IKボーンのチェック状態を設定
+		if outputItem, ok := child.(*OutputItem); ok {
+			if outputItem.AsIk() {
+				outputItem.SetChecked(checked)
+				treeView.SetChecked(outputItem, checked)
+			}
+		}
+
+		// 子どもアイテムのチェック状態を設定
+		ss.SetOutputIkChecked(treeView, child, checked)
+	}
 }

@@ -80,34 +80,73 @@ func (pi *OutputItem) AtByBoneIndex(boneIndex int) *OutputItem {
 	return nil
 }
 
-type OutputModel struct {
+func (pi *OutputItem) GetCheckedBoneNames() []string {
+	var names []string
+	if pi.Checked() {
+		names = append(names, pi.Text())
+	}
+	for _, child := range pi.children {
+		names = append(names, child.(*OutputItem).GetCheckedBoneNames()...)
+	}
+	return names
+}
+
+func (pi *OutputItem) SetCheckedByBoneName(boneNames []string) {
+	for _, name := range boneNames {
+		if pi.Text() == name {
+			pi.SetChecked(true)
+		} else {
+			pi.SetChecked(false)
+		}
+	}
+	for _, child := range pi.children {
+		child.(*OutputItem).SetCheckedByBoneName(boneNames)
+	}
+}
+
+type OutputBoneTreeModel struct {
 	*walk.TreeModelBase
 	nodes []*OutputItem
 }
 
-func NewOutputModel() *OutputModel {
-	return &OutputModel{
+func NewOutputBoneTreeModel() *OutputBoneTreeModel {
+	return &OutputBoneTreeModel{
 		TreeModelBase: &walk.TreeModelBase{},
 		nodes:         make([]*OutputItem, 0),
 	}
 }
 
-func (pm *OutputModel) AddNode(node *OutputItem) {
+func (pm *OutputBoneTreeModel) GetCheckedBoneNames() []string {
+	var names []string
+	for _, node := range pm.nodes {
+		names = append(names, node.GetCheckedBoneNames()...)
+	}
+	return names
+}
+
+func (pm *OutputBoneTreeModel) SetCheckedByBoneNames(boneNames []string) {
+	for _, node := range pm.nodes {
+		node.SetCheckedByBoneName(boneNames)
+		pm.PublishItemChecked(node)
+	}
+}
+
+func (pm *OutputBoneTreeModel) AddNode(node *OutputItem) {
 	pm.nodes = append(pm.nodes, node)
 }
 
-func (pm *OutputModel) RootCount() int {
+func (pm *OutputBoneTreeModel) RootCount() int {
 	return len(pm.nodes)
 }
 
-func (pm *OutputModel) RootAt(index int) walk.TreeItem {
+func (pm *OutputBoneTreeModel) RootAt(index int) walk.TreeItem {
 	if index < 0 || index >= len(pm.nodes) {
 		return nil
 	}
 	return pm.nodes[index]
 }
 
-func (pm *OutputModel) AtByBoneIndex(boneIndex int) walk.TreeItem {
+func (pm *OutputBoneTreeModel) AtByBoneIndex(boneIndex int) walk.TreeItem {
 	if boneIndex < 0 {
 		return nil
 	}
@@ -121,9 +160,11 @@ func (pm *OutputModel) AtByBoneIndex(boneIndex int) walk.TreeItem {
 	return nil
 }
 
-func (pm *OutputModel) PublishItemChecked(item walk.TreeItem) {
+func (pm *OutputBoneTreeModel) PublishItemChecked(item walk.TreeItem) {
 	if item == nil {
-		return
+		for _, node := range pm.nodes {
+			pm.TreeModelBase.PublishItemChecked(node)
+		}
 	}
 
 	if _, ok := item.(*OutputItem); !ok {

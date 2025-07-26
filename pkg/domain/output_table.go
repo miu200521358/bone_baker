@@ -9,12 +9,12 @@ import (
 type OutputTableModel struct {
 	walk.TableModelBase
 	tv      *walk.TableView
-	Records []*OutputRecord
+	Records []*OutputBoneRecord
 }
 
 func NewOutputTableModel() *OutputTableModel {
 	m := new(OutputTableModel)
-	m.Records = make([]*OutputRecord, 0)
+	m.Records = make([]*OutputBoneRecord, 0)
 	m.AddRecord() // 初期行を追加
 	return m
 }
@@ -49,11 +49,13 @@ func (m *OutputTableModel) Value(row, col int) any {
 }
 
 func (m *OutputTableModel) AddRecord() {
-	item := &OutputRecord{}
+	item := &OutputBoneRecord{
+		ResetFrame: -5, // 初期値として5F前のリセットを入れる
+	}
 	m.Records = append(m.Records, item)
 }
 
-type OutputRecord struct {
+type OutputBoneRecord struct {
 	StartFrame      int
 	EndFrame        int
 	ResetFrame      int

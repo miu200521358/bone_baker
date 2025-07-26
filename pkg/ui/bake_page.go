@@ -2,6 +2,7 @@ package ui
 
 import (
 	"path/filepath"
+	"time"
 
 	"github.com/miu200521358/bone_baker/pkg/domain"
 	"github.com/miu200521358/bone_baker/pkg/usecase"
@@ -218,8 +219,7 @@ func NewBakePage(mWidgets *controller.MWidgets) declarative.TabPage {
 			if physicsSet.OutputMotionPath != "" && physicsSet.OutputMotion != nil {
 				// チェックボーンのみ残す
 				motions, err := physicsSet.GetOutputMotionOnlyChecked(
-					bakeState.StartFrameEdit.Value(),
-					bakeState.EndFrameEdit.Value(),
+					bakeState.OutputTableView.Model().(*domain.OutputTableModel).Records,
 				)
 				if err != nil {
 					mlog.ET(mi18n.T("モーション保存失敗"), err, "")
@@ -422,7 +422,7 @@ func NewBakePage(mWidgets *controller.MWidgets) declarative.TabPage {
 								OnValueChanged: func() {
 									if currentItem := bakeState.PhysicsTreeView.CurrentItem(); currentItem != nil {
 										currentItem.(*domain.PhysicsItem).CalcMass(bakeState.MassEdit.Value())
-										bakeState.PhysicsTreeView.Model().(*domain.PhysicsModel).PublishItemChanged(currentItem)
+										bakeState.PhysicsTreeView.Model().(*domain.PhysicsBoneTreeModel).PublishItemChanged(currentItem)
 									}
 								},
 								Value:              1,     // 初期値
@@ -448,7 +448,7 @@ func NewBakePage(mWidgets *controller.MWidgets) declarative.TabPage {
 									if currentItem := bakeState.PhysicsTreeView.CurrentItem(); currentItem != nil {
 										// 選択されている物理ボーンの硬さを更新
 										currentItem.(*domain.PhysicsItem).CalcStiffness(bakeState.StiffnessEdit.Value())
-										bakeState.PhysicsTreeView.Model().(*domain.PhysicsModel).PublishItemChanged(currentItem)
+										bakeState.PhysicsTreeView.Model().(*domain.PhysicsBoneTreeModel).PublishItemChanged(currentItem)
 									}
 								},
 								Value:              1,     // 初期値
@@ -473,7 +473,7 @@ func NewBakePage(mWidgets *controller.MWidgets) declarative.TabPage {
 								OnValueChanged: func() {
 									if currentItem := bakeState.PhysicsTreeView.CurrentItem(); currentItem != nil {
 										currentItem.(*domain.PhysicsItem).CalcTension(bakeState.TensionEdit.Value())
-										bakeState.PhysicsTreeView.Model().(*domain.PhysicsModel).PublishItemChanged(currentItem)
+										bakeState.PhysicsTreeView.Model().(*domain.PhysicsBoneTreeModel).PublishItemChanged(currentItem)
 									}
 								},
 								Value:              1,     // 初期値
@@ -501,7 +501,7 @@ func NewBakePage(mWidgets *controller.MWidgets) declarative.TabPage {
 
 									model := bakeState.CurrentSet().OriginalModel
 									model.RigidBodies.ForEach(func(rigidIndex int, rb *pmx.RigidBody) bool {
-										physicsItem := bakeState.PhysicsTreeView.Model().(*domain.PhysicsModel).AtByBoneIndex(rb.BoneIndex)
+										physicsItem := bakeState.PhysicsTreeView.Model().(*domain.PhysicsBoneTreeModel).AtByBoneIndex(rb.BoneIndex)
 
 										if physicsItem == nil {
 											return true
@@ -518,13 +518,13 @@ func NewBakePage(mWidgets *controller.MWidgets) declarative.TabPage {
 
 										var physicsItemA, physicsItemB walk.TreeItem
 										if rigidBodyA != nil && rigidBodyA.BoneIndex >= 0 {
-											physicsItemA = bakeState.PhysicsTreeView.Model().(*domain.PhysicsModel).AtByBoneIndex(rigidBodyA.BoneIndex)
+											physicsItemA = bakeState.PhysicsTreeView.Model().(*domain.PhysicsBoneTreeModel).AtByBoneIndex(rigidBodyA.BoneIndex)
 										}
 										if physicsItemA == nil {
 											physicsItemA = domain.NewPhysicsItem(nil, nil)
 										}
 										if rigidBodyB != nil && rigidBodyB.BoneIndex >= 0 {
-											physicsItemB = bakeState.PhysicsTreeView.Model().(*domain.PhysicsModel).AtByBoneIndex(rigidBodyB.BoneIndex)
+											physicsItemB = bakeState.PhysicsTreeView.Model().(*domain.PhysicsBoneTreeModel).AtByBoneIndex(rigidBodyB.BoneIndex)
 										}
 										if physicsItemB == nil {
 											physicsItemB = domain.NewPhysicsItem(nil, nil)
@@ -578,7 +578,7 @@ func NewBakePage(mWidgets *controller.MWidgets) declarative.TabPage {
 									bakeState.SetWidgetEnabled(false)
 
 									// 物理ツリーをリセット
-									bakeState.PhysicsTreeView.Model().(*domain.PhysicsModel).Reset()
+									bakeState.PhysicsTreeView.Model().(*domain.PhysicsBoneTreeModel).Reset()
 
 									bakeState.MassEdit.SetValue(1.0)
 									bakeState.StiffnessEdit.SetValue(1.0)
@@ -607,7 +607,7 @@ func NewBakePage(mWidgets *controller.MWidgets) declarative.TabPage {
 						Children: []declarative.Widget{
 							declarative.TreeView{
 								AssignTo: &bakeState.PhysicsTreeView,
-								Model:    domain.NewPhysicsModel(),
+								Model:    domain.NewPhysicsBoneTreeModel(),
 								MinSize:  declarative.Size{Width: 230, Height: 150},
 								OnCurrentItemChanged: func() {
 									// 物理ボーンツリーの選択が変更されたときの処理
@@ -666,66 +666,66 @@ func NewBakePage(mWidgets *controller.MWidgets) declarative.TabPage {
 									bakeState.OutputMotionPicker.ChangePath(currentSet.OutputMotionPath)
 								},
 							},
-							declarative.TextLabel{
-								Text:        mi18n.T("出力開始"),
-								ToolTipText: mi18n.T("出力開始説明"),
-							},
-							declarative.NumberEdit{
-								ToolTipText:        mi18n.T("出力開始説明"),
-								SpinButtonsVisible: true,
-								AssignTo:           &bakeState.StartFrameEdit,
-								Decimals:           0,
-								Increment:          1,
-								MinValue:           0,
-								MaxValue:           1,
-							},
-							declarative.TextLabel{
-								Text:        mi18n.T("出力終了"),
-								ToolTipText: mi18n.T("出力終了説明"),
-							},
-							declarative.NumberEdit{
-								ToolTipText:        mi18n.T("出力終了説明"),
-								SpinButtonsVisible: true,
-								AssignTo:           &bakeState.EndFrameEdit,
-								Decimals:           0,
-								Increment:          1,
-								MinValue:           0,
-								MaxValue:           1,
-							},
-							declarative.CheckBox{
-								AssignTo:    &bakeState.OutputIkCheckBox,
-								Text:        mi18n.T("IK焼き込み対象"),
-								ToolTipText: mi18n.T("IK焼き込み対象説明"),
-								ColumnSpan:  2,
-								OnCheckedChanged: func() {
-									// IK焼き込み対象のチェックボックスが変更されたときの処理
-									// 無限ループを防ぐためのフラグチェック
-									treeModel := bakeState.OutputTreeView.Model()
-									if treeModel == nil || bakeState.IsOutputUpdatingChildren {
-										return
-									}
+							// declarative.TextLabel{
+							// 	Text:        mi18n.T("出力開始"),
+							// 	ToolTipText: mi18n.T("出力開始説明"),
+							// },
+							// declarative.NumberEdit{
+							// 	ToolTipText:        mi18n.T("出力開始説明"),
+							// 	SpinButtonsVisible: true,
+							// 	AssignTo:           &bakeState.StartFrameEdit,
+							// 	Decimals:           0,
+							// 	Increment:          1,
+							// 	MinValue:           0,
+							// 	MaxValue:           1,
+							// },
+							// declarative.TextLabel{
+							// 	Text:        mi18n.T("出力終了"),
+							// 	ToolTipText: mi18n.T("出力終了説明"),
+							// },
+							// declarative.NumberEdit{
+							// 	ToolTipText:        mi18n.T("出力終了説明"),
+							// 	SpinButtonsVisible: true,
+							// 	AssignTo:           &bakeState.EndFrameEdit,
+							// 	Decimals:           0,
+							// 	Increment:          1,
+							// 	MinValue:           0,
+							// 	MaxValue:           1,
+							// },
+							// declarative.CheckBox{
+							// 	AssignTo:    &bakeState.OutputIkCheckBox,
+							// 	Text:        mi18n.T("IK焼き込み対象"),
+							// 	ToolTipText: mi18n.T("IK焼き込み対象説明"),
+							// 	ColumnSpan:  2,
+							// 	OnCheckedChanged: func() {
+							// 		// IK焼き込み対象のチェックボックスが変更されたときの処理
+							// 		// 無限ループを防ぐためのフラグチェック
+							// 		treeModel := bakeState.OutputTreeView.Model()
+							// 		if treeModel == nil || bakeState.IsOutputUpdatingChildren {
+							// 			return
+							// 		}
 
-									// IK出力のチェック状態を更新
-									checked := bakeState.OutputIkCheckBox.Checked()
-									bakeState.SetOutputIkChecked(nil, checked)
-								},
-							},
-							declarative.CheckBox{
-								AssignTo:    &bakeState.OutputPhysicsCheckBox,
-								Text:        mi18n.T("物理焼き込み対象"),
-								ToolTipText: mi18n.T("物理焼き込み対象説明"),
-								ColumnSpan:  2,
-								OnCheckedChanged: func() {
-									treeModel := bakeState.OutputTreeView.Model()
-									if treeModel == nil || bakeState.IsOutputUpdatingChildren {
-										return
-									}
+							// 		// IK出力のチェック状態を更新
+							// 		checked := bakeState.OutputIkCheckBox.Checked()
+							// 		bakeState.SetOutputIkChecked(nil, checked)
+							// 	},
+							// },
+							// declarative.CheckBox{
+							// 	AssignTo:    &bakeState.OutputPhysicsCheckBox,
+							// 	Text:        mi18n.T("物理焼き込み対象"),
+							// 	ToolTipText: mi18n.T("物理焼き込み対象説明"),
+							// 	ColumnSpan:  2,
+							// 	OnCheckedChanged: func() {
+							// 		treeModel := bakeState.OutputTreeView.Model()
+							// 		if treeModel == nil || bakeState.IsOutputUpdatingChildren {
+							// 			return
+							// 		}
 
-									// 物理焼き込み対象のチェック状態を更新
-									checked := bakeState.OutputPhysicsCheckBox.Checked()
-									bakeState.SetOutputPhysicsChecked(nil, checked)
-								},
-							},
+							// 		// 物理焼き込み対象のチェック状態を更新
+							// 		checked := bakeState.OutputPhysicsCheckBox.Checked()
+							// 		bakeState.SetOutputPhysicsChecked(nil, checked)
+							// 	},
+							// },
 						},
 					},
 					declarative.Composite{
@@ -745,32 +745,170 @@ func NewBakePage(mWidgets *controller.MWidgets) declarative.TabPage {
 									{Title: mi18n.T("ボーン数"), Width: 60},
 									{Title: mi18n.T("焼き込み対象ボーン名"), Width: 200},
 								},
-							},
-						},
-					},
-					declarative.Composite{
-						Layout: declarative.VBox{},
-						Children: []declarative.Widget{
-							declarative.TreeView{
-								AssignTo:  &bakeState.OutputTreeView,
-								Model:     domain.NewOutputModel(),
-								MinSize:   declarative.Size{Width: 230, Height: 200},
-								Checkable: true,
-								OnItemChecked: func(item walk.TreeItem) {
-									// 無限ループを防ぐためのフラグチェック
-									treeModel := bakeState.OutputTreeView.Model()
-									if treeModel == nil || item == nil || bakeState.IsOutputUpdatingChildren {
-										return
+								OnItemClicked: func() {
+									// アイテムがクリックされたら、入力ダイアログを表示する
+									var dlg *walk.Dialog
+									var cancelBtn *walk.PushButton
+									var okBtn *walk.PushButton
+									var db *walk.DataBinder
+									var treeView *walk.TreeView
+
+									builder := declarative.NewBuilder(bakeTab)
+
+									dialog := &declarative.Dialog{
+										AssignTo:      &dlg,
+										CancelButton:  &cancelBtn,
+										DefaultButton: &okBtn,
+										Title:         mi18n.T("焼き込み設定変更"),
+										Layout:        declarative.VBox{},
+										MinSize:       declarative.Size{Width: 600, Height: 200},
+										DataBinder: declarative.DataBinder{
+											AssignTo:   &db,
+											DataSource: bakeState.CurrentSet().OutputTableModel.Records[bakeState.OutputTableView.CurrentIndex()],
+										},
+										Children: []declarative.Widget{
+											declarative.Composite{
+												Layout: declarative.Grid{Columns: 6},
+												Children: []declarative.Widget{
+													declarative.Label{
+														Text: mi18n.T("出力開始フレーム"),
+													},
+													declarative.NumberEdit{
+														Value:              declarative.Bind("StartFrame"),
+														ToolTipText:        mi18n.T("出力開始フレーム説明"),
+														SpinButtonsVisible: true,
+														Decimals:           0,
+														Increment:          1,
+														MinValue:           0,
+														MaxValue:           bakeState.CurrentSet().MaxFrame() + 1,
+													},
+													declarative.Label{
+														Text: mi18n.T("出力終了フレーム"),
+													},
+													declarative.NumberEdit{
+														Value:              declarative.Bind("EndFrame"),
+														ToolTipText:        mi18n.T("出力終了フレーム説明"),
+														SpinButtonsVisible: true,
+														Decimals:           0,
+														Increment:          1,
+														MinValue:           0,
+														MaxValue:           bakeState.CurrentSet().MaxFrame() + 1,
+													},
+													declarative.Label{
+														Text: mi18n.T("リセットフレーム"),
+													},
+													declarative.NumberEdit{
+														Value:              declarative.Bind("ResetFrame"),
+														ToolTipText:        mi18n.T("リセットフレーム説明"),
+														SpinButtonsVisible: true,
+														Decimals:           0,
+														Increment:          1,
+														MinValue:           -100,
+														MaxValue:           0,
+													},
+													declarative.Label{
+														Text: mi18n.T("焼き込み対象ボーン"),
+													},
+													declarative.HSpacer{
+														ColumnSpan: 5,
+													},
+													declarative.TreeView{
+														AssignTo:   &treeView,
+														Model:      bakeState.CurrentSet().OutputBoneTreeModel,
+														MinSize:    declarative.Size{Width: 230, Height: 200},
+														Checkable:  true,
+														ColumnSpan: 6,
+														// OnItemChecked: func(item walk.TreeItem) {
+														// 	// 無限ループを防ぐためのフラグチェック
+														// 	treeModel := treeView.Model()
+														// 	if treeModel == nil || item == nil || bakeState.CurrentSet().IsOutputUpdatingChildren {
+														// 		return
+														// 	}
+
+														// 	checked := treeView.Checked(item)
+
+														// 	// // 子どもアイテムも同じチェック状態に設定
+														// 	// bakeState.CurrentSet().SetOutputChildrenChecked(treeView, item, checked)
+														// },
+													},
+												},
+											},
+											declarative.Composite{
+												Layout: declarative.HBox{
+													Alignment: declarative.AlignHFarVCenter,
+												},
+												Children: []declarative.Widget{
+													declarative.PushButton{
+														AssignTo: &okBtn,
+														Text:     mi18n.T("設定"),
+														OnClicked: func() {
+															if err := db.Submit(); err != nil {
+																mlog.ET(mi18n.T("焼き込み設定変更エラー"), err, "")
+																return
+															}
+															dlg.Accept()
+														},
+													},
+													declarative.PushButton{
+														AssignTo: &cancelBtn,
+														Text:     mi18n.T("キャンセル"),
+														OnClicked: func() {
+															dlg.Cancel()
+														},
+													},
+												},
+											},
+										},
 									}
 
-									checked := bakeState.OutputTreeView.Checked(item)
-
-									// 子どもアイテムも同じチェック状態に設定
-									bakeState.SetOutputChildrenChecked(item, checked)
+									if cmd, err := dialog.RunWithFunc(builder.Parent().Form(), func(dialog *walk.Dialog) {
+										// ダイアログが完全に表示された後に実行
+										go func() {
+											// 少し待ってからチェック状態を適用
+											for range 5 {
+												time.Sleep(10 * time.Millisecond)
+												treeView.Synchronize(func() {
+													treeView.ApplyRootCheckStates()
+												})
+											}
+										}()
+									}); err == nil && cmd == walk.DlgCmdOK {
+										// 次の作業用の行を追加して、更新
+										currentIndex := bakeState.OutputTableView.CurrentIndex()
+										bakeState.CurrentSet().OutputTableModel.Records[currentIndex].TargetBoneNames = bakeState.CurrentSet().OutputBoneTreeModel.GetCheckedBoneNames()
+										if currentIndex == len(bakeState.CurrentSet().OutputTableModel.Records)-1 {
+											// 最後の行が選択されている場合は、新しい行を追加
+											bakeState.CurrentSet().OutputTableModel.AddRecord()
+										}
+										bakeState.OutputTableView.SetModel(bakeState.CurrentSet().OutputTableModel)
+									}
 								},
 							},
 						},
 					},
+					// declarative.Composite{
+					// 	Layout: declarative.VBox{},
+					// 	Children: []declarative.Widget{
+					// 		declarative.TreeView{
+					// 			AssignTo:  &bakeState.OutputTreeView,
+					// 			Model:     domain.NewOutputModel(),
+					// 			MinSize:   declarative.Size{Width: 230, Height: 200},
+					// 			Checkable: true,
+					// 			OnItemChecked: func(item walk.TreeItem) {
+					// 				// 無限ループを防ぐためのフラグチェック
+					// 				treeModel := bakeState.OutputTreeView.Model()
+					// 				if treeModel == nil || item == nil || bakeState.IsOutputUpdatingChildren {
+					// 					return
+					// 				}
+
+					// 				checked := bakeState.OutputTreeView.Checked(item)
+
+					// 				// 子どもアイテムも同じチェック状態に設定
+					// 				bakeState.SetOutputChildrenChecked(item, checked)
+					// 			},
+					// 		},
+					// 	},
+					// },
 					bakeState.SaveMotionButton.Widgets(),
 				},
 			},

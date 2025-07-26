@@ -148,34 +148,34 @@ func (pi *PhysicsItem) AtByBoneIndex(boneIndex int) *PhysicsItem {
 	return nil
 }
 
-type PhysicsModel struct {
+type PhysicsBoneTreeModel struct {
 	*walk.TreeModelBase
 	nodes []*PhysicsItem
 }
 
-func NewPhysicsModel() *PhysicsModel {
-	return &PhysicsModel{
+func NewPhysicsBoneTreeModel() *PhysicsBoneTreeModel {
+	return &PhysicsBoneTreeModel{
 		TreeModelBase: &walk.TreeModelBase{},
 		nodes:         make([]*PhysicsItem, 0),
 	}
 }
 
-func (pm *PhysicsModel) AddNode(node *PhysicsItem) {
+func (pm *PhysicsBoneTreeModel) AddNode(node *PhysicsItem) {
 	pm.nodes = append(pm.nodes, node)
 }
 
-func (pm *PhysicsModel) RootCount() int {
+func (pm *PhysicsBoneTreeModel) RootCount() int {
 	return len(pm.nodes)
 }
 
-func (pm *PhysicsModel) RootAt(index int) walk.TreeItem {
+func (pm *PhysicsBoneTreeModel) RootAt(index int) walk.TreeItem {
 	if index < 0 || index >= len(pm.nodes) {
 		return nil
 	}
 	return pm.nodes[index]
 }
 
-func (pm *PhysicsModel) AtByBoneIndex(boneIndex int) walk.TreeItem {
+func (pm *PhysicsBoneTreeModel) AtByBoneIndex(boneIndex int) walk.TreeItem {
 	if boneIndex < 0 {
 		return nil
 	}
@@ -190,7 +190,7 @@ func (pm *PhysicsModel) AtByBoneIndex(boneIndex int) walk.TreeItem {
 }
 
 // 物理ボーンを含むツリーだけ残す
-func (pm *PhysicsModel) SaveOnlyPhysicsItems() {
+func (pm *PhysicsBoneTreeModel) SaveOnlyPhysicsItems() {
 	newNodes := make([]*PhysicsItem, 0)
 	for _, node := range pm.nodes {
 		// 子に物理ボーンがある場合のみ残す
@@ -203,7 +203,7 @@ func (pm *PhysicsModel) SaveOnlyPhysicsItems() {
 	pm.nodes = newNodes
 }
 
-func (pm *PhysicsModel) PublishItemChanged(item walk.TreeItem) {
+func (pm *PhysicsBoneTreeModel) PublishItemChanged(item walk.TreeItem) {
 	if item == nil {
 		return
 	}
@@ -219,7 +219,7 @@ func (pm *PhysicsModel) PublishItemChanged(item walk.TreeItem) {
 	}
 }
 
-func (pm *PhysicsModel) Reset() {
+func (pm *PhysicsBoneTreeModel) Reset() {
 	for _, node := range pm.nodes {
 		node.Reset()
 		pm.PublishItemChanged(node)

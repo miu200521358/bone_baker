@@ -102,23 +102,6 @@ func (uc *BakeUsecase) LoadBakeSet(jsonPath string) ([]*domain.BakeSet, error) {
 	return domain.LoadBakeSets(jsonPath)
 }
 
-// ExportMotions モーション出力のビジネスロジック
-func (uc *BakeUsecase) ExportMotions(bakeSet *domain.BakeSet, startFrame, endFrame float64) error {
-	motions, err := bakeSet.GetOutputMotionOnlyChecked(startFrame, endFrame)
-	if err != nil {
-		return err
-	}
-
-	for _, motion := range motions {
-		vmdRep := repository.NewVmdVpdRepository(false)
-		if err := vmdRep.Save(motion.Path(), motion, false); err != nil {
-			return err
-		}
-	}
-
-	return nil
-}
-
 func (uc *BakeUsecase) loadModelWithPhysics(path string, enablePhysics bool) (*pmx.PmxModel, error) {
 	pmxRep := repository.NewPmxRepository(enablePhysics)
 	data, err := pmxRep.Load(path)
