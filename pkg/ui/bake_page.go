@@ -255,15 +255,15 @@ func NewBakePage(mWidgets *controller.MWidgets) declarative.TabPage {
 		mWidgets.Window().SetSaveDelta(0, playing)
 		bakeState.SetWidgetEnabled(!playing)
 
-		// フレームドロップ無効
-		mWidgets.Window().SetCheckedFrameDropEnabled(!playing)
+		// // フレームドロップ無効
+		// mWidgets.Window().SetCheckedFrameDropEnabled(!playing)
 
 		// 情報表示
 		mWidgets.Window().SetCheckedShowInfoEnabled(playing)
 
 		if playing {
-			// FPS無制限
-			mWidgets.Window().TriggerUnLimitFps()
+			// // FPS無制限
+			// mWidgets.Window().TriggerUnLimitFps()
 
 			bakeState.SetWidgetPlayingEnabled(true)
 
