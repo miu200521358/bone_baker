@@ -33,7 +33,7 @@ type BakeState struct {
 	MassEdit                 *walk.NumberEdit     // 質量入力
 	StiffnessEdit            *walk.NumberEdit     // 硬さ入力
 	TensionEdit              *walk.NumberEdit     // 張り入力
-	MaxSubStepsEdit          *walk.NumberEdit     // 最大サブステップ数
+	MaxSubStepsEdit          *walk.NumberEdit     // 最大最大演算回数
 	FixedTimeStepEdit        *walk.NumberEdit     // 固定タイムステップ入力
 	PhysicsTreeView          *walk.TreeView       // 物理ボーン表示ツリー
 	OutputTreeView           *walk.TreeView       // 出力ボーン表示ツリー

@@ -29,14 +29,14 @@ func NewBakePage(mWidgets *controller.MWidgets) declarative.TabPage {
 
 	bakeState.OutputMotionPicker = widget.NewVmdSaveFilePicker(
 		mi18n.T("焼き込み後モーション(Vmd)"),
-		mi18n.T("焼き込み後モーションツールチップ"),
+		mi18n.T("焼き込み後モーション説明"),
 		func(cw *controller.ControlWindow, rep repository.IRepository, path string) {
 		},
 	)
 
 	bakeState.OutputModelPicker = widget.NewPmxSaveFilePicker(
 		mi18n.T("変更後モデル(Pmx)"),
-		mi18n.T("変更後モデルツールチップ"),
+		mi18n.T("変更後モデル説明"),
 		func(cw *controller.ControlWindow, rep repository.IRepository, path string) {
 			// 実際に保存するのは、物理有効な元モデル
 			model := bakeState.CurrentSet().OriginalModel
@@ -53,10 +53,10 @@ func NewBakePage(mWidgets *controller.MWidgets) declarative.TabPage {
 		},
 	)
 
-	bakeState.OriginalMotionPicker = widget.NewVmdVpdLoadFilePicker(
+	bakeState.OriginalMotionPicker = widget.NewVmdLoadFilePicker(
 		"vmd",
-		mi18n.T("モーション(Vmd/Vpd)"),
-		mi18n.T("モーションツールチップ"),
+		mi18n.T("モーション(Vmd)"),
+		mi18n.T("モーション説明"),
 		func(cw *controller.ControlWindow, rep repository.IRepository, path string) {
 			if err := bakeState.LoadMotion(cw, path, true); err != nil {
 				if ok := merr.ShowErrorDialog(cw.AppConfig(), err); ok {
@@ -69,7 +69,7 @@ func NewBakePage(mWidgets *controller.MWidgets) declarative.TabPage {
 	bakeState.OriginalModelPicker = widget.NewPmxLoadFilePicker(
 		"pmx",
 		mi18n.T("モデル(Pmx)"),
-		mi18n.T("モデルツールチップ"),
+		mi18n.T("モデル説明"),
 		func(cw *controller.ControlWindow, rep repository.IRepository, path string) {
 			if err := bakeState.LoadModel(cw, path); err != nil {
 				if ok := merr.ShowErrorDialog(cw.AppConfig(), err); ok {
@@ -194,7 +194,7 @@ func NewBakePage(mWidgets *controller.MWidgets) declarative.TabPage {
 				// 保存するのは物理が有効になっている元モデル
 				rep := repository.NewPmxRepository(true)
 				if err := rep.Save(physicsSet.OutputModelPath, physicsSet.OriginalModel, false); err != nil {
-					mlog.ET(mi18n.T("保存失敗"), err, "")
+					mlog.ET(mi18n.T("モデル保存失敗"), err, "")
 					if ok := merr.ShowErrorDialog(cw.AppConfig(), err); ok {
 						bakeState.SetWidgetEnabled(true)
 					}
@@ -222,14 +222,14 @@ func NewBakePage(mWidgets *controller.MWidgets) declarative.TabPage {
 					bakeState.EndFrameEdit.Value(),
 				)
 				if err != nil {
-					mlog.ET(mi18n.T("保存失敗"), err, "")
+					mlog.ET(mi18n.T("モーション保存失敗"), err, "")
 					return
 				}
 
 				for _, motion := range motions {
 					rep := repository.NewVmdRepository(true)
 					if err := rep.Save(motion.Path(), motion, false); err != nil {
-						mlog.ET(mi18n.T("保存失敗"), err, "")
+						mlog.ET(mi18n.T("モーション保存失敗"), err, "")
 						if ok := merr.ShowErrorDialog(cw.AppConfig(), err); ok {
 							bakeState.SetWidgetEnabled(true)
 						}
@@ -343,9 +343,9 @@ func NewBakePage(mWidgets *controller.MWidgets) declarative.TabPage {
 					bakeState.OriginalMotionPicker.Widgets(),
 					declarative.VSeparator{},
 					declarative.TextLabel{
-						Text: mi18n.T("焼き込みオプション"),
+						Text: mi18n.T("物理設定オプション"),
 						OnMouseDown: func(x, y int, button walk.MouseButton) {
-							mlog.ILT(mi18n.T("焼き込みオプション"), mi18n.T("焼き込みオプション説明"))
+							mlog.ILT(mi18n.T("物理設定オプション"), mi18n.T("物理設定オプション説明"))
 						},
 					},
 					declarative.Composite{
@@ -371,10 +371,10 @@ func NewBakePage(mWidgets *controller.MWidgets) declarative.TabPage {
 								MaxSize:            declarative.Size{Width: 60, Height: 20},
 							},
 							declarative.TextLabel{
-								Text:        mi18n.T("サブステップ数"),
-								ToolTipText: mi18n.T("サブステップ数説明"),
+								Text:        mi18n.T("最大演算回数"),
+								ToolTipText: mi18n.T("最大演算回数説明"),
 								OnMouseDown: func(x, y int, button walk.MouseButton) {
-									mlog.IL("%s", mi18n.T("サブステップ数説明"))
+									mlog.IL("%s", mi18n.T("最大演算回数説明"))
 								},
 								MinSize: declarative.Size{Width: 80, Height: 20},
 							},
@@ -390,10 +390,10 @@ func NewBakePage(mWidgets *controller.MWidgets) declarative.TabPage {
 								MaxSize:            declarative.Size{Width: 60, Height: 20},
 							},
 							declarative.TextLabel{
-								Text:        mi18n.T("演算精度"),
-								ToolTipText: mi18n.T("演算精度説明"),
+								Text:        mi18n.T("物理演算頻度"),
+								ToolTipText: mi18n.T("物理演算頻度説明"),
 								OnMouseDown: func(x, y int, button walk.MouseButton) {
-									mlog.IL("%s", mi18n.T("演算精度説明"))
+									mlog.IL("%s", mi18n.T("物理演算頻度説明"))
 								},
 								MinSize: declarative.Size{Width: 80, Height: 20},
 							},
@@ -410,10 +410,10 @@ func NewBakePage(mWidgets *controller.MWidgets) declarative.TabPage {
 								MaxSize:            declarative.Size{Width: 60, Height: 20},
 							},
 							declarative.TextLabel{
-								Text:        mi18n.T("質量"),
-								ToolTipText: mi18n.T("質量説明"),
+								Text:        mi18n.T("質量倍率"),
+								ToolTipText: mi18n.T("質量倍率説明"),
 								OnMouseDown: func(x, y int, button walk.MouseButton) {
-									mlog.IL("%s", mi18n.T("質量説明"))
+									mlog.IL("%s", mi18n.T("質量倍率説明"))
 								},
 								MinSize: declarative.Size{Width: 80, Height: 20},
 							},
@@ -435,10 +435,10 @@ func NewBakePage(mWidgets *controller.MWidgets) declarative.TabPage {
 								MaxSize:            declarative.Size{Width: 60, Height: 20},
 							},
 							declarative.TextLabel{
-								Text:        mi18n.T("硬さ"),
-								ToolTipText: mi18n.T("硬さ説明"),
+								Text:        mi18n.T("硬さ倍率"),
+								ToolTipText: mi18n.T("硬さ倍率説明"),
 								OnMouseDown: func(x, y int, button walk.MouseButton) {
-									mlog.IL("%s", mi18n.T("硬さ説明"))
+									mlog.IL("%s", mi18n.T("硬さ倍率説明"))
 								},
 								MinSize: declarative.Size{Width: 80, Height: 20},
 							},
@@ -461,10 +461,10 @@ func NewBakePage(mWidgets *controller.MWidgets) declarative.TabPage {
 								MaxSize:            declarative.Size{Width: 60, Height: 20},
 							},
 							declarative.TextLabel{
-								Text:        mi18n.T("張り"),
-								ToolTipText: mi18n.T("張り説明"),
+								Text:        mi18n.T("張り倍率"),
+								ToolTipText: mi18n.T("張り倍率説明"),
 								OnMouseDown: func(x, y int, button walk.MouseButton) {
-									mlog.IL("%s", mi18n.T("張り説明"))
+									mlog.IL("%s", mi18n.T("張り倍率説明"))
 								},
 								MinSize: declarative.Size{Width: 80, Height: 20},
 							},

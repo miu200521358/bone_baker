@@ -1,94 +1,286 @@
 [
     {
+        "id": "ツール概要説明",
+        "translation": "During motion playback, the bone transformation information of the model can be baked and exported as motion data based on any transformation history.\nThere are no restrictions on the bones that can be baked.\nFor bone names related to physics within the model, prefixes will be added to the baked results and included in the display frames to make them readable in MMD."
+    },
+    {
+        "id": "焼き込み",
+        "translation": "Bake"
+    },
+    {
         "id": "&ツールについて",
         "translation": "&About the Tool"
     },
     {
-        "id": "使い方説明",
-        "translation": "If you associate the tool with the .vmd or .vpd file extension, you can launch the viewer by double-clicking the file.\nYou can also check for missing standard bones and morphs."
+        "id": "セット追加",
+        "translation": "Add Set"
     },
     {
-        "id": "ビューワー",
-        "translation": "Viewer"
+        "id": "セット追加説明",
+        "translation": "You can additionally load multi-person motions or models for rigid bodies.\nBy adding sets, you can switch between the target models or motions to be baked."
     },
     {
-        "id": "設定",
-        "translation": "Settings"
+        "id": "セット全削除",
+        "translation": "Delete All Sets"
     },
     {
-        "id": "設定説明",
-        "translation": "Settings Description"
+        "id": "セット全削除説明",
+        "translation": "Deletes all bake sets."
     },
     {
-        "id": "設定保存",
-        "translation": "Save Model Settings"
+        "id": "セット設定読込",
+        "translation": "Load Set Configuration"
     },
     {
-        "id": "モデルファイル",
-        "translation": "Model File"
+        "id": "セット設定読込説明",
+        "translation": "Loads bake set configurations saved separately in JSON format."
     },
     {
-        "id": "モデルファイルを選択してください",
-        "translation": "Please select a model file. Pmx or X files can be opened.\n・You can set the Pmx model to be applied when opening a motion.\n・Click the save button to save the model path and close the window."
+        "id": "セット設定保存",
+        "translation": "Save Set Configuration"
     },
     {
-        "id": "モーションファイル",
-        "translation": "Motion File"
+        "id": "セット設定保存説明",
+        "translation": "Saves the current bake set configuration as a JSON file.\nYou can load the saved JSON later to restore the settings."
     },
     {
-        "id": "モーションファイルを選択してください",
-        "translation": "Please select a motion file.\nVmd or Vpd files can be opened."
+        "id": "焼き込み停止",
+        "translation": "Stop Baking"
+    },
+    {
+        "id": "焼き込み停止説明",
+        "translation": "Stops both motion playback and baking simultaneously."
+    },
+    {
+        "id": "焼き込み再生",
+        "translation": "Play & Bake"
+    },
+    {
+        "id": "焼き込み再生説明",
+        "translation": "Starts both motion playback and baking simultaneously.\nThe baked motion can be played in the 'Physics Baked Viewer'."
+    },
+    {
+        "id": "重力",
+        "translation": "Gravity"
+    },
+    {
+        "id": "重力説明",
+        "translation": "Sets the downward gravity for physics simulation."
+    },
+    {
+        "id": "焼き込み後モーション(Vmd)",
+        "translation": "Baked Motion (VMD)"
+    },
+    {
+        "id": "焼き込み後モーション説明",
+        "translation": "You can set the output destination for the baked motion."
+    },
+    {
+        "id": "変更後モデル(Pmx)",
+        "translation": "Modified Model (PMX)"
+    },
+    {
+        "id": "変更後モデル説明",
+        "translation": "You can set the output destination for the modified model with adjusted bone names for baking.\nThe modified model includes bones with baking-specific prefixes added to the display frames."
     },
     {
         "id": "保存失敗",
-        "translation": "Failed to Save Settings"
+        "translation": "Save Failed"
     },
     {
-        "id": "保存エラーメッセージ",
-        "translation": "Failed to save model settings.\n\nError message: {{.Error}}"
+        "id": "モーション(Vmd)",
+        "translation": "Motion (VMD)"
     },
     {
-        "id": "保存失敗メッセージ",
-        "translation": "Failed to save model settings.\nPlease check if the correct model path is specified.\n\nModel path: {{.Path}}"
+        "id": "モーション説明",
+        "translation": "You can set the motion to be baked."
     },
     {
-        "id": "OKボーン",
-        "translation": "[OK] Bone"
+        "id": "モデル(Pmx)",
+        "translation": "Model (PMX)"
     },
     {
-        "id": "OKボーン説明",
-        "translation": "Bones that exist in both the motion and the model."
+        "id": "モデル説明",
+        "translation": "You can set the model to be baked."
     },
     {
-        "id": "OKモーフ",
-        "translation": "[OK] Morph"
+        "id": "ファイル選択ダイアログタイトル",
+        "translation": "File Selection Dialog Title"
     },
     {
-        "id": "OKモーフ説明",
-        "translation": "Morphs that exist in both the motion and the model."
+        "id": "ファイル選択ダイアログ選択エラー",
+        "translation": "Failed to select a file in the file selection dialog."
     },
     {
-        "id": "NGボーン",
-        "translation": "[NG] Bone"
+        "id": "モデル保存",
+        "translation": "Save Model"
     },
     {
-        "id": "NGボーン説明",
-        "translation": "Bones that exist in the motion but not in the model."
+        "id": "モデル保存説明",
+        "translation": "Saves the model adjusted for baking.\nBone names for baking will be prefixed to make the physics results readable in MMD."
     },
     {
-        "id": "NGモーフ",
-        "translation": "[NG] Morph"
+        "id": "モデル保存失敗",
+        "translation": "Failed to Save Model"
     },
     {
-        "id": "NGモーフ説明",
-        "translation": "Morphs that exist in the motion but not in the model."
+        "id": "モーション保存",
+        "translation": "Save Motion"
     },
     {
-        "id": "保存成功",
-        "translation": "Successfully Saved Settings"
+        "id": "モーション保存説明",
+        "translation": "Saves the specified range of the selected baked history index as a VMD file."
     },
     {
-        "id": "保存成功メッセージ",
-        "translation": "Model settings have been successfully saved.\nPlease close the window.\nIf you have not yet associated the file extension, please do so.\n\nModel path: {{.Path}}"
+        "id": "モーション保存失敗",
+        "translation": "Failed to Save Motion"
+    },
+    {
+        "id": "物理設定オプション",
+        "translation": "Physics Settings Options"
+    },
+    {
+        "id": "物理設定オプション説明",
+        "translation": "You can configure options for physics baking.\nThese options can be changed and applied even during baking playback.\nThe physics settings changed here are reflected in the adjusted model and can be saved."
+    },
+    {
+        "id": "出力開始",
+        "translation": "Output Start"
+    },
+    {
+        "id": "出力開始説明",
+        "translation": "You can set the starting frame for saving the baked results."
+    },
+    {
+        "id": "出力終了",
+        "translation": "Output End"
+    },
+    {
+        "id": "出力終了説明",
+        "translation": "You can set the ending frame for saving the baked results."
+    },
+    {
+        "id": "焼き込み履歴",
+        "translation": "Bake History"
+    },
+    {
+        "id": "焼き込み履歴説明",
+        "translation": "You can select a bake history recorded during bake playback.\nHistory indices are automatically added during bake playback.\nChanging the index will display the corresponding history in the 'Physics Baked Viewer'.\nIn that state, pressing the 'Save Motion' button will save the motion of the selected history."
+    },
+    {
+        "id": "焼き込みセットの元モデルまたは出力モーションが設定されていません",
+        "translation": "The original model or output motion for the bake set is not set."
+    },
+    {
+        "id": "開始フレームより終了フレームが小さいか、負の値が設定されています",
+        "translation": "The end frame is smaller than the start frame, or a negative value is set."
+    },
+    {
+        "id": "質量倍率",
+        "translation": "Mass Multiplier"
+    },
+    {
+        "id": "質量倍率説明",
+        "translation": "Sets the multiplier for changing the mass of rigid bodies.\nThe larger the value, the heavier and less responsive the rigid bodies become.\nSpecifically, this multiplies the current mass of each rigid body by the specified factor.\nIt is applied only to the selected bone and its child bones in the bone tree view below."
+    },
+    {
+        "id": "硬さ倍率",
+        "translation": "Stiffness Multiplier"
+    },
+    {
+        "id": "硬さ倍率説明",
+        "translation": "Sets the multiplier for changing joint stiffness.\nThe larger the value, the stiffer the joints become, making them less prone to deformation.\nSpecifically, this multiplies the current rotation limit of each joint by the specified factor.\nIt is applied only to the selected bone and its child bones in the bone tree view below."
+    },
+    {
+        "id": "張り倍率",
+        "translation": "Spring Multiplier"
+    },
+    {
+        "id": "張り倍率説明",
+        "translation": "Sets the multiplier for changing spring strength.\nThe larger the value, the stronger the spring becomes, making deformation more difficult.\nSpecifically, this multiplies the current spring value of each joint by the specified factor.\nIt is applied only to the selected bone and its child bones in the bone tree view below."
+    },
+    {
+        "id": "%s (質量: %.2f, 硬さ: %.2f, 張り: %.2f)",
+        "translation": "%s (Mass: %.2f, Stiffness: %.2f, Spring: %.2f)"
+    },
+    {
+        "id": "物理設定変更",
+        "translation": "Apply Physics Settings"
+    },
+    {
+        "id": "物理設定変更説明",
+        "translation": "Applies the current physics setting options to the model in the currently selected bake set.\nThe modified physics settings are reflected in the adjusted model and can be saved.\nThese changes are also applied during bake playback."
+    },
+    {
+        "id": "物理リセット",
+        "translation": "Reset Physics Settings"
+    },
+    {
+        "id": "物理リセット説明",
+        "translation": "Resets the current physics setting options and restores the original physics settings from the PMX model.\nThe restored settings are reflected in the adjusted model and can be saved.\nThis reset is also applied during bake playback."
+    },
+    {
+        "id": "最大演算回数",
+        "translation": "Max Simulation Steps"
+    },
+    {
+        "id": "最大演算回数説明",
+        "translation": "Sets Bullet's MaxSubSteps.\nPerforms multiple simulations per frame to improve physics accuracy.\nLarger values increase accuracy but also processing time."
+    },
+    {
+        "id": "物理演算頻度",
+        "translation": "Physics Simulation Frequency"
+    },
+    {
+        "id": "物理演算頻度説明",
+        "translation": "Sets Bullet's FixedTimeStep.\nChanges how often physics simulation is executed within a frame.\nHigher values mean more frequent simulations and better accuracy, but also increased processing time."
+    },
+    {
+        "id": "IK焼き込み対象",
+        "translation": "IK Bake Target"
+    },
+    {
+        "id": "IK焼き込み対象説明",
+        "translation": "Specifies whether IK bones in the output bone tree should be included in baking.\nSpecifically, IK bones, IK link bones, and IK target bones will be baked.\nWhen enabled, the positions and rotations of IK bones will be included in the output motion."
+    },
+    {
+        "id": "物理焼き込み対象",
+        "translation": "Physics Bake Target"
+    },
+    {
+        "id": "物理焼き込み対象説明",
+        "translation": "Specifies whether physics bones in the output bone tree should be included in baking.\nWhen enabled, the positions and rotations of physics bones will be included in the output motion."
+    },
+    {
+        "id": "キーフレーム数が上限を超えるため、モーションを切り替えます[%04.0fF]: %d -> %d",
+        "translation": "The number of keyframes exceeds the limit. Switching motion [%04.0fF]: %d -> %d"
+    },
+    {
+        "id": "- 物理焼き込み中... [%04.0fF] %dキーフレーム",
+        "translation": "- Baking physics... [%04.0fF] %d keyframes"
+    },
+    {
+        "id": "物理焼き込みセット保存失敗エラー",
+        "translation": "Failed to save physics bake set settings JSON."
+    },
+    {
+        "id": "物理焼き込みセット保存成功",
+        "translation": "Successfully saved physics bake set settings JSON."
+    },
+    {
+        "id": "物理焼き込みセット読込失敗エラー",
+        "translation": "Failed to load physics bake set settings JSON."
+    },
+    {
+        "id": "物理焼き込みセット読込成功",
+        "translation": "Successfully loaded physics bake set settings JSON."
+    },
+    {
+        "id": "出力ボーンツリー設定失敗エラー",
+        "translation": "Failed to initialize output bone tree settings."
+    },
+    {
+        "id": "物理ボーンツリー設定失敗エラー",
+        "translation": "Failed to initialize physics bone tree settings."
     }
 ]
