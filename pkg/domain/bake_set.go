@@ -13,6 +13,7 @@ import (
 
 	"github.com/miu200521358/mlib_go/pkg/config/mi18n"
 	"github.com/miu200521358/mlib_go/pkg/config/mlog"
+	"github.com/miu200521358/mlib_go/pkg/domain/mmath"
 	"github.com/miu200521358/mlib_go/pkg/domain/pmx"
 	"github.com/miu200521358/mlib_go/pkg/domain/vmd"
 	"github.com/miu200521358/mlib_go/pkg/infrastructure/mfile"
@@ -39,7 +40,6 @@ type BakeSet struct {
 	OutputMotion   *vmd.VmdMotion `json:"-"` // 出力結果モーション
 
 	PhysicsBoneTreeModel *PhysicsBoneTreeModel `json:"-"` // 物理ボーンツリー
-	OutputBoneTreeModel  *OutputBoneTreeModel  `json:"-"` // 出力ボーンツリー
 	OutputTableModel     *OutputTableModel     `json:"-"` // 出力定義テーブル
 }
 
@@ -47,7 +47,6 @@ func NewPhysicsSet(index int) *BakeSet {
 	return &BakeSet{
 		Index:                index,
 		PhysicsBoneTreeModel: NewPhysicsBoneTreeModel(),
-		OutputBoneTreeModel:  NewOutputBoneTreeModel(),
 		OutputTableModel:     NewOutputTableModel(),
 	}
 }
@@ -229,6 +228,8 @@ func (ss *BakeSet) insertPhysicsBonePrefix(model *pmx.PmxModel) {
 		}
 		return true
 	})
+
+	model.Bones.UpdateNameIndexes()
 }
 
 func (ss *BakeSet) encodeName(name string, limit int) string {
@@ -311,99 +312,100 @@ func (ss *BakeSet) GetOutputMotionOnlyChecked(records []*OutputBoneRecord) ([]*v
 	motions := make([]*vmd.VmdMotion, 0)
 
 	if ss.OriginalModel == nil || ss.OutputMotion == nil || len(records) == 0 {
-		return nil, errors.New(mi18n.T("物理焼き込みセットの元モデルまたは出力モーションが設定されていません"))
+		return motions, errors.New(mi18n.T("物理焼き込みセットの元モデルまたは出力モーションが設定されていません"))
 	}
 
-	boneCount := 0
-	ss.OriginalModel.Bones.ForEach(func(boneIndex int, bone *pmx.Bone) bool {
-		item := ss.OutputBoneTreeModel.AtByBoneIndex(boneIndex)
-		if item == nil || !item.(*OutputItem).Checked() {
-			// チェックされていないボーンはスキップ
-			return true
+	var bakedMotion *vmd.VmdMotion
+
+	// まずは既存モーションに焼き込みボーンを追加挿入する
+	var err error
+	bakedMotion, err = ss.OriginalMotion.Copy()
+	bakedMotion.SetPath(ss.OutputMotionPath)
+	if err != nil {
+		return motions, fmt.Errorf(mi18n.T("元モーションのコピーに失敗しました: %w"), err)
+	}
+
+	keyCounts := make([]int, int(ss.OriginalMotion.MaxFrame()+1+1))
+	for _, record := range records {
+		if record == nil || record.OutputBoneTreeModel == nil {
+			continue
 		}
 
-		boneCount++
-		return true
-	})
+		for f := record.StartFrame; f <= record.EndFrame; f++ {
+			for _, boneName := range record.TargetBoneNames {
+				bf := ss.OutputMotion.BoneFrames.Get(boneName).Get(f)
 
-	nextFrameCount := 0
-	logFrameCount := 0
+				if bf == nil {
+					continue
+				}
 
-	var motion *vmd.VmdMotion
+				if bone, err := ss.OriginalModel.Bones.GetByName(boneName); err == nil {
+					if bone.HasPhysics() {
+						bf.DisablePhysics = true
+					}
+					bakedMotion.AppendBoneFrame(boneName, bf)
+					keyCounts[int(f)]++
 
-	// まずは既存モーションに焼き込みボーンを追加する
-	var err error
-	motion, err = ss.OriginalMotion.Copy()
-	if err != nil {
-		return nil, fmt.Errorf(mi18n.T("元モーションのコピーに失敗しました: %w"), err)
+					// 次のキーフレ物理有効で登録しておく
+					if bone.HasPhysics() {
+						bf := ss.OutputMotion.BoneFrames.Get(boneName).Get(f + 1)
+						if bf == nil {
+							continue
+						}
+						bf.DisablePhysics = false
+						bakedMotion.AppendBoneFrame(boneName, bf)
+						keyCounts[int(f)]++
+					}
+				}
+			}
+		}
+	}
+
+	if mmath.Sum(keyCounts) == 0 {
+		return motions, errors.New(mi18n.T("焼き込み対象キーフレームなし"))
 	}
 
 	dirPath, fileName, ext := mfile.SplitPath(ss.OutputMotionPath)
-	motion.SetPath(fmt.Sprintf("%s/%s_%04.0f%s", dirPath, fileName, 0, ext))
+	motion := vmd.NewVmdMotion("")
+	motion.SetPath(fmt.Sprintf("%s%s_%04d%s", dirPath, fileName, 0, ext))
+	motion.MorphFrames, _ = ss.OriginalMotion.MorphFrames.Copy()
 
-	// ボーン焼き込み
-	for index := 0; index <= 1000; index++ {
-		nextFrameCount += boneCount
+	frameCount := 0
+	logFrameCount := 0
 
-		if nextFrameCount > vmd.MAX_BONE_FRAMES {
+	for f := 0; f <= len(keyCounts); f++ {
+		if f < len(keyCounts)-1 && frameCount+keyCounts[int(f+1)] > vmd.MAX_BONE_FRAMES {
 			// キーフレーム数が上限を超える場合は切り替える
-			motions = append(motions, motion)
-
-			mlog.I(fmt.Sprintf(mi18n.T("キーフレーム数が上限を超えるため、モーションを切り替えます[%04.0fF]: %d -> %d"),
-				index, nextFrameCount, vmd.MAX_BONE_FRAMES))
-
 			dirPath, fileName, ext := mfile.SplitPath(ss.OutputMotionPath)
-			motion = vmd.NewVmdMotion(fmt.Sprintf("%s/%s_%04.0f%s", dirPath, fileName, index, ext))
-			nextFrameCount = boneCount
-			logFrameCount = boneCount
+			motion = vmd.NewVmdMotion(fmt.Sprintf("%s%s_%04d%s", dirPath, fileName, f, ext))
+			motions = append(motions, motion)
+			motion.MorphFrames, _ = ss.OriginalMotion.MorphFrames.Copy()
+
+			mlog.I(fmt.Sprintf(mi18n.T("キーフレーム数が上限を超えるため、モーションを切り替えます[%04dF]: %d -> %d"),
+				f, frameCount, vmd.MAX_BONE_FRAMES))
+
+			frameCount = 0
+			logFrameCount = 0
 		}
 
-		if nextFrameCount/100000 > logFrameCount/100000 {
-			mlog.I(fmt.Sprintf(mi18n.T("- 物理焼き込み中... [%04.0fF] %dキーフレーム"), index, nextFrameCount))
-			logFrameCount = nextFrameCount
+		if frameCount/100000 > logFrameCount/100000 {
+			mlog.I(fmt.Sprintf(mi18n.T("- 物理焼き込み中... [%04.0fF] %dキーフレーム"), f, frameCount))
+			logFrameCount = frameCount
 		}
 
 		ss.OriginalModel.Bones.ForEach(func(boneIndex int, bone *pmx.Bone) bool {
-			item := ss.OutputBoneTreeModel.AtByBoneIndex(boneIndex)
-			if item == nil || !item.(*OutputItem).Checked() {
-				// チェックされていないボーンはスキップ
-				return true
+			if bakedMotion.BoneFrames.Get(bone.Name()).Contains(float32(f)) {
+				// キーフレームがある場合は登録
+				motion.AppendBoneFrame(bone.Name(), bakedMotion.BoneFrames.Get(bone.Name()).Get(float32(f)))
 			}
-
-			bf := ss.OutputMotion.BoneFrames.Get(bone.Name()).Get(float32(index))
-			if bf == nil {
-				return true
-			}
-
-			if bone.HasPhysics() {
-				bf.DisablePhysics = true // 物理演算を無効にする
-			}
-			motion.AppendBoneFrame(bone.Name(), bf)
 
 			return true
 		})
+
+		if f < len(keyCounts)-1 {
+			frameCount += keyCounts[int(f)]
+		}
 	}
-
-	// 最後に物理演算を有効にする
-	ss.OriginalModel.Bones.ForEach(func(boneIndex int, bone *pmx.Bone) bool {
-		item := ss.OutputBoneTreeModel.AtByBoneIndex(boneIndex)
-		if item == nil || !item.(*OutputItem).Checked() {
-			// チェックされていないボーンはスキップ
-			return true
-		}
-
-		if bone.HasPhysics() {
-			// 最後に物理有効化を入れる
-			lastBf := ss.OutputMotion.BoneFrames.Get(bone.Name()).Get(float32(1000 + 1))
-			if lastBf == nil {
-				return true
-			}
-			lastBf.DisablePhysics = false // 物理演算を有効にする
-			motion.AppendBoneFrame(bone.Name(), lastBf)
-		}
-
-		return true
-	})
 
 	motions = append(motions, motion)
 	return motions, nil

@@ -3,6 +3,7 @@ package domain
 import (
 	"strings"
 
+	"github.com/miu200521358/mlib_go/pkg/domain/pmx"
 	"github.com/miu200521358/walk/pkg/walk"
 )
 
@@ -37,28 +38,21 @@ func (m *OutputTableModel) Value(row, col int) any {
 	case 2:
 		return int(item.EndFrame)
 	case 3:
-		return item.ResetFrame
-	case 4:
 		return len(item.TargetBoneNames)
-	case 5:
+	case 4:
 		return strings.Join(item.TargetBoneNames, ", ")
 	}
 
 	panic("unexpected col")
 }
 
-func (m *OutputTableModel) AddRecord(startFrame, endFrame float32) {
+func (m *OutputTableModel) AddRecord(model *pmx.PmxModel, startFrame, endFrame float32) {
 	item := &OutputBoneRecord{
-		Checked:    false,
-		StartFrame: startFrame,
-		EndFrame:   endFrame,
-		ResetFrame: -5, // 初期値として5F前のリセットを入れる
+		StartFrame:          startFrame,
+		EndFrame:            endFrame,
+		OutputBoneTreeModel: NewOutputBoneTreeModel(model),
 	}
 	m.Records = append(m.Records, item)
-}
-
-func (m *OutputTableModel) Checked(row int) bool {
-	return m.Records[row].Checked
 }
 
 func (m *OutputTableModel) RemoveRow(index int) {
@@ -72,9 +66,8 @@ func (m *OutputTableModel) RemoveRow(index int) {
 }
 
 type OutputBoneRecord struct {
-	Checked         bool
-	StartFrame      float32
-	EndFrame        float32
-	ResetFrame      int
-	TargetBoneNames []string
+	StartFrame          float32
+	EndFrame            float32
+	TargetBoneNames     []string
+	OutputBoneTreeModel *OutputBoneTreeModel // 出力ボーンツリー
 }

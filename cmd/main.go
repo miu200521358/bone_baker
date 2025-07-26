@@ -86,7 +86,7 @@ func main() {
 		return
 	}
 
-	viewerName := []string{"Viewer", "Physics Baked Viewer"}
+	viewerName := []string{"Viewer", "Baked Viewer"}
 
 	// 描画ウィンドウはメインスレッドで起動
 	defer app.SafeExecute(appConfig, func() {

@@ -109,11 +109,30 @@ type OutputBoneTreeModel struct {
 	nodes []*OutputItem
 }
 
-func NewOutputBoneTreeModel() *OutputBoneTreeModel {
-	return &OutputBoneTreeModel{
+func NewOutputBoneTreeModel(model *pmx.PmxModel) *OutputBoneTreeModel {
+	tree := &OutputBoneTreeModel{
 		TreeModelBase: &walk.TreeModelBase{},
 		nodes:         make([]*OutputItem, 0),
 	}
+
+	if model == nil {
+		return tree
+	}
+
+	// モデルのボーンをツリーに追加
+	for _, boneIndex := range model.Bones.LayerSortedIndexes {
+		if bone, err := model.Bones.Get(boneIndex); err == nil {
+			parent := tree.AtByBoneIndex(bone.ParentIndex)
+			item := NewOutputItem(bone, parent)
+			if parent == nil {
+				tree.AddNode(item)
+			} else {
+				parent.(*OutputItem).AddChild(item)
+			}
+		}
+	}
+
+	return tree
 }
 
 func (pm *OutputBoneTreeModel) GetCheckedBoneNames() []string {

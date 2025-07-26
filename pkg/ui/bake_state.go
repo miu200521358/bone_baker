@@ -107,11 +107,6 @@ func (ss *BakeState) ChangeCurrentAction(index int) {
 		ss.CurrentSet().PhysicsBoneTreeModel = domain.NewPhysicsBoneTreeModel()
 	}
 	ss.PhysicsTreeView.SetModel(ss.CurrentSet().PhysicsBoneTreeModel)
-
-	// 出力ツリーのモデル変更
-	if ss.CurrentSet().OutputBoneTreeModel == nil {
-		ss.CurrentSet().OutputBoneTreeModel = domain.NewOutputBoneTreeModel()
-	}
 }
 
 func (ss *BakeState) ClearOptions() {
@@ -186,8 +181,6 @@ func (bakeState *BakeState) LoadModel(
 
 	// 物理ツリーモデ作成
 	bakeState.createPhysicsTree()
-	// 出力ツリーモデル作成
-	bakeState.createOutputTree()
 
 	for n := range bakeState.BakeSets {
 		cw.ClearDeltaMotion(0, n)
@@ -203,25 +196,6 @@ func (bakeState *BakeState) LoadModel(
 	bakeState.SetWidgetEnabled(true)
 
 	return nil
-}
-
-func (bakeState *BakeState) createOutputTree() {
-	// 出力ツリーのモデル変更
-	tree := domain.NewOutputBoneTreeModel()
-
-	for _, boneIndex := range bakeState.CurrentSet().OriginalModel.Bones.LayerSortedIndexes {
-		if bone, err := bakeState.CurrentSet().OriginalModel.Bones.Get(boneIndex); err == nil {
-			parent := tree.AtByBoneIndex(bone.ParentIndex)
-			item := domain.NewOutputItem(bone, parent)
-			if parent == nil {
-				tree.AddNode(item)
-			} else {
-				parent.(*domain.OutputItem).AddChild(item)
-			}
-		}
-	}
-
-	bakeState.CurrentSet().OutputBoneTreeModel = tree
 }
 
 func (bakeState *BakeState) createPhysicsTree() {
@@ -287,7 +261,10 @@ func (bakeState *BakeState) LoadMotion(
 		// モーションプレイヤーのリセット
 		bakeState.Player.Reset(bakeState.CurrentSet().OriginalMotion.MaxFrame())
 		// 出力ボーン定義に行追加
-		bakeState.CurrentSet().OutputTableModel.AddRecord(0, bakeState.CurrentSet().OriginalMotion.MaxFrame())
+		bakeState.CurrentSet().OutputTableModel.AddRecord(
+			bakeState.CurrentSet().OriginalModel,
+			0,
+			bakeState.CurrentSet().OriginalMotion.MaxFrame())
 		bakeState.OutputTableView.SetModel(bakeState.CurrentSet().OutputTableModel)
 	}
 

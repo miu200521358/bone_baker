@@ -57,7 +57,7 @@
     },
     {
         "id": "焼き込み再生説明",
-        "translation": "Starts both motion playback and baking simultaneously.\nThe baked motion can be played in the 'Physics Baked Viewer'."
+        "translation": "Starts both motion playback and baking simultaneously.\nThe baked motion can be played in the 'Baked Viewer'."
     },
     {
         "id": "重力",
@@ -165,7 +165,7 @@
     },
     {
         "id": "焼き込み履歴説明",
-        "translation": "You can select a bake history recorded during bake playback.\nHistory indices are automatically added during bake playback.\nChanging the index will display the corresponding history in the 'Physics Baked Viewer'.\nIn that state, pressing the 'Save Motion' button will save the motion of the selected history."
+        "translation": "You can select a bake history recorded during bake playback.\nHistory indices are automatically added during bake playback.\nChanging the index will display the corresponding history in the 'Baked Viewer'.\nIn that state, pressing the 'Save Motion' button will save the motion of the selected history."
     },
     {
         "id": "焼き込みセットの元モデルまたは出力モーションが設定されていません",

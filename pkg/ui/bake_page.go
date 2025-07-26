@@ -633,8 +633,15 @@ func NewBakePage(mWidgets *controller.MWidgets) declarative.TabPage {
 						Layout: declarative.Grid{Columns: 6},
 						Children: []declarative.Widget{
 							declarative.TextLabel{
-								Text:        mi18n.T("焼き込み履歴"),
-								ToolTipText: mi18n.T("焼き込み履歴説明"),
+								Text:        mi18n.T("焼き込み保存設定テーブル"),
+								ToolTipText: mi18n.T("焼き込み保存設定テーブル説明"),
+							},
+							declarative.HSpacer{
+								ColumnSpan: 3,
+							},
+							declarative.TextLabel{
+								Text:        mi18n.T("焼き込み履歴INDEX"),
+								ToolTipText: mi18n.T("焼き込み履歴INDEX説明"),
 							},
 							declarative.NumberEdit{
 								SpinButtonsVisible: true,
@@ -666,90 +673,22 @@ func NewBakePage(mWidgets *controller.MWidgets) declarative.TabPage {
 									bakeState.OutputMotionPicker.ChangePath(currentSet.OutputMotionPath)
 								},
 							},
-							// declarative.TextLabel{
-							// 	Text:        mi18n.T("出力開始"),
-							// 	ToolTipText: mi18n.T("出力開始説明"),
-							// },
-							// declarative.NumberEdit{
-							// 	ToolTipText:        mi18n.T("出力開始説明"),
-							// 	SpinButtonsVisible: true,
-							// 	AssignTo:           &bakeState.StartFrameEdit,
-							// 	Decimals:           0,
-							// 	Increment:          1,
-							// 	MinValue:           0,
-							// 	MaxValue:           1,
-							// },
-							// declarative.TextLabel{
-							// 	Text:        mi18n.T("出力終了"),
-							// 	ToolTipText: mi18n.T("出力終了説明"),
-							// },
-							// declarative.NumberEdit{
-							// 	ToolTipText:        mi18n.T("出力終了説明"),
-							// 	SpinButtonsVisible: true,
-							// 	AssignTo:           &bakeState.EndFrameEdit,
-							// 	Decimals:           0,
-							// 	Increment:          1,
-							// 	MinValue:           0,
-							// 	MaxValue:           1,
-							// },
-							// declarative.CheckBox{
-							// 	AssignTo:    &bakeState.OutputIkCheckBox,
-							// 	Text:        mi18n.T("IK焼き込み対象"),
-							// 	ToolTipText: mi18n.T("IK焼き込み対象説明"),
-							// 	ColumnSpan:  2,
-							// 	OnCheckedChanged: func() {
-							// 		// IK焼き込み対象のチェックボックスが変更されたときの処理
-							// 		// 無限ループを防ぐためのフラグチェック
-							// 		treeModel := bakeState.OutputTreeView.Model()
-							// 		if treeModel == nil || bakeState.IsOutputUpdatingChildren {
-							// 			return
-							// 		}
-
-							// 		// IK出力のチェック状態を更新
-							// 		checked := bakeState.OutputIkCheckBox.Checked()
-							// 		bakeState.SetOutputIkChecked(nil, checked)
-							// 	},
-							// },
-							// declarative.CheckBox{
-							// 	AssignTo:    &bakeState.OutputPhysicsCheckBox,
-							// 	Text:        mi18n.T("物理焼き込み対象"),
-							// 	ToolTipText: mi18n.T("物理焼き込み対象説明"),
-							// 	ColumnSpan:  2,
-							// 	OnCheckedChanged: func() {
-							// 		treeModel := bakeState.OutputTreeView.Model()
-							// 		if treeModel == nil || bakeState.IsOutputUpdatingChildren {
-							// 			return
-							// 		}
-
-							// 		// 物理焼き込み対象のチェック状態を更新
-							// 		checked := bakeState.OutputPhysicsCheckBox.Checked()
-							// 		bakeState.SetOutputPhysicsChecked(nil, checked)
-							// 	},
-							// },
 						},
 					},
 					declarative.Composite{
 						Layout: declarative.VBox{},
 						Children: []declarative.Widget{
 							declarative.TableView{
-								AssignTo: &bakeState.OutputTableView,
-								Model:    domain.NewOutputTableModel(),
-								MinSize:  declarative.Size{Width: 230, Height: 150},
-								StyleCell: func(style *walk.CellStyle) {
-									if bakeState.CurrentSet().OutputTableModel.Checked(style.Row()) {
-										// 水色(追加データで処理対象)
-										style.BackgroundColor = walk.RGB(159, 255, 243)
-									} else {
-										style.BackgroundColor = walk.RGB(255, 255, 255)
-									}
-								},
+								AssignTo:         &bakeState.OutputTableView,
+								Model:            domain.NewOutputTableModel(),
+								AlternatingRowBG: true,
+								MinSize:          declarative.Size{Width: 230, Height: 150},
 								Columns: []declarative.TableViewColumn{
 									{Title: "#", Width: 30},
 									{Title: mi18n.T("開始F"), Width: 60},
 									{Title: mi18n.T("終了F"), Width: 60},
-									{Title: mi18n.T("リセットF"), Width: 60},
 									{Title: mi18n.T("ボーン数"), Width: 60},
-									{Title: mi18n.T("焼き込み対象ボーン名"), Width: 200},
+									{Title: mi18n.T("焼き込み対象ボーン名"), Width: 300},
 								},
 								OnItemClicked: func() {
 									// アイテムがクリックされたら、入力ダイアログを表示する
@@ -803,18 +742,6 @@ func NewBakePage(mWidgets *controller.MWidgets) declarative.TabPage {
 														MaxValue:           float64(bakeState.CurrentSet().MaxFrame() + 1),
 													},
 													declarative.Label{
-														Text: mi18n.T("リセットフレーム"),
-													},
-													declarative.NumberEdit{
-														Value:              declarative.Bind("ResetFrame"),
-														ToolTipText:        mi18n.T("リセットフレーム説明"),
-														SpinButtonsVisible: true,
-														Decimals:           0,
-														Increment:          1,
-														MinValue:           -100,
-														MaxValue:           0,
-													},
-													declarative.Label{
 														Text: mi18n.T("焼き込み対象ボーン"),
 													},
 													declarative.HSpacer{
@@ -838,7 +765,7 @@ func NewBakePage(mWidgets *controller.MWidgets) declarative.TabPage {
 													},
 													declarative.TreeView{
 														AssignTo:   &treeView,
-														Model:      bakeState.CurrentSet().OutputBoneTreeModel,
+														Model:      bakeState.CurrentSet().OutputTableModel.Records[bakeState.OutputTableView.CurrentIndex()].OutputBoneTreeModel,
 														MinSize:    declarative.Size{Width: 230, Height: 200},
 														Checkable:  true,
 														ColumnSpan: 6,
@@ -900,10 +827,11 @@ func NewBakePage(mWidgets *controller.MWidgets) declarative.TabPage {
 									}); err == nil && cmd == walk.DlgCmdOK {
 										// 次の作業用の行を追加して、更新
 										currentIndex := bakeState.OutputTableView.CurrentIndex()
-										bakeState.CurrentSet().OutputTableModel.Records[currentIndex].TargetBoneNames = bakeState.CurrentSet().OutputBoneTreeModel.GetCheckedBoneNames()
+										bakeState.CurrentSet().OutputTableModel.Records[currentIndex].TargetBoneNames = bakeState.CurrentSet().OutputTableModel.Records[currentIndex].OutputBoneTreeModel.GetCheckedBoneNames()
 										if currentIndex == len(bakeState.CurrentSet().OutputTableModel.Records)-1 {
 											// 最後の行が選択されている場合は、新しい行を追加
 											bakeState.CurrentSet().OutputTableModel.AddRecord(
+												bakeState.CurrentSet().OriginalModel,
 												0,
 												bakeState.CurrentSet().MaxFrame())
 										}
