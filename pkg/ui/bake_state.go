@@ -37,6 +37,7 @@ type BakeState struct {
 	FixedTimeStepEdit        *walk.NumberEdit     // 固定タイムステップ入力
 	PhysicsTreeView          *walk.TreeView       // 物理ボーン表示ツリー
 	OutputTreeView           *walk.TreeView       // 出力ボーン表示ツリー
+	OutputTableView          *walk.TableView      // 出力定義テーブル
 	IsOutputUpdatingChildren bool                 // 子どもアイテム更新中フラグ
 	OutputIkCheckBox         *walk.CheckBox       // 出力IKチェックボックス
 	IsOutputUpdatingIk       bool                 // 出力IK更新中フラグ

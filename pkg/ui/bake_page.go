@@ -608,7 +608,7 @@ func NewBakePage(mWidgets *controller.MWidgets) declarative.TabPage {
 							declarative.TreeView{
 								AssignTo: &bakeState.PhysicsTreeView,
 								Model:    domain.NewPhysicsModel(),
-								MinSize:  declarative.Size{Width: 230, Height: 200},
+								MinSize:  declarative.Size{Width: 230, Height: 150},
 								OnCurrentItemChanged: func() {
 									// 物理ボーンツリーの選択が変更されたときの処理
 									currentItem := bakeState.PhysicsTreeView.CurrentItem()
@@ -724,6 +724,26 @@ func NewBakePage(mWidgets *controller.MWidgets) declarative.TabPage {
 									// 物理焼き込み対象のチェック状態を更新
 									checked := bakeState.OutputPhysicsCheckBox.Checked()
 									bakeState.SetOutputPhysicsChecked(nil, checked)
+								},
+							},
+						},
+					},
+					declarative.Composite{
+						Layout: declarative.VBox{},
+						Children: []declarative.Widget{
+							declarative.TableView{
+								AssignTo:         &bakeState.OutputTableView,
+								AlternatingRowBG: true,
+								MultiSelection:   true,
+								Model:            domain.NewOutputTableModel(),
+								MinSize:          declarative.Size{Width: 230, Height: 150},
+								Columns: []declarative.TableViewColumn{
+									{Title: "#", Width: 20},
+									{Title: mi18n.T("開始F"), Width: 60},
+									{Title: mi18n.T("終了F"), Width: 60},
+									{Title: mi18n.T("リセットF"), Width: 60},
+									{Title: mi18n.T("ボーン数"), Width: 60},
+									{Title: mi18n.T("焼き込み対象ボーン名"), Width: 200},
 								},
 							},
 						},

@@ -38,8 +38,9 @@ type BakeSet struct {
 	BakedModel     *pmx.PmxModel  `json:"-"` // 物理焼き込み先モデル
 	OutputMotion   *vmd.VmdMotion `json:"-"` // 出力結果モーション
 
-	PhysicsTree *PhysicsModel `json:"-"` // 物理ボーンツリー
-	OutputTree  *OutputModel  `json:"-"` // 出力ボーンツリー
+	PhysicsTree      *PhysicsModel     `json:"-"` // 物理ボーンツリー
+	OutputTree       *OutputModel      `json:"-"` // 出力ボーンツリー
+	OutputTableModel *OutputTableModel `json:"-"` // 出力定義テーブル
 }
 
 func NewPhysicsSet(index int) *BakeSet {
@@ -323,9 +324,17 @@ func (ss *BakeSet) GetOutputMotionOnlyChecked(startFrame, endFrame float64) ([]*
 	nextFrameCount := 0
 	logFrameCount := 0
 
-	motion := vmd.NewVmdMotion(ss.OutputMotionPath)
+	var motion *vmd.VmdMotion
+
+	// まずは既存モーションに焼き込みボーンを追加する
+	var err error
+	motion, err = ss.OriginalMotion.Copy()
+	if err != nil {
+		return nil, fmt.Errorf(mi18n.T("元モーションのコピーに失敗しました: %w"), err)
+	}
+
 	dirPath, fileName, ext := mfile.SplitPath(ss.OutputMotionPath)
-	motion = vmd.NewVmdMotion(fmt.Sprintf("%s/%s_%04.0f%s", dirPath, fileName, startFrame, ext))
+	motion.SetPath(fmt.Sprintf("%s/%s_%04.0f%s", dirPath, fileName, startFrame, ext))
 
 	// ボーン焼き込み
 	for index := startFrame; index <= endFrame; index++ {
