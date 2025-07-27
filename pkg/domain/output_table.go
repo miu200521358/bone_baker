@@ -28,6 +28,10 @@ func (m *OutputTableModel) SetParent(parent *walk.TableView) {
 }
 
 func (m *OutputTableModel) Value(row, col int) any {
+	if row < 0 || row >= len(m.Records) {
+		return nil
+	}
+
 	item := m.Records[row]
 
 	switch col {

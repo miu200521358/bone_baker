@@ -1,6 +1,7 @@
 package domain
 
 import (
+	"github.com/miu200521358/mlib_go/pkg/domain/mmath"
 	"github.com/miu200521358/mlib_go/pkg/domain/pmx"
 	"github.com/miu200521358/walk/pkg/walk"
 )
@@ -27,6 +28,10 @@ func (m *PhysicsTableModel) SetParent(parent *walk.TableView) {
 }
 
 func (m *PhysicsTableModel) Value(row, col int) any {
+	if row < 0 || row >= len(m.Records) {
+		return nil
+	}
+
 	item := m.Records[row]
 
 	switch col {
@@ -73,11 +78,15 @@ func (m *PhysicsTableModel) RemoveRow(index int) {
 }
 
 type PhysicsBoneRecord struct {
-	StartFrame    float32
-	EndFrame      float32
-	Gravity       float64
-	MaxSubSteps   int
-	FixedTimeStep float64
-	IsStartDeform bool                       // 開始用整形有無
-	TreeModel     *PhysicsRigidBodyTreeModel // 出力ボーンツリー
+	StartFrame     float32
+	EndFrame       float32
+	Gravity        float64
+	MaxSubSteps    int
+	FixedTimeStep  float64
+	IsStartDeform  bool                       // 開始用整形有無
+	SizeRatio      *mmath.MVec3               // 大きさの比率
+	MassRatio      float64                    // 質量の比率
+	TensionRatio   float64                    // 張りの比率
+	StiffnessRatio float64                    // 硬さの比率
+	TreeModel      *PhysicsRigidBodyTreeModel // 出力ボーンツリー
 }

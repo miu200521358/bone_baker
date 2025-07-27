@@ -102,10 +102,10 @@ func NewBakePage(mWidgets *controller.MWidgets) declarative.TabPage {
 					bakeState.OriginalMotionPicker.Widgets(),
 					declarative.VSeparator{},
 					declarative.TextLabel{
-						Text:        mi18n.T("物理設定オプション"),
-						ToolTipText: mi18n.T("物理設定オプション説明"),
+						Text:        mi18n.T("物理設定オプションテーブル"),
+						ToolTipText: mi18n.T("物理設定オプションテーブル説明"),
 						OnMouseDown: func(x, y int, button walk.MouseButton) {
-							mlog.ILT(mi18n.T("物理設定オプション"), mi18n.T("物理設定オプション説明"))
+							mlog.ILT(mi18n.T("物理設定オプションテーブル"), mi18n.T("物理設定オプションテーブル説明"))
 						},
 					},
 					newPhysicsTableView(bakeState, mWidgets),
@@ -513,8 +513,8 @@ func newPhysicsTableViewDialog(bakeState *BakeState, mWidgets *controller.MWidge
 							MinSize: declarative.Size{Width: 100, Height: 20},
 						},
 						declarative.NumberEdit{
+							Value:              declarative.Bind("Gravity"),
 							AssignTo:           &gravityEdit,
-							Value:              -9.8,   // 初期値
 							MinValue:           -100.0, // 最小値
 							MaxValue:           100.0,  // 最大値
 							Decimals:           1,      // 小数点以下の桁数
@@ -532,8 +532,8 @@ func newPhysicsTableViewDialog(bakeState *BakeState, mWidgets *controller.MWidge
 							MinSize: declarative.Size{Width: 100, Height: 20},
 						},
 						declarative.NumberEdit{
+							Value:              declarative.Bind("MaxSubSteps"),
 							AssignTo:           &maxSubStepsEdit,
-							Value:              2.0,   // 初期値
 							MinValue:           1.0,   // 最小値
 							MaxValue:           100.0, // 最大値
 							Decimals:           0,     // 小数点以下の桁数
@@ -551,8 +551,8 @@ func newPhysicsTableViewDialog(bakeState *BakeState, mWidgets *controller.MWidge
 							MinSize: declarative.Size{Width: 100, Height: 20},
 						},
 						declarative.NumberEdit{
+							Value:              declarative.Bind("FixedTimeStep"),
 							AssignTo:           &fixedTimeStepEdit,
-							Value:              60.0,    // 初期値
 							MinValue:           10.0,    // 最小値
 							MaxValue:           48000.0, // 最大値
 							Decimals:           0,       // 小数点以下の桁数
@@ -790,7 +790,7 @@ func newPhysicsTableViewDialog(bakeState *BakeState, mWidgets *controller.MWidge
 					}))
 					physicsMotion.AppendMaxSubStepsFrame(vmd.NewMaxSubStepsFrameByValue(f, record.MaxSubSteps))
 					physicsMotion.AppendFixedTimeStepFrame(vmd.NewFixedTimeStepFrameByValue(f, record.FixedTimeStep))
-					if f == record.StartFrame {
+					if f == record.StartFrame || f == record.EndFrame {
 						if record.IsStartDeform {
 							// 開始時用整形をON
 							physicsMotion.AppendPhysicsResetFrame(vmd.NewPhysicsResetFrameByValue(f, vmd.PHYSICS_RESET_TYPE_START_FIT_FRAME))
@@ -799,12 +799,13 @@ func newPhysicsTableViewDialog(bakeState *BakeState, mWidgets *controller.MWidge
 							physicsMotion.AppendPhysicsResetFrame(vmd.NewPhysicsResetFrameByValue(f, vmd.PHYSICS_RESET_TYPE_CONTINUE_FRAME))
 						}
 					} else {
-						// 開始以降はリセットしない
+						// 開始と終了以外はリセットしない
 						physicsMotion.AppendPhysicsResetFrame(vmd.NewPhysicsResetFrameByValue(f, vmd.PHYSICS_RESET_TYPE_NONE))
 					}
 				}
 			}
 			mWidgets.Window().StorePhysicsMotion(0, physicsMotion)
+			mWidgets.Window().TriggerPhysicsReset()
 
 			bakeState.SetWidgetEnabled(true)
 			controller.Beep()
