@@ -42,6 +42,8 @@ func (m *PhysicsTableModel) Value(row, col int) any {
 		return item.MaxSubSteps
 	case 5:
 		return item.FixedTimeStep
+	case 6:
+		return item.IsStartDeform
 	}
 
 	panic("unexpected col")
@@ -51,9 +53,10 @@ func (m *PhysicsTableModel) AddRecord(model *pmx.PmxModel, startFrame, endFrame 
 	item := &PhysicsBoneRecord{
 		StartFrame:    startFrame,
 		EndFrame:      endFrame,
-		Gravity:       -9.8, // 重力の初期値
-		MaxSubSteps:   2,    // 最大演算回数の初期値
-		FixedTimeStep: 60,   // 固定フレーム時間の初期値
+		Gravity:       -9.8,  // 重力の初期値
+		MaxSubSteps:   2,     // 最大演算回数の初期値
+		FixedTimeStep: 60,    // 固定フレーム時間の初期値
+		IsStartDeform: false, // 開始用整形の初期値
 		TreeModel:     NewPhysicsRigidBodyTreeModel(model),
 	}
 	m.Records = append(m.Records, item)
@@ -72,8 +75,9 @@ func (m *PhysicsTableModel) RemoveRow(index int) {
 type PhysicsBoneRecord struct {
 	StartFrame    float32
 	EndFrame      float32
-	Gravity       float32
+	Gravity       float64
 	MaxSubSteps   int
-	FixedTimeStep int
+	FixedTimeStep float64
+	IsStartDeform bool                       // 開始用整形有無
 	TreeModel     *PhysicsRigidBodyTreeModel // 出力ボーンツリー
 }

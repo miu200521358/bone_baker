@@ -5,6 +5,7 @@ import (
 
 	"github.com/miu200521358/bone_baker/pkg/domain"
 	"github.com/miu200521358/bone_baker/pkg/usecase"
+	"github.com/miu200521358/mlib_go/pkg/domain/mmath"
 	"github.com/miu200521358/mlib_go/pkg/interface/controller"
 	"github.com/miu200521358/mlib_go/pkg/interface/controller/widget"
 	"github.com/miu200521358/walk/pkg/walk"
@@ -28,14 +29,6 @@ type BakeState struct {
 	PhysicsTableView      *walk.TableView      // 物理ボーン表示テーブル
 	OutputTableView       *walk.TableView      // 出力定義テーブル
 	BakeSets              []*domain.BakeSet    `json:"bake_sets"` // ボーン焼き込みセット
-
-	// GravityEdit           *walk.NumberEdit     // 重力値入力
-	// MassEdit              *walk.NumberEdit     // 質量入力
-	// StiffnessEdit         *walk.NumberEdit     // 硬さ入力
-	// TensionEdit           *walk.NumberEdit     // 張り入力
-	// MaxSubStepsEdit       *walk.NumberEdit     // 最大最大演算回数
-	// FixedTimeStepEdit     *walk.NumberEdit     // 固定タイムステップ入力
-	// PhysicsTreeView       *walk.TreeView       // 物理ボーン表示ツリー
 
 	// Usecase（依存性注入）
 	bakeUsecase *usecase.BakeUsecase
@@ -229,20 +222,32 @@ func (bakeState *BakeState) LoadMotion(
 	bakeState.BakedHistoryIndexEdit.SetRange(1.0, 2.0)
 
 	if bakeState.CurrentSet().OriginalMotion != nil {
-		// モーションプレイヤーのリセット
-		bakeState.Player.Reset(bakeState.CurrentSet().OriginalMotion.MaxFrame())
 		// 出力ボーン定義に行追加
+		bakeState.CurrentSet().OutputTableModel = domain.NewOutputTableModel()
 		bakeState.CurrentSet().OutputTableModel.AddRecord(
 			bakeState.CurrentSet().OriginalModel,
 			0,
 			bakeState.CurrentSet().OriginalMotion.MaxFrame())
 		bakeState.OutputTableView.SetModel(bakeState.CurrentSet().OutputTableModel)
+
 		// 物理定義に行追加
+		bakeState.CurrentSet().PhysicsTableModel = domain.NewPhysicsTableModel()
 		bakeState.CurrentSet().PhysicsTableModel.AddRecord(
 			bakeState.CurrentSet().OriginalModel,
 			0,
 			bakeState.CurrentSet().OriginalMotion.MaxFrame())
 		bakeState.PhysicsTableView.SetModel(bakeState.CurrentSet().PhysicsTableModel)
+	}
+
+	{
+		maxFrames := make([]float32, len(bakeState.BakeSets))
+		for i, set := range bakeState.BakeSets {
+			if set.OriginalMotion != nil {
+				maxFrames[i] = set.OriginalMotion.MaxFrame()
+			}
+		}
+		// モーションプレイヤーのリセット
+		bakeState.Player.Reset(mmath.Max(maxFrames))
 	}
 
 	bakeState.OutputMotionPicker.SetPath(bakeState.CurrentSet().OutputMotionPath)

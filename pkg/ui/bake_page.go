@@ -10,6 +10,8 @@ import (
 	"github.com/miu200521358/mlib_go/pkg/config/merr"
 	"github.com/miu200521358/mlib_go/pkg/config/mi18n"
 	"github.com/miu200521358/mlib_go/pkg/config/mlog"
+	"github.com/miu200521358/mlib_go/pkg/domain/mmath"
+	"github.com/miu200521358/mlib_go/pkg/domain/vmd"
 	"github.com/miu200521358/mlib_go/pkg/infrastructure/repository"
 	"github.com/miu200521358/mlib_go/pkg/interface/controller"
 	"github.com/miu200521358/mlib_go/pkg/interface/controller/widget"
@@ -26,6 +28,8 @@ func NewBakePage(mWidgets *controller.MWidgets) declarative.TabPage {
 
 	bakeState.Player = widget.NewMotionPlayer()
 	bakeState.Player.SetLabelTexts(mi18n.T("焼き込み停止"), mi18n.T("焼き込み再生"))
+	bakeState.Player.SetOnEnabledInPlaying(newEnabledPlaying(bakeState))
+	bakeState.Player.SetOnChangePlayingPre(newOnChangePlayingPre(bakeState, mWidgets))
 
 	bakeState.OutputMotionPicker = newOutputMotionFilePicker()
 	bakeState.OutputModelPicker = newOutputModelFilePicker(bakeState)
@@ -49,8 +53,6 @@ func NewBakePage(mWidgets *controller.MWidgets) declarative.TabPage {
 		bakeState.BakeSets = append(bakeState.BakeSets, domain.NewPhysicsSet(len(bakeState.BakeSets)))
 		bakeState.AddAction()
 	})
-
-	mWidgets.SetOnChangePlaying(newOnChangePlaying(bakeState, mWidgets))
 
 	return declarative.TabPage{
 		Title:    mi18n.T("焼き込み"),
@@ -100,7 +102,8 @@ func NewBakePage(mWidgets *controller.MWidgets) declarative.TabPage {
 					bakeState.OriginalMotionPicker.Widgets(),
 					declarative.VSeparator{},
 					declarative.TextLabel{
-						Text: mi18n.T("物理設定オプション"),
+						Text:        mi18n.T("物理設定オプション"),
+						ToolTipText: mi18n.T("物理設定オプション説明"),
 						OnMouseDown: func(x, y int, button walk.MouseButton) {
 							mlog.ILT(mi18n.T("物理設定オプション"), mi18n.T("物理設定オプション説明"))
 						},
@@ -118,7 +121,10 @@ func NewBakePage(mWidgets *controller.MWidgets) declarative.TabPage {
 					declarative.TextLabel{
 						Text:        mi18n.T("焼き込み保存設定テーブル"),
 						ToolTipText: mi18n.T("焼き込み保存設定テーブル説明"),
-						ColumnSpan:  6,
+						OnMouseDown: func(x, y int, button walk.MouseButton) {
+							mlog.ILT(mi18n.T("焼き込み保存設定テーブル"), mi18n.T("焼き込み保存設定テーブル説明"))
+						},
+						ColumnSpan: 6,
 					},
 					newOutputTableView(bakeState, mWidgets),
 					bakeState.SaveMotionButton.Widgets(),
@@ -371,17 +377,24 @@ func newSaveMotionButton(bakeState *BakeState) *widget.MPushButton {
 	return btn
 }
 
-func newOnChangePlaying(bakeState *BakeState, mWidgets *controller.MWidgets) func(playing bool) {
+func newEnabledPlaying(bakeState *BakeState) func(playing bool) {
+	return func(playing bool) {
+		bakeState.SetWidgetEnabled(!playing)
+		if playing {
+			// 再生中も操作可ウィジェットを有効化
+			bakeState.SetWidgetPlayingEnabled(true)
+		}
+	}
+}
+
+func newOnChangePlayingPre(bakeState *BakeState, mWidgets *controller.MWidgets) func(playing bool) {
 	return func(playing bool) {
 		mWidgets.Window().SetSaveDelta(0, playing)
-		bakeState.SetWidgetEnabled(!playing)
 
 		// 情報表示
 		mWidgets.Window().SetCheckedShowInfoEnabled(playing)
 
 		if playing {
-			bakeState.SetWidgetPlayingEnabled(true)
-
 			// 焼き込み開始時にINDEX加算
 			deltaIndex := mWidgets.Window().GetDeltaMotionCount(0, bakeState.CurrentIndex())
 			if deltaIndex > 0 {
@@ -389,6 +402,11 @@ func newOnChangePlaying(bakeState *BakeState, mWidgets *controller.MWidgets) fun
 				deltaIndex += 1
 			}
 			mWidgets.Window().SetSaveDeltaIndex(0, deltaIndex)
+
+			// 再生フレーム
+			mlog.IL(mi18n.T("焼き込み再生開始: 焼き込み履歴INDEX[%d]"), deltaIndex+1)
+			mWidgets.Window().SetFrame(mWidgets.Window().Frame() - 2)
+			mWidgets.Window().StorePhysicsReset(vmd.PHYSICS_RESET_TYPE_START_FIT_FRAME)
 		} else {
 			// 焼き込み完了時に範囲を更新
 			deltaCnt := mWidgets.Window().GetDeltaMotionCount(0, bakeState.CurrentIndex())
@@ -408,9 +426,10 @@ func newPhysicsTableView(bakeState *BakeState, mWidgets *controller.MWidgets) de
 			{Title: "#", Width: 30},
 			{Title: mi18n.T("開始F"), Width: 60},
 			{Title: mi18n.T("終了F"), Width: 60},
-			{Title: mi18n.T("重力"), Width: 100},
+			{Title: mi18n.T("重力"), Width: 60},
 			{Title: mi18n.T("最大演算回数"), Width: 100},
 			{Title: mi18n.T("物理演算頻度"), Width: 100},
+			{Title: mi18n.T("開始時用整形"), Width: 100},
 		},
 		OnItemClicked: newPhysicsTableViewDialog(bakeState, mWidgets),
 	}
@@ -477,8 +496,13 @@ func newPhysicsTableViewDialog(bakeState *BakeState, mWidgets *controller.MWidge
 							MinValue:           0,
 							MaxValue:           float64(bakeState.CurrentSet().MaxFrame() + 1),
 						},
-						declarative.HSpacer{
-							ColumnSpan: 2,
+						declarative.Label{
+							Text:        mi18n.T("開始時用整形"),
+							ToolTipText: mi18n.T("開始時用整形説明"),
+						},
+						declarative.CheckBox{
+							Checked:     declarative.Bind("IsStartDeform"),
+							ToolTipText: mi18n.T("開始時用整形説明"),
 						},
 						declarative.TextLabel{
 							Text:        mi18n.T("重力"),
@@ -754,6 +778,37 @@ func newPhysicsTableViewDialog(bakeState *BakeState, mWidgets *controller.MWidge
 		}
 
 		if cmd, err := dialog.Run(builder.Parent().Form()); err == nil && cmd == walk.DlgCmdOK {
+			bakeState.SetWidgetEnabled(false)
+
+			physicsMotion := mWidgets.Window().LoadPhysicsMotion(0)
+			for _, record := range bakeState.PhysicsTableView.Model().(*domain.PhysicsTableModel).Records {
+				for f := record.StartFrame; f <= record.EndFrame; f++ {
+					physicsMotion.AppendGravityFrame(vmd.NewGravityFrameByValue(f, &mmath.MVec3{
+						X: 0,
+						Y: float64(record.Gravity),
+						Z: 0,
+					}))
+					physicsMotion.AppendMaxSubStepsFrame(vmd.NewMaxSubStepsFrameByValue(f, record.MaxSubSteps))
+					physicsMotion.AppendFixedTimeStepFrame(vmd.NewFixedTimeStepFrameByValue(f, record.FixedTimeStep))
+					if f == record.StartFrame {
+						if record.IsStartDeform {
+							// 開始時用整形をON
+							physicsMotion.AppendPhysicsResetFrame(vmd.NewPhysicsResetFrameByValue(f, vmd.PHYSICS_RESET_TYPE_START_FIT_FRAME))
+						} else {
+							// 前フレームから継続して物理演算を行う
+							physicsMotion.AppendPhysicsResetFrame(vmd.NewPhysicsResetFrameByValue(f, vmd.PHYSICS_RESET_TYPE_CONTINUE_FRAME))
+						}
+					} else {
+						// 開始以降はリセットしない
+						physicsMotion.AppendPhysicsResetFrame(vmd.NewPhysicsResetFrameByValue(f, vmd.PHYSICS_RESET_TYPE_NONE))
+					}
+				}
+			}
+			mWidgets.Window().StorePhysicsMotion(0, physicsMotion)
+
+			bakeState.SetWidgetEnabled(true)
+			controller.Beep()
+
 			// 次の作業用の行を追加して、更新
 			currentIndex := bakeState.PhysicsTableView.CurrentIndex()
 			if currentIndex == len(bakeState.CurrentSet().PhysicsTableModel.Records)-1 {

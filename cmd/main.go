@@ -66,7 +66,6 @@ func main() {
 				ui.NewMenuItems(), []declarative.TabPage{
 					ui.NewBakePage(widgets),
 				},
-				widgets.SetEnabledInPlaying,
 				widths[0], heights[0], positionXs[0], positionYs[0], viewerCount)
 			if err != nil {
 				merr.ShowFatalErrorDialog(appConfig, err)
