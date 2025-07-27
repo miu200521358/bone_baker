@@ -790,7 +790,7 @@ func newPhysicsTableViewDialog(bakeState *BakeState, mWidgets *controller.MWidge
 					}))
 					physicsMotion.AppendMaxSubStepsFrame(vmd.NewMaxSubStepsFrameByValue(f, record.MaxSubSteps))
 					physicsMotion.AppendFixedTimeStepFrame(vmd.NewFixedTimeStepFrameByValue(f, record.FixedTimeStep))
-					if f == record.StartFrame || f == record.EndFrame {
+					if f == record.StartFrame {
 						if record.IsStartDeform {
 							// 開始時用整形をON
 							physicsMotion.AppendPhysicsResetFrame(vmd.NewPhysicsResetFrameByValue(f, vmd.PHYSICS_RESET_TYPE_START_FIT_FRAME))
@@ -803,6 +803,9 @@ func newPhysicsTableViewDialog(bakeState *BakeState, mWidgets *controller.MWidge
 						physicsMotion.AppendPhysicsResetFrame(vmd.NewPhysicsResetFrameByValue(f, vmd.PHYSICS_RESET_TYPE_NONE))
 					}
 				}
+
+				// 最後のフレームの後に物理リセットする
+				physicsMotion.AppendPhysicsResetFrame(vmd.NewPhysicsResetFrameByValue(record.EndFrame+1, vmd.PHYSICS_RESET_TYPE_CONTINUE_FRAME))
 			}
 			mWidgets.Window().StorePhysicsMotion(0, physicsMotion)
 			mWidgets.Window().TriggerPhysicsReset()
