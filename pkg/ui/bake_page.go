@@ -11,6 +11,7 @@ import (
 	"github.com/miu200521358/mlib_go/pkg/config/mi18n"
 	"github.com/miu200521358/mlib_go/pkg/config/mlog"
 	"github.com/miu200521358/mlib_go/pkg/domain/mmath"
+	"github.com/miu200521358/mlib_go/pkg/domain/pmx"
 	"github.com/miu200521358/mlib_go/pkg/domain/vmd"
 	"github.com/miu200521358/mlib_go/pkg/infrastructure/repository"
 	"github.com/miu200521358/mlib_go/pkg/interface/controller"
@@ -461,7 +462,7 @@ func newPhysicsTableViewDialog(bakeState *BakeState, mWidgets *controller.MWidge
 			DefaultButton: &okBtn,
 			Title:         mi18n.T("物理設定変更"),
 			Layout:        declarative.VBox{},
-			MinSize:       declarative.Size{Width: 600, Height: 200},
+			MinSize:       declarative.Size{Width: 600, Height: 300},
 			DataBinder: declarative.DataBinder{
 				AssignTo:   &db,
 				DataSource: bakeState.CurrentSet().PhysicsTableModel.Records[bakeState.PhysicsTableView.CurrentIndex()],
@@ -565,6 +566,35 @@ func newPhysicsTableViewDialog(bakeState *BakeState, mWidgets *controller.MWidge
 						declarative.VSeparator{
 							ColumnSpan: 6,
 						},
+						declarative.Label{
+							Text:        mi18n.T("設定最大開始フレーム"),
+							ToolTipText: mi18n.T("設定最大開始フレーム説明"),
+						},
+						declarative.NumberEdit{
+							Value:              declarative.Bind("MaxStartFrame"),
+							ToolTipText:        mi18n.T("設定最大開始フレーム説明"),
+							SpinButtonsVisible: true,
+							Decimals:           0,
+							Increment:          1,
+							MinValue:           0,
+							MaxValue:           float64(bakeState.CurrentSet().MaxFrame() + 1),
+						},
+						declarative.Label{
+							Text:        mi18n.T("設定最大終了フレーム"),
+							ToolTipText: mi18n.T("設定最大終了フレーム説明"),
+						},
+						declarative.NumberEdit{
+							Value:              declarative.Bind("MaxEndFrame"),
+							ToolTipText:        mi18n.T("設定最大終了フレーム説明"),
+							SpinButtonsVisible: true,
+							Decimals:           0,
+							Increment:          1,
+							MinValue:           0,
+							MaxValue:           float64(bakeState.CurrentSet().MaxFrame() + 1),
+						},
+						declarative.VSeparator{
+							ColumnSpan: 2,
+						},
 						declarative.TextLabel{
 							Text:        mi18n.T("大きさX倍率"),
 							ToolTipText: mi18n.T("大きさX倍率説明"),
@@ -577,6 +607,9 @@ func newPhysicsTableViewDialog(bakeState *BakeState, mWidgets *controller.MWidge
 							AssignTo: &sizeXEdit,
 							OnValueChanged: func() {
 								// 選択されているアイテムの大きさXを更新
+								if treeView.CurrentItem() == nil {
+									return
+								}
 								treeView.CurrentItem().(*domain.PhysicsItem).CalcSizeX(sizeXEdit.Value())
 								// モデルの更新
 								treeView.Model().(*domain.PhysicsRigidBodyTreeModel).PublishItemChanged(treeView.CurrentItem())
@@ -601,6 +634,10 @@ func newPhysicsTableViewDialog(bakeState *BakeState, mWidgets *controller.MWidge
 						declarative.NumberEdit{
 							AssignTo: &sizeYEdit,
 							OnValueChanged: func() {
+								if treeView.CurrentItem() == nil {
+									return
+								}
+
 								// 選択されているアイテムの大きさYを更新
 								treeView.CurrentItem().(*domain.PhysicsItem).CalcSizeY(sizeYEdit.Value())
 								// モデルの更新
@@ -626,6 +663,10 @@ func newPhysicsTableViewDialog(bakeState *BakeState, mWidgets *controller.MWidge
 						declarative.NumberEdit{
 							AssignTo: &sizeZEdit,
 							OnValueChanged: func() {
+								if treeView.CurrentItem() == nil {
+									return
+								}
+
 								// 選択されているアイテムの大きさZを更新
 								treeView.CurrentItem().(*domain.PhysicsItem).CalcSizeZ(sizeZEdit.Value())
 								// モデルの更新
@@ -651,6 +692,10 @@ func newPhysicsTableViewDialog(bakeState *BakeState, mWidgets *controller.MWidge
 						declarative.NumberEdit{
 							AssignTo: &massEdit,
 							OnValueChanged: func() {
+								if treeView.CurrentItem() == nil {
+									return
+								}
+
 								// 選択されているアイテムの質量を更新
 								treeView.CurrentItem().(*domain.PhysicsItem).CalcMass(massEdit.Value())
 								// モデルの更新
@@ -676,6 +721,10 @@ func newPhysicsTableViewDialog(bakeState *BakeState, mWidgets *controller.MWidge
 						declarative.NumberEdit{
 							AssignTo: &stiffnessEdit,
 							OnValueChanged: func() {
+								if treeView.CurrentItem() == nil {
+									return
+								}
+
 								// 選択されているアイテムの硬さを更新
 								treeView.CurrentItem().(*domain.PhysicsItem).CalcStiffness(stiffnessEdit.Value())
 								// モデルの更新
@@ -701,6 +750,10 @@ func newPhysicsTableViewDialog(bakeState *BakeState, mWidgets *controller.MWidge
 						declarative.NumberEdit{
 							AssignTo: &tensionEdit,
 							OnValueChanged: func() {
+								if treeView.CurrentItem() == nil {
+									return
+								}
+
 								// 選択されているアイテムの張りを更新
 								treeView.CurrentItem().(*domain.PhysicsItem).CalcTension(tensionEdit.Value())
 								// モデルの更新
@@ -722,16 +775,18 @@ func newPhysicsTableViewDialog(bakeState *BakeState, mWidgets *controller.MWidge
 							MinSize:    declarative.Size{Width: 230, Height: 200},
 							ColumnSpan: 6,
 							OnCurrentItemChanged: func() {
-								if treeView.CurrentItem() != nil {
-									// 選択されたアイテムの情報を更新
-									currentItem := treeView.CurrentItem().(*domain.PhysicsItem)
-									sizeXEdit.ChangeValue(currentItem.SizeRatio().X)
-									sizeYEdit.ChangeValue(currentItem.SizeRatio().Y)
-									sizeZEdit.ChangeValue(currentItem.SizeRatio().Z)
-									massEdit.ChangeValue(currentItem.MassRatio())
-									stiffnessEdit.ChangeValue(currentItem.StiffnessRatio())
-									tensionEdit.ChangeValue(currentItem.TensionRatio())
+								if treeView.CurrentItem() == nil {
+									return
 								}
+
+								// 選択されたアイテムの情報を更新
+								currentItem := treeView.CurrentItem().(*domain.PhysicsItem)
+								sizeXEdit.ChangeValue(currentItem.SizeRatio().X)
+								sizeYEdit.ChangeValue(currentItem.SizeRatio().Y)
+								sizeZEdit.ChangeValue(currentItem.SizeRatio().Z)
+								massEdit.ChangeValue(currentItem.MassRatio())
+								stiffnessEdit.ChangeValue(currentItem.StiffnessRatio())
+								tensionEdit.ChangeValue(currentItem.TensionRatio())
 							},
 						},
 					},
@@ -780,34 +835,180 @@ func newPhysicsTableViewDialog(bakeState *BakeState, mWidgets *controller.MWidge
 		if cmd, err := dialog.Run(builder.Parent().Form()); err == nil && cmd == walk.DlgCmdOK {
 			bakeState.SetWidgetEnabled(false)
 
-			physicsMotion := mWidgets.Window().LoadPhysicsMotion(0)
+			physicsWorldMotion := mWidgets.Window().LoadPhysicsWorldMotion(0)
+			physicsModelMotion := mWidgets.Window().LoadPhysicsModelMotion(0, bakeState.CurrentIndex())
+
 			for _, record := range bakeState.PhysicsTableView.Model().(*domain.PhysicsTableModel).Records {
 				for f := record.StartFrame; f <= record.EndFrame; f++ {
-					physicsMotion.AppendGravityFrame(vmd.NewGravityFrameByValue(f, &mmath.MVec3{
+					physicsWorldMotion.AppendGravityFrame(vmd.NewGravityFrameByValue(f, &mmath.MVec3{
 						X: 0,
 						Y: float64(record.Gravity),
 						Z: 0,
 					}))
-					physicsMotion.AppendMaxSubStepsFrame(vmd.NewMaxSubStepsFrameByValue(f, record.MaxSubSteps))
-					physicsMotion.AppendFixedTimeStepFrame(vmd.NewFixedTimeStepFrameByValue(f, record.FixedTimeStep))
+					physicsWorldMotion.AppendMaxSubStepsFrame(vmd.NewMaxSubStepsFrameByValue(f, record.MaxSubSteps))
+					physicsWorldMotion.AppendFixedTimeStepFrame(vmd.NewFixedTimeStepFrameByValue(f, record.FixedTimeStep))
+
 					if f == record.StartFrame {
 						if record.IsStartDeform {
 							// 開始時用整形をON
-							physicsMotion.AppendPhysicsResetFrame(vmd.NewPhysicsResetFrameByValue(f, vmd.PHYSICS_RESET_TYPE_START_FIT_FRAME))
+							physicsWorldMotion.AppendPhysicsResetFrame(vmd.NewPhysicsResetFrameByValue(f, vmd.PHYSICS_RESET_TYPE_START_FIT_FRAME))
 						} else {
 							// 前フレームから継続して物理演算を行う
-							physicsMotion.AppendPhysicsResetFrame(vmd.NewPhysicsResetFrameByValue(f, vmd.PHYSICS_RESET_TYPE_CONTINUE_FRAME))
+							physicsWorldMotion.AppendPhysicsResetFrame(vmd.NewPhysicsResetFrameByValue(f, vmd.PHYSICS_RESET_TYPE_CONTINUE_FRAME))
 						}
 					} else {
 						// 開始と終了以外はリセットしない
-						physicsMotion.AppendPhysicsResetFrame(vmd.NewPhysicsResetFrameByValue(f, vmd.PHYSICS_RESET_TYPE_NONE))
+						physicsWorldMotion.AppendPhysicsResetFrame(vmd.NewPhysicsResetFrameByValue(f, vmd.PHYSICS_RESET_TYPE_NONE))
 					}
+
+					// 剛体・ジョイントパラは台形の線形補間で変形させる
+					frameRatio := float32(0.0)
+					if f < record.MaxStartFrame && f > record.StartFrame &&
+						record.MaxStartFrame > record.StartFrame {
+						// StartFrame から MaxStartFrame の間：0倍から指定倍率まで線形補間
+						frameRatio = (f - record.StartFrame) / (record.MaxStartFrame - record.StartFrame)
+						// 変動中はリセッし続ける
+						physicsWorldMotion.AppendPhysicsResetFrame(vmd.NewPhysicsResetFrameByValue(f, vmd.PHYSICS_RESET_TYPE_CONTINUE_FRAME))
+					} else if f > record.MaxEndFrame && f < record.EndFrame &&
+						record.MaxEndFrame < record.EndFrame {
+						// MaxEndFrame から EndFrame の間：指定倍率から0倍まで線形補間
+						frameRatio = (record.EndFrame - f) / (record.EndFrame - record.MaxEndFrame)
+						// 変動中はリセッし続ける
+						physicsWorldMotion.AppendPhysicsResetFrame(vmd.NewPhysicsResetFrameByValue(f, vmd.PHYSICS_RESET_TYPE_CONTINUE_FRAME))
+					} else if f >= record.MaxStartFrame && f <= record.MaxEndFrame {
+						// MAXの間はそのまま最大倍率
+						frameRatio = 1.0
+					} else {
+						// StartFrame以前とEndFrame以後は元の値（倍率なし）
+						frameRatio = 0.0
+					}
+					frameRatio64 := float64(frameRatio)
+
+					// 剛体
+					model := bakeState.CurrentSet().OriginalModel
+					model.RigidBodies.ForEach(func(rigidIndex int, rb *pmx.RigidBody) bool {
+						rigidBodyItem := record.TreeModel.AtByRigidBodyIndex(rb.Index())
+
+						if rigidBodyItem == nil || !rigidBodyItem.(*domain.PhysicsItem).Modified() {
+							physicsModelMotion.AppendRigidBodyFrame(rb.Name(),
+								vmd.NewRigidBodyFrameByValues(
+									f,
+									rb.Size,
+									rb.RigidBodyParam.Mass,
+								))
+
+							return true
+						}
+
+						// 質量の計算：元の質量 + (元の質量 * (massRatio - 1.0) * frameRatio)
+						sizeRatio := rigidBodyItem.(*domain.PhysicsItem).SizeRatio()
+						calculatedSize := rb.Size.Added(rb.Size.Muled(sizeRatio.SubedScalar(1.0).MuledScalar(frameRatio64)))
+
+						massRatio := rigidBodyItem.(*domain.PhysicsItem).MassRatio()
+						calculatedMass := rb.RigidBodyParam.Mass + (rb.RigidBodyParam.Mass * (massRatio - 1.0) * frameRatio64)
+
+						physicsModelMotion.AppendRigidBodyFrame(rb.Name(),
+							vmd.NewRigidBodyFrameByValues(
+								f,
+								calculatedSize,
+								calculatedMass,
+							))
+
+						return true
+					})
+
+					// ジョイント
+					model.Joints.ForEach(func(jointIndex int, joint *pmx.Joint) bool {
+						rigidBodyItemA := record.TreeModel.AtByRigidBodyIndex(joint.RigidbodyIndexA)
+						rigidBodyItemB := record.TreeModel.AtByRigidBodyIndex(joint.RigidbodyIndexB)
+
+						if rigidBodyItemA == nil && rigidBodyItemB == nil {
+							// ジョイントの両端が未設定の場合はスキップ
+							physicsModelMotion.AppendJointFrame(joint.Name(),
+								vmd.NewJointFrameByValues(
+									f,
+									joint.JointParam.TranslationLimitMin,
+									joint.JointParam.TranslationLimitMax,
+									joint.JointParam.RotationLimitMin,
+									joint.JointParam.RotationLimitMax,
+									joint.JointParam.SpringConstantTranslation,
+									joint.JointParam.SpringConstantRotation,
+								))
+
+							return true
+						}
+
+						if ((rigidBodyItemA != nil && !rigidBodyItemA.(*domain.PhysicsItem).Modified()) || rigidBodyItemA == nil) &&
+							((rigidBodyItemB != nil && !rigidBodyItemB.(*domain.PhysicsItem).Modified()) || rigidBodyItemB == nil) {
+							// 両方の剛体が未変更の場合はスキップ
+							physicsModelMotion.AppendJointFrame(joint.Name(),
+								vmd.NewJointFrameByValues(
+									f,
+									joint.JointParam.TranslationLimitMin,
+									joint.JointParam.TranslationLimitMax,
+									joint.JointParam.RotationLimitMin,
+									joint.JointParam.RotationLimitMax,
+									joint.JointParam.SpringConstantTranslation,
+									joint.JointParam.SpringConstantRotation,
+								))
+
+							return true
+						}
+
+						// ジョイントのパラメータを台形の線形補間で変形させる
+						var stiffnessRatioA, stiffnessRatioB float64
+						var tensionRatioA, tensionRatioB float64
+						if rigidBodyItemA != nil && rigidBodyItemA.(*domain.PhysicsItem).Modified() {
+							stiffnessRatioA = rigidBodyItemA.(*domain.PhysicsItem).StiffnessRatio()
+							tensionRatioA = rigidBodyItemA.(*domain.PhysicsItem).TensionRatio()
+						} else {
+							stiffnessRatioA = 1.0
+							tensionRatioA = 1.0
+						}
+						if rigidBodyItemB != nil && rigidBodyItemB.(*domain.PhysicsItem).Modified() {
+							stiffnessRatioB = rigidBodyItemB.(*domain.PhysicsItem).StiffnessRatio()
+							tensionRatioB = rigidBodyItemB.(*domain.PhysicsItem).TensionRatio()
+						} else {
+							stiffnessRatioB = 1.0
+							tensionRatioB = 1.0
+						}
+
+						// 両剛体の平均倍率を計算
+						avgStiffnessRatio := mmath.Mean([]float64{stiffnessRatioA, stiffnessRatioB})
+						avgTensionRatio := mmath.Mean([]float64{tensionRatioA, tensionRatioB})
+
+						// 台形状の変化を適用
+						calculatedRotationLimitMin := joint.JointParam.RotationLimitMin.Added(
+							joint.JointParam.RotationLimitMin.DivedScalar((avgStiffnessRatio - 1.0) * frameRatio64))
+						calculatedRotationLimitMax := joint.JointParam.RotationLimitMax.Added(
+							joint.JointParam.RotationLimitMax.DivedScalar((avgStiffnessRatio - 1.0) * frameRatio64))
+						calculatedSpringConstantRotation := joint.JointParam.SpringConstantRotation.Added(
+							joint.JointParam.SpringConstantRotation.MuledScalar((avgTensionRatio - 1.0) * frameRatio64))
+
+						physicsModelMotion.AppendJointFrame(joint.Name(),
+							vmd.NewJointFrameByValues(
+								f,
+								joint.JointParam.TranslationLimitMin,
+								joint.JointParam.TranslationLimitMax,
+								calculatedRotationLimitMin,
+								calculatedRotationLimitMax,
+								joint.JointParam.SpringConstantTranslation,
+								calculatedSpringConstantRotation,
+							))
+
+						return true
+					})
 				}
 
+				// 最初フレームの前には物理リセットしない（次キーフレを呼んでしまうので）
+				if record.StartFrame > 0 {
+					physicsWorldMotion.AppendPhysicsResetFrame(vmd.NewPhysicsResetFrameByValue(record.StartFrame-1, vmd.PHYSICS_RESET_TYPE_NONE))
+				}
 				// 最後のフレームの後に物理リセットする
-				physicsMotion.AppendPhysicsResetFrame(vmd.NewPhysicsResetFrameByValue(record.EndFrame+1, vmd.PHYSICS_RESET_TYPE_CONTINUE_FRAME))
+				physicsWorldMotion.AppendPhysicsResetFrame(vmd.NewPhysicsResetFrameByValue(record.EndFrame+1, vmd.PHYSICS_RESET_TYPE_CONTINUE_FRAME))
 			}
-			mWidgets.Window().StorePhysicsMotion(0, physicsMotion)
+			mWidgets.Window().StorePhysicsWorldMotion(0, physicsWorldMotion)
+			mWidgets.Window().StorePhysicsModelMotion(0, bakeState.CurrentIndex(), physicsModelMotion)
 			mWidgets.Window().TriggerPhysicsReset()
 
 			bakeState.SetWidgetEnabled(true)

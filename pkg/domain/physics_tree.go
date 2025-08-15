@@ -19,6 +19,7 @@ type PhysicsItem struct {
 	massRatio      float64      // 質量比率
 	stiffnessRatio float64      // 硬さ比率
 	tensionRatio   float64      // 張り比率
+	modified       bool         // 変更されたかどうか
 }
 
 func NewPhysicsItem(bones *pmx.Bones, bone *pmx.Bone, rigidBody *pmx.RigidBody, parent walk.TreeItem) *PhysicsItem {
@@ -103,6 +104,7 @@ func (pi *PhysicsItem) Reset() {
 
 func (pi *PhysicsItem) CalcSizeX(x float64) {
 	pi.sizeRatio.X = x
+	pi.modified = true
 
 	for _, child := range pi.children {
 		child.(*PhysicsItem).CalcSizeX(x)
@@ -111,6 +113,7 @@ func (pi *PhysicsItem) CalcSizeX(x float64) {
 
 func (pi *PhysicsItem) CalcSizeY(y float64) {
 	pi.sizeRatio.Y = y
+	pi.modified = true
 
 	for _, child := range pi.children {
 		child.(*PhysicsItem).CalcSizeY(y)
@@ -119,6 +122,7 @@ func (pi *PhysicsItem) CalcSizeY(y float64) {
 
 func (pi *PhysicsItem) CalcSizeZ(z float64) {
 	pi.sizeRatio.Z = z
+	pi.modified = true
 
 	for _, child := range pi.children {
 		child.(*PhysicsItem).CalcSizeZ(z)
@@ -127,6 +131,7 @@ func (pi *PhysicsItem) CalcSizeZ(z float64) {
 
 func (pi *PhysicsItem) CalcMass(massRatio float64) {
 	pi.massRatio = massRatio
+	pi.modified = true
 
 	for _, child := range pi.children {
 		child.(*PhysicsItem).CalcMass(massRatio)
@@ -135,6 +140,7 @@ func (pi *PhysicsItem) CalcMass(massRatio float64) {
 
 func (pi *PhysicsItem) CalcStiffness(stiffnessRatio float64) {
 	pi.stiffnessRatio = stiffnessRatio
+	pi.modified = true
 
 	for _, child := range pi.children {
 		child.(*PhysicsItem).CalcStiffness(stiffnessRatio)
@@ -143,6 +149,7 @@ func (pi *PhysicsItem) CalcStiffness(stiffnessRatio float64) {
 
 func (pi *PhysicsItem) CalcTension(tensionRatio float64) {
 	pi.tensionRatio = tensionRatio
+	pi.modified = true
 
 	for _, child := range pi.children {
 		child.(*PhysicsItem).CalcTension(tensionRatio)
@@ -163,6 +170,10 @@ func (pi *PhysicsItem) StiffnessRatio() float64 {
 
 func (pi *PhysicsItem) TensionRatio() float64 {
 	return pi.tensionRatio
+}
+
+func (pi *PhysicsItem) Modified() bool {
+	return pi.modified
 }
 
 func (pi *PhysicsItem) SaveOnlyPhysicsItems() {
@@ -211,6 +222,30 @@ func (pi *PhysicsItem) AtByBoneIndex(boneIndex int) *PhysicsItem {
 	return nil
 }
 
+func (pi *PhysicsItem) AtByRigidBodyIndex(rigidBodyIndex int) *PhysicsItem {
+	if pi.rigidBody == nil {
+		for _, child := range pi.children {
+			if found := child.(*PhysicsItem).AtByRigidBodyIndex(rigidBodyIndex); found != nil {
+				return found
+			}
+		}
+
+		return nil
+	}
+
+	if pi.rigidBody.Index() == rigidBodyIndex {
+		return pi
+	}
+
+	for _, child := range pi.children {
+		if found := child.(*PhysicsItem).AtByRigidBodyIndex(rigidBodyIndex); found != nil {
+			return found
+		}
+	}
+
+	return nil
+}
+
 type PhysicsRigidBodyTreeModel struct {
 	*walk.TreeModelBase
 	nodes []*PhysicsItem
@@ -250,24 +285,6 @@ func NewPhysicsRigidBodyTreeModel(model *pmx.PmxModel) *PhysicsRigidBodyTreeMode
 		}
 	}
 
-	var noBoneItem *PhysicsItem
-
-	// ボーンに紐付かない剛体も追加
-	for rigidBodyIndex, registered := range registeredRigidBodyIndexes {
-		if registered {
-			continue
-		}
-		if rigidBody, err := model.RigidBodies.Get(rigidBodyIndex); err == nil {
-			if noBoneItem == nil {
-				noBone := pmx.NewBoneByName("No Bone")
-				noBoneItem = NewPhysicsItem(model.Bones, noBone, nil, nil)
-				tree.AddNode(noBoneItem)
-			}
-			item := NewPhysicsItem(model.Bones, nil, rigidBody, noBoneItem)
-			noBoneItem.AddChild(item)
-		}
-	}
-
 	// 物理ボーンを持つアイテムのみを保存
 	tree.SaveOnlyPhysicsItems()
 
@@ -296,6 +313,20 @@ func (pm *PhysicsRigidBodyTreeModel) AtByBoneIndex(boneIndex int) walk.TreeItem 
 
 	for _, item := range pm.nodes {
 		if found := item.AtByBoneIndex(boneIndex); found != nil {
+			return found
+		}
+	}
+
+	return nil
+}
+
+func (pm *PhysicsRigidBodyTreeModel) AtByRigidBodyIndex(rigidBodyIndex int) walk.TreeItem {
+	if rigidBodyIndex < 0 {
+		return nil
+	}
+
+	for _, item := range pm.nodes {
+		if found := item.AtByRigidBodyIndex(rigidBodyIndex); found != nil {
 			return found
 		}
 	}

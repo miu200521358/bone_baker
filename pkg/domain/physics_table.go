@@ -58,6 +58,8 @@ func (m *PhysicsTableModel) AddRecord(model *pmx.PmxModel, startFrame, endFrame 
 	item := &PhysicsBoneRecord{
 		StartFrame:    startFrame,
 		EndFrame:      endFrame,
+		MaxStartFrame: startFrame,
+		MaxEndFrame:   endFrame,
 		Gravity:       -9.8,  // 重力の初期値
 		MaxSubSteps:   2,     // 最大演算回数の初期値
 		FixedTimeStep: 60,    // 固定フレーム時間の初期値
@@ -78,11 +80,13 @@ func (m *PhysicsTableModel) RemoveRow(index int) {
 }
 
 type PhysicsBoneRecord struct {
-	StartFrame     float32
-	EndFrame       float32
-	Gravity        float64
-	MaxSubSteps    int
-	FixedTimeStep  float64
+	StartFrame     float32                    // 区間開始フレーム
+	EndFrame       float32                    // 区間終了フレーム
+	MaxStartFrame  float32                    // 最大値開始フレーム
+	MaxEndFrame    float32                    // 最大値終了フレーム
+	Gravity        float64                    // 重力
+	MaxSubSteps    int                        // 最大演算回数
+	FixedTimeStep  float64                    // 物理演算頻度
 	IsStartDeform  bool                       // 開始用整形有無
 	SizeRatio      *mmath.MVec3               // 大きさの比率
 	MassRatio      float64                    // 質量の比率
