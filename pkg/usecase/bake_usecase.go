@@ -5,16 +5,32 @@ import (
 )
 
 type BakeUsecase struct {
-	modelUsecase      *ModelUsecase
-	motionUsecase     *MotionUsecase
-	bakeSetRepository domain.BakeSetRepository
+	modelUsecase  *ModelUsecase
+	motionUsecase *MotionUsecase
+	bakeSetReader domain.BakeSetReader
+	bakeSetWriter domain.BakeSetWriter
 }
 
+// NewBakeUsecase コンストラクタ（完全なリポジトリインターフェースを受け取る）
 func NewBakeUsecase(bakeSetRepository domain.BakeSetRepository) *BakeUsecase {
 	return &BakeUsecase{
-		modelUsecase:      NewModelUsecase(),
-		motionUsecase:     NewMotionUsecase(),
-		bakeSetRepository: bakeSetRepository,
+		modelUsecase:  NewModelUsecase(),
+		motionUsecase: NewMotionUsecase(),
+		bakeSetReader: bakeSetRepository,
+		bakeSetWriter: bakeSetRepository,
+	}
+}
+
+// NewBakeUsecaseWithSeparatedInterfaces 分離されたインターフェースでのコンストラクタ
+func NewBakeUsecaseWithSeparatedInterfaces(
+	reader domain.BakeSetReader,
+	writer domain.BakeSetWriter,
+) *BakeUsecase {
+	return &BakeUsecase{
+		modelUsecase:  NewModelUsecase(),
+		motionUsecase: NewMotionUsecase(),
+		bakeSetReader: reader,
+		bakeSetWriter: writer,
 	}
 }
 
@@ -54,10 +70,10 @@ func (uc *BakeUsecase) LoadMotionForBakeSet(bakeSet *domain.BakeSet, path string
 
 // SaveBakeSet セット保存のビジネスロジック
 func (uc *BakeUsecase) SaveBakeSet(bakeSets []*domain.BakeSet, jsonPath string) error {
-	return uc.bakeSetRepository.Save(bakeSets, jsonPath)
+	return uc.bakeSetWriter.Save(bakeSets, jsonPath)
 }
 
 // LoadBakeSet セット読み込みのビジネスロジック
 func (uc *BakeUsecase) LoadBakeSet(jsonPath string) ([]*domain.BakeSet, error) {
-	return uc.bakeSetRepository.Load(jsonPath)
+	return uc.bakeSetReader.Load(jsonPath)
 }

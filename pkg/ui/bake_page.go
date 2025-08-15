@@ -275,8 +275,8 @@ func newLoadSetButton(bakeState *BakeState, mWidgets *controller.MWidgets) *widg
 
 			for index := range bakeState.BakeSets {
 				bakeState.ChangeCurrentAction(index)
-				bakeState.OriginalMotionPicker.SetForcePath(bakeState.BakeSets[index].OriginalMotionPath)
-				bakeState.OutputModelPicker.SetForcePath(bakeState.BakeSets[index].OutputModelPath)
+				bakeState.OriginalMotionPicker.SetForcePath(bakeState.BakeSets[index].OriginalMotionPath())
+				bakeState.OutputModelPicker.SetForcePath(bakeState.BakeSets[index].OutputModelPath())
 			}
 
 			bakeState.SetCurrentIndex(0)
@@ -293,7 +293,7 @@ func newSaveSetButton(bakeState *BakeState) *widget.MPushButton {
 	btn.SetMaxSize(declarative.Size{Width: 100, Height: 20})
 	btn.SetOnClicked(func(cw *controller.ControlWindow) {
 		// 焼き込み元モーションパスを初期パスとする
-		initialDirPath := filepath.Dir(bakeState.CurrentSet().OriginalMotionPath)
+		initialDirPath := filepath.Dir(bakeState.CurrentSet().OriginalMotionPath())
 
 		// ファイル選択ダイアログを開く
 		dlg := walk.FileDialog{
@@ -324,10 +324,10 @@ func newSaveModelButton(bakeState *BakeState) *widget.MPushButton {
 		bakeState.SetWidgetEnabled(false)
 
 		for _, physicsSet := range bakeState.BakeSets {
-			if physicsSet.OutputModelPath != "" && physicsSet.OriginalModel != nil {
+			if physicsSet.OutputModelPath() != "" && physicsSet.OriginalModel != nil {
 				// 保存するのは物理が有効になっている元モデル
 				rep := repository.NewPmxRepository(true)
-				if err := rep.Save(physicsSet.OutputModelPath, physicsSet.OriginalModel, false); err != nil {
+				if err := rep.Save(physicsSet.OutputModelPath(), physicsSet.OriginalModel, false); err != nil {
 					mlog.ET(mi18n.T("モデル保存失敗"), err, "")
 					if ok := merr.ShowErrorDialog(cw.AppConfig(), err); ok {
 						bakeState.SetWidgetEnabled(true)
@@ -353,7 +353,7 @@ func newSaveMotionButton(bakeState *BakeState) *widget.MPushButton {
 		bakeState.SetWidgetEnabled(false)
 
 		for _, physicsSet := range bakeState.BakeSets {
-			if physicsSet.OutputMotionPath != "" && physicsSet.OutputMotion != nil {
+			if physicsSet.OutputMotionPath() != "" && physicsSet.OutputMotion != nil {
 				// チェックボーンのみ残す
 				motions, err := physicsSet.GetOutputMotionOnlyChecked(
 					bakeState.OutputTableView.Model().(*domain.OutputTableModel).Records,
@@ -1235,8 +1235,8 @@ func newBakedHistoryWidgets(bakeState *BakeState, mWidgets *controller.MWidgets)
 
 				// 出力モーションを更新
 				currentSet.OutputMotion = outputMotion
-				currentSet.OutputMotionPath = currentSet.CreateOutputMotionPath()
-				bakeState.OutputMotionPicker.ChangePath(currentSet.OutputMotionPath)
+				currentSet.SetOutputMotionPath(currentSet.CreateOutputMotionPath())
+				bakeState.OutputMotionPicker.ChangePath(currentSet.OutputMotionPath())
 			},
 		},
 		declarative.PushButton{

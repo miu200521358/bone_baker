@@ -1,11 +1,8 @@
 package domain
 
 import (
-	"bytes"
 	"errors"
 	"fmt"
-	"io"
-	"math"
 
 	"github.com/miu200521358/mlib_go/pkg/config/mi18n"
 	"github.com/miu200521358/mlib_go/pkg/config/mlog"
@@ -13,18 +10,21 @@ import (
 	"github.com/miu200521358/mlib_go/pkg/domain/pmx"
 	"github.com/miu200521358/mlib_go/pkg/domain/vmd"
 	"github.com/miu200521358/mlib_go/pkg/infrastructure/mfile"
-	"golang.org/x/text/encoding/japanese"
-	"golang.org/x/text/transform"
 )
 
 type BakeSet struct {
 	Index       int  // インデックス
 	IsTerminate bool // 処理停止フラグ
 
-	OriginalMotionPath string `json:"original_motion_path"` // 元モーションパス
-	OriginalModelPath  string `json:"original_model_path"`  // 元モデルパス
-	OutputMotionPath   string `json:"-"`                    // 出力モーションパス
-	OutputModelPath    string `json:"-"`                    // 出力モデルパス
+	// Value Objectsを使用したファイルパス
+	originalMotionPath *FilePath `json:"-"` // 元モーションパス（Value Object）
+	originalModelPath  *FilePath `json:"-"` // 元モデルパス（Value Object）
+	outputMotionPath   *FilePath `json:"-"` // 出力モーションパス（Value Object）
+	outputModelPath    *FilePath `json:"-"` // 出力モデルパス（Value Object）
+
+	// JSONシリアライズ用の文字列フィールド（後方互換性）
+	OriginalMotionPathStr string `json:"original_motion_path"` // 元モーションパス
+	OriginalModelPathStr  string `json:"original_model_path"`  // 元モデルパス
 
 	OriginalMotionName string `json:"-"` // 元モーション名
 	OriginalModelName  string `json:"-"` // 元モーション名
@@ -41,10 +41,62 @@ type BakeSet struct {
 
 func NewPhysicsSet(index int) *BakeSet {
 	return &BakeSet{
-		Index:             index,
-		PhysicsTableModel: NewPhysicsTableModel(),
-		OutputTableModel:  NewOutputTableModel(),
+		Index:              index,
+		PhysicsTableModel:  NewPhysicsTableModel(),
+		OutputTableModel:   NewOutputTableModel(),
+		originalMotionPath: NewFilePath(""),
+		originalModelPath:  NewFilePath(""),
+		outputMotionPath:   NewFilePath(""),
+		outputModelPath:    NewFilePath(""),
 	}
+}
+
+// Getter methods for Value Objects
+func (ss *BakeSet) OriginalMotionPath() string {
+	if ss.originalMotionPath == nil {
+		return ""
+	}
+	return ss.originalMotionPath.Value()
+}
+
+func (ss *BakeSet) OriginalModelPath() string {
+	if ss.originalModelPath == nil {
+		return ""
+	}
+	return ss.originalModelPath.Value()
+}
+
+func (ss *BakeSet) OutputMotionPath() string {
+	if ss.outputMotionPath == nil {
+		return ""
+	}
+	return ss.outputMotionPath.Value()
+}
+
+func (ss *BakeSet) OutputModelPath() string {
+	if ss.outputModelPath == nil {
+		return ""
+	}
+	return ss.outputModelPath.Value()
+}
+
+// Setter methods for Value Objects
+func (ss *BakeSet) SetOriginalMotionPath(path string) {
+	ss.originalMotionPath = NewFilePath(path)
+	ss.OriginalMotionPathStr = path
+}
+
+func (ss *BakeSet) SetOriginalModelPath(path string) {
+	ss.originalModelPath = NewFilePath(path)
+	ss.OriginalModelPathStr = path
+}
+
+func (ss *BakeSet) SetOutputMotionPath(path string) {
+	ss.outputMotionPath = NewFilePath(path)
+}
+
+func (ss *BakeSet) SetOutputModelPath(path string) {
+	ss.outputModelPath = NewFilePath(path)
 }
 
 func (ss *BakeSet) MaxFrame() float32 {
@@ -77,11 +129,11 @@ func (ss *BakeSet) CreateOutputMotionPath() string {
 
 func (ss *BakeSet) setMotion(originalMotion, outputMotion *vmd.VmdMotion) {
 	if originalMotion == nil || outputMotion == nil {
-		ss.OriginalMotionPath = ""
+		ss.SetOriginalMotionPath("")
 		ss.OriginalMotionName = ""
 		ss.OriginalMotion = nil
 
-		ss.OutputMotionPath = ""
+		ss.SetOutputMotionPath("")
 		ss.OutputMotion = vmd.NewVmdMotion("")
 
 		return
@@ -94,14 +146,14 @@ func (ss *BakeSet) setMotion(originalMotion, outputMotion *vmd.VmdMotion) {
 
 func (ss *BakeSet) setModels(originalModel, physicsBakedModel *pmx.PmxModel) {
 	if originalModel == nil {
-		ss.OriginalModelPath = ""
+		ss.SetOriginalModelPath("")
 		ss.OriginalModelName = ""
 		ss.OriginalModel = nil
 		ss.BakedModel = nil
 		return
 	}
 
-	ss.OriginalModelPath = originalModel.Path()
+	ss.SetOriginalModelPath(originalModel.Path())
 	ss.OriginalModelName = originalModel.Name()
 	ss.OriginalModel = originalModel
 	ss.BakedModel = physicsBakedModel
@@ -114,16 +166,19 @@ func (ss *BakeSet) SetModels(originalModel, bakedModel *pmx.PmxModel) error {
 		return nil
 	}
 
+	// ドメインサービスを使用
+	physicsBoneService := NewPhysicsBoneService()
+
 	// ドメインルールの適用
-	ss.processPhysicsBones(originalModel)
-	ss.processPhysicsBones(bakedModel)
+	physicsBoneService.ProcessPhysicsBones(originalModel)
+	physicsBoneService.ProcessPhysicsBones(bakedModel)
 
 	if bakedModel != nil {
-		ss.fixPhysicsRigidBodies(bakedModel)
+		physicsBoneService.FixPhysicsRigidBodies(bakedModel)
 	}
 
 	ss.setModels(originalModel, bakedModel)
-	ss.OutputModelPath = ss.CreateOutputModelPath()
+	ss.SetOutputModelPath(ss.CreateOutputModelPath())
 
 	return nil
 }
@@ -136,7 +191,7 @@ func (ss *BakeSet) ClearModels() {
 // SetMotions ドメインロジックでモーションを設定（公開メソッド）
 func (ss *BakeSet) SetMotions(originalMotion, outputMotion *vmd.VmdMotion) error {
 	ss.setMotion(originalMotion, outputMotion)
-	ss.OutputMotionPath = ss.CreateOutputMotionPath()
+	ss.SetOutputMotionPath(ss.CreateOutputMotionPath())
 	return nil
 }
 
@@ -145,154 +200,11 @@ func (ss *BakeSet) ClearMotions() {
 	ss.setMotion(nil, nil)
 }
 
-// processPhysicsBones 物理ボーンの処理（ドメインロジック）
-func (ss *BakeSet) processPhysicsBones(model *pmx.PmxModel) {
-	if model == nil {
-		return
-	}
-
-	// 物理ボーンの名前に接頭辞を追加
-	ss.insertPhysicsBonePrefix(model)
-	// 物理ボーンを表示枠に追加
-	ss.appendPhysicsBoneToDisplaySlots(model)
-}
-
-// appendPhysicsBoneToDisplaySlots 物理ボーンを表示枠に追加
-func (ss *BakeSet) appendPhysicsBoneToDisplaySlots(model *pmx.PmxModel) {
-	if model == nil {
-		return
-	}
-
-	// 表示枠に追加済みのボーン一覧を取得
-	displayedBones := make([]bool, model.Bones.Length())
-	model.DisplaySlots.ForEach(func(slotIndex int, slot *pmx.DisplaySlot) bool {
-		for _, ref := range slot.References {
-			if ref.DisplayType == pmx.DISPLAY_TYPE_BONE {
-				displayedBones[ref.DisplayIndex] = true
-			}
-		}
-		return true
-	})
-
-	var physicsDisplaySlot *pmx.DisplaySlot
-
-	// 物理ボーンを表示枠に追加
-	model.Bones.ForEach(func(boneIndex int, bone *pmx.Bone) bool {
-		if bone.HasPhysics() && !displayedBones[boneIndex] {
-			// 物理ボーンで、表示枠に追加されていない場合
-			if physicsDisplaySlot == nil {
-				// 物理ボーン用の表示枠がまだない場合、作成する
-				physicsDisplaySlot = pmx.NewDisplaySlot()
-				physicsDisplaySlot.SetName("Physics")
-			}
-
-			// 物理ボーンを表示枠に追加
-			ref := pmx.NewDisplaySlotReferenceByValues(pmx.DISPLAY_TYPE_BONE, boneIndex)
-			physicsDisplaySlot.References = append(physicsDisplaySlot.References, ref)
-
-			// 操作できるようにフラグを設定
-			bone.BoneFlag |= pmx.BONE_FLAG_IS_VISIBLE
-			bone.BoneFlag |= pmx.BONE_FLAG_CAN_MANIPULATE
-			bone.BoneFlag |= pmx.BONE_FLAG_CAN_TRANSLATE
-			bone.BoneFlag |= pmx.BONE_FLAG_CAN_ROTATE
-
-			model.Bones.Update(bone)
-		}
-		return true
-	})
-
-	if physicsDisplaySlot != nil {
-		// 物理ボーン用の表示枠が作成された場合、モデルに追加する
-		model.DisplaySlots.Append(physicsDisplaySlot)
-	}
-}
-
-// insertPhysicsBonePrefix 物理ボーンの名前に接頭辞を追加
-func (ss *BakeSet) insertPhysicsBonePrefix(model *pmx.PmxModel) {
-	if model == nil {
-		return
-	}
-
-	digits := int(math.Log10(float64(model.Bones.Length()))) + 1
-
-	// 物理ボーンの名前に接頭辞を追加
-	model.Bones.ForEach(func(boneIndex int, bone *pmx.Bone) bool {
-		if bone.HasDynamicPhysics() {
-			// ボーンINDEXを0埋めして設定
-			formattedBoneName := fmt.Sprintf("BB%0*d_%s", digits, boneIndex, bone.Name())
-			bone.SetName(ss.encodeName(formattedBoneName, 15))
-		}
-		return true
-	})
-
-	model.Bones.UpdateNameIndexes()
-}
-
-func (ss *BakeSet) encodeName(name string, limit int) string {
-	// Encode to CP932
-	cp932Encoder := japanese.ShiftJIS.NewEncoder()
-	cp932Encoded, err := cp932Encoder.String(name)
-	if err != nil {
-		return name // エンコード失敗時はそのまま返す
-	}
-
-	// Decode to Shift_JIS
-	shiftJISDecoder := japanese.ShiftJIS.NewDecoder()
-	reader := transform.NewReader(bytes.NewReader([]byte(cp932Encoded)), shiftJISDecoder)
-	shiftJISDecoded, err := io.ReadAll(reader)
-	if err != nil {
-		return name // エンコード失敗時はそのまま返す
-	}
-
-	// Encode to Shift_JIS
-	shiftJISEncoder := japanese.ShiftJIS.NewEncoder()
-	shiftJISEncoded, err := shiftJISEncoder.String(string(shiftJISDecoded))
-	if err != nil {
-		return name // エンコード失敗時はそのまま返す
-	}
-
-	encodedName := []byte(shiftJISEncoded)
-	if len(encodedName) <= limit {
-		// 指定バイト数に足りない場合は b"\x00" で埋める
-		encodedName = append(encodedName, make([]byte, limit-len(encodedName))...)
-	}
-
-	// 指定バイト数に切り詰め
-	encodedLimitName := encodedName[:limit]
-
-	// VMDは空白込みで入っているので、正規表現で空白以降は削除する
-	decodedBytes, err := japanese.ShiftJIS.NewDecoder().Bytes(encodedLimitName)
-	if err != nil {
-		return name // エンコード失敗時はそのまま返す
-	}
-
-	trimBytes := bytes.TrimRight(decodedBytes, "\xfd")                   // PMDで保存したVMDに入ってる
-	trimBytes = bytes.TrimRight(trimBytes, "\x00")                       // VMDの末尾空白を除去
-	trimBytes = bytes.ReplaceAll(trimBytes, []byte("\x00"), []byte(" ")) // 空白をスペースに変換
-
-	decodedText := string(trimBytes)
-
-	return decodedText
-}
-
-func (ss *BakeSet) fixPhysicsRigidBodies(model *pmx.PmxModel) {
-	if model == nil {
-		return
-	}
-
-	// 物理ボーンの剛体を修正
-	model.RigidBodies.ForEach(func(rigidBodyIndex int, rigidBody *pmx.RigidBody) bool {
-		rigidBody.PhysicsType = pmx.PHYSICS_TYPE_STATIC // 剛体の物理演算を無効にする
-		model.RigidBodies.Update(rigidBody)
-		return true
-	})
-}
-
 func (ss *BakeSet) Delete() {
-	ss.OriginalMotionPath = ""
-	ss.OriginalModelPath = ""
-	ss.OutputMotionPath = ""
-	ss.OutputModelPath = ""
+	ss.SetOriginalMotionPath("")
+	ss.SetOriginalModelPath("")
+	ss.SetOutputMotionPath("")
+	ss.SetOutputModelPath("")
 
 	ss.OriginalMotionName = ""
 	ss.OriginalModelName = ""
@@ -316,7 +228,7 @@ func (ss *BakeSet) GetOutputMotionOnlyChecked(records []*OutputBoneRecord) ([]*v
 	// まずは既存モーションに焼き込みボーンを追加挿入する
 	var err error
 	bakedMotion, err = ss.OriginalMotion.Copy()
-	bakedMotion.SetPath(ss.OutputMotionPath)
+	bakedMotion.SetPath(ss.OutputMotionPath())
 	if err != nil {
 		return motions, fmt.Errorf(mi18n.T("元モーションのコピーに失敗しました: %w"), err)
 	}
@@ -361,7 +273,7 @@ func (ss *BakeSet) GetOutputMotionOnlyChecked(records []*OutputBoneRecord) ([]*v
 		return motions, errors.New(mi18n.T("焼き込み対象キーフレームなし"))
 	}
 
-	dirPath, fileName, ext := mfile.SplitPath(ss.OutputMotionPath)
+	dirPath, fileName, ext := mfile.SplitPath(ss.OutputMotionPath())
 	motion := vmd.NewVmdMotion("")
 	motion.SetPath(fmt.Sprintf("%s%s_%04d%s", dirPath, fileName, 0, ext))
 	motion.MorphFrames, _ = ss.OriginalMotion.MorphFrames.Copy()
@@ -374,7 +286,7 @@ func (ss *BakeSet) GetOutputMotionOnlyChecked(records []*OutputBoneRecord) ([]*v
 			// キーフレーム数が上限を超える場合は切り替える
 			motions = append(motions, motion)
 
-			dirPath, fileName, ext := mfile.SplitPath(ss.OutputMotionPath)
+			dirPath, fileName, ext := mfile.SplitPath(ss.OutputMotionPath())
 			motion = vmd.NewVmdMotion(fmt.Sprintf("%s%s_%04d%s", dirPath, fileName, f, ext))
 			motion.MorphFrames, _ = ss.OriginalMotion.MorphFrames.Copy()
 

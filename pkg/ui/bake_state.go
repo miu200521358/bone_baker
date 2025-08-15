@@ -89,10 +89,10 @@ func (ss *BakeState) ChangeCurrentAction(index int) {
 	ss.NavToolBar.Actions().At(index).SetChecked(true)
 
 	// 物理焼き込みセットの情報を表示
-	ss.OriginalModelPicker.ChangePath(ss.CurrentSet().OriginalModelPath)
-	ss.OriginalMotionPicker.ChangePath(ss.CurrentSet().OriginalMotionPath)
-	ss.OutputModelPicker.ChangePath(ss.CurrentSet().OutputModelPath)
-	ss.OutputMotionPicker.ChangePath(ss.CurrentSet().OutputMotionPath)
+	ss.OriginalModelPicker.ChangePath(ss.CurrentSet().OriginalModelPath())
+	ss.OriginalMotionPicker.ChangePath(ss.CurrentSet().OriginalMotionPath())
+	ss.OutputModelPicker.ChangePath(ss.CurrentSet().OutputModelPath())
+	ss.OutputMotionPicker.ChangePath(ss.CurrentSet().OutputMotionPath())
 
 	// // 物理ツリーのモデル変更
 	// if ss.CurrentSet().PhysicsBoneTreeModel == nil {
@@ -168,7 +168,7 @@ func (bakeState *BakeState) LoadModel(
 	bakeState.BakedHistoryIndexEdit.SetValue(1.0)
 	bakeState.BakedHistoryIndexEdit.SetRange(1.0, 2.0)
 
-	bakeState.OutputModelPicker.ChangePath(bakeState.CurrentSet().OutputModelPath)
+	bakeState.OutputModelPicker.ChangePath(bakeState.CurrentSet().OutputModelPath())
 	bakeState.SetWidgetEnabled(true)
 
 	return nil
@@ -207,7 +207,7 @@ func (bakeState *BakeState) LoadMotion(
 	// モーションプレイヤーのリセット
 	bakeState.Player.Reset(bakeState.applicationService.CalculateMaxFrame(bakeState.BakeSets))
 
-	bakeState.OutputMotionPicker.SetPath(bakeState.CurrentSet().OutputMotionPath)
+	bakeState.OutputMotionPicker.SetPath(bakeState.CurrentSet().OutputMotionPath())
 	bakeState.SetWidgetEnabled(true)
 
 	return nil
