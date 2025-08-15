@@ -6,6 +6,7 @@ import (
 
 	"github.com/miu200521358/bone_baker/pkg/application"
 	"github.com/miu200521358/bone_baker/pkg/domain"
+	"github.com/miu200521358/bone_baker/pkg/infrastructure"
 	"github.com/miu200521358/bone_baker/pkg/usecase"
 	"github.com/miu200521358/mlib_go/pkg/config/mconfig"
 	"github.com/miu200521358/mlib_go/pkg/config/merr"
@@ -24,8 +25,9 @@ import (
 func NewBakePage(mWidgets *controller.MWidgets) declarative.TabPage {
 	var bakeTab *walk.TabPage
 
-	// Application Serviceの依存性注入
-	bakeUsecase := usecase.NewBakeUsecase()
+	// Repository パターンの依存性注入
+	bakeSetRepository := infrastructure.NewFileBakeSetRepository()
+	bakeUsecase := usecase.NewBakeUsecase(bakeSetRepository)
 	bakeApplicationService := application.NewBakeApplicationService(bakeUsecase)
 	bakeState := NewBakeState(bakeApplicationService)
 

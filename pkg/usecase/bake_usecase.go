@@ -5,14 +5,16 @@ import (
 )
 
 type BakeUsecase struct {
-	modelUsecase  *ModelUsecase
-	motionUsecase *MotionUsecase
+	modelUsecase      *ModelUsecase
+	motionUsecase     *MotionUsecase
+	bakeSetRepository domain.BakeSetRepository
 }
 
-func NewBakeUsecase() *BakeUsecase {
+func NewBakeUsecase(bakeSetRepository domain.BakeSetRepository) *BakeUsecase {
 	return &BakeUsecase{
-		modelUsecase:  NewModelUsecase(),
-		motionUsecase: NewMotionUsecase(),
+		modelUsecase:      NewModelUsecase(),
+		motionUsecase:     NewMotionUsecase(),
+		bakeSetRepository: bakeSetRepository,
 	}
 }
 
@@ -52,10 +54,10 @@ func (uc *BakeUsecase) LoadMotionForBakeSet(bakeSet *domain.BakeSet, path string
 
 // SaveBakeSet セット保存のビジネスロジック
 func (uc *BakeUsecase) SaveBakeSet(bakeSets []*domain.BakeSet, jsonPath string) error {
-	return domain.SaveBakeSets(bakeSets, jsonPath)
+	return uc.bakeSetRepository.Save(bakeSets, jsonPath)
 }
 
 // LoadBakeSet セット読み込みのビジネスロジック
 func (uc *BakeUsecase) LoadBakeSet(jsonPath string) ([]*domain.BakeSet, error) {
-	return domain.LoadBakeSets(jsonPath)
+	return uc.bakeSetRepository.Load(jsonPath)
 }

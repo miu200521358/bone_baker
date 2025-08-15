@@ -2,14 +2,10 @@ package domain
 
 import (
 	"bytes"
-	"encoding/json"
 	"errors"
 	"fmt"
 	"io"
 	"math"
-	"os"
-	"path/filepath"
-	"strings"
 
 	"github.com/miu200521358/mlib_go/pkg/config/mi18n"
 	"github.com/miu200521358/mlib_go/pkg/config/mlog"
@@ -410,45 +406,6 @@ func (ss *BakeSet) GetOutputMotionOnlyChecked(records []*OutputBoneRecord) ([]*v
 
 	motions = append(motions, motion)
 	return motions, nil
-}
-
-// SaveBakeSets セット保存用のドメインサービス
-func SaveBakeSets(bakeSets []*BakeSet, jsonPath string) error {
-	if strings.ToLower(filepath.Ext(jsonPath)) != ".json" {
-		jsonPath += ".json"
-	}
-
-	output, err := json.Marshal(bakeSets)
-	if err != nil {
-		mlog.E(mi18n.T("物理焼き込みセット保存失敗エラー"), err, "")
-		return err
-	}
-
-	if err := os.WriteFile(jsonPath, output, 0644); err != nil {
-		mlog.E(mi18n.T("物理焼き込みセット保存失敗エラー"), err, "")
-		return err
-	}
-
-	mlog.I(mi18n.T("物理焼き込みセット保存成功", map[string]any{"Path": jsonPath}))
-	return nil
-}
-
-// LoadBakeSets セット読み込み用のドメインサービス
-func LoadBakeSets(jsonPath string) ([]*BakeSet, error) {
-	input, err := os.ReadFile(jsonPath)
-	if err != nil {
-		mlog.E(mi18n.T("物理焼き込みセット読込失敗エラー"), err, "")
-		return nil, err
-	}
-
-	var bakeSets []*BakeSet
-	if err := json.Unmarshal(input, &bakeSets); err != nil {
-		mlog.E(mi18n.T("物理焼き込みセット読込失敗エラー"), err, "")
-		return nil, err
-	}
-
-	mlog.I(mi18n.T("物理焼き込みセット読込成功", map[string]any{"Path": jsonPath}))
-	return bakeSets, nil
 }
 
 // // SetOutputChildrenChecked は指定されたアイテムの子どもを再帰的にチェック状態を設定する
