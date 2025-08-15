@@ -45,8 +45,8 @@ func (s *BakeApplicationService) LoadModelForBakeSet(
 	cw *controller.ControlWindow,
 	setIndex int,
 ) error {
-	// ユースケース経由でモデル読み込み
-	if err := s.bakeUsecase.LoadModel(bakeSet, path); err != nil {
+	// BakeUsecase経由でモデル読み込み
+	if err := s.bakeUsecase.LoadModelForBakeSet(bakeSet, path); err != nil {
 		return err
 	}
 
@@ -64,8 +64,8 @@ func (s *BakeApplicationService) LoadMotionForBakeSet(
 	cw *controller.ControlWindow,
 	setIndex int,
 ) error {
-	// ユースケース経由でモーション読み込み
-	if err := s.bakeUsecase.LoadMotion(bakeSet, path); err != nil {
+	// BakeUsecase経由でモーション読み込み
+	if err := s.bakeUsecase.LoadMotionForBakeSet(bakeSet, path); err != nil {
 		return err
 	}
 
