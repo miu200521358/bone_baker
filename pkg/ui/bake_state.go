@@ -3,9 +3,8 @@ package ui
 import (
 	"fmt"
 
+	"github.com/miu200521358/bone_baker/pkg/application"
 	"github.com/miu200521358/bone_baker/pkg/domain"
-	"github.com/miu200521358/bone_baker/pkg/usecase"
-	"github.com/miu200521358/mlib_go/pkg/domain/mmath"
 	"github.com/miu200521358/mlib_go/pkg/interface/controller"
 	"github.com/miu200521358/mlib_go/pkg/interface/controller/widget"
 	"github.com/miu200521358/walk/pkg/walk"
@@ -30,15 +29,15 @@ type BakeState struct {
 	OutputTableView       *walk.TableView      // 出力定義テーブル
 	BakeSets              []*domain.BakeSet    `json:"bake_sets"` // ボーン焼き込みセット
 
-	// Usecase（依存性注入）
-	bakeUsecase *usecase.BakeUsecase
+	// Application Service（依存性注入）
+	applicationService *application.BakeApplicationService
 }
 
-func NewBakeState(bakeUsecase *usecase.BakeUsecase) *BakeState {
+func NewBakeState(applicationService *application.BakeApplicationService) *BakeState {
 	return &BakeState{
-		bakeUsecase:  bakeUsecase,
-		BakeSets:     make([]*domain.BakeSet, 0),
-		currentIndex: -1,
+		applicationService: applicationService,
+		BakeSets:           make([]*domain.BakeSet, 0),
+		currentIndex:       -1,
 	}
 }
 
@@ -135,12 +134,12 @@ func (ss *BakeState) CurrentSet() *domain.BakeSet {
 
 // SaveSet セット情報を保存
 func (ss *BakeState) SaveSet(jsonPath string) error {
-	return ss.bakeUsecase.SaveBakeSet(ss.BakeSets, jsonPath)
+	return ss.applicationService.SaveBakeSetToFile(ss.BakeSets, jsonPath)
 }
 
 // LoadSet セット情報を読み込む
 func (ss *BakeState) LoadSet(jsonPath string) error {
-	bakeSets, err := ss.bakeUsecase.LoadBakeSet(jsonPath)
+	bakeSets, err := ss.applicationService.LoadBakeSetFromFile(jsonPath)
 	if err != nil {
 		return err
 	}
@@ -158,26 +157,13 @@ func (bakeState *BakeState) LoadModel(
 	// オプションクリア
 	bakeState.ClearOptions()
 
-	if err := bakeState.bakeUsecase.LoadModel(bakeState.CurrentSet(), path); err != nil {
+	if err := bakeState.applicationService.LoadModelForBakeSet(
+		bakeState.CurrentSet(), path, cw, bakeState.CurrentIndex()); err != nil {
 		return err
 	}
 
-	cw.StoreModel(0, bakeState.CurrentIndex(), bakeState.CurrentSet().OriginalModel)
-	cw.StoreModel(1, bakeState.CurrentIndex(), bakeState.CurrentSet().BakedModel)
-
-	cw.StoreMotion(0, bakeState.CurrentIndex(), bakeState.CurrentSet().OriginalMotion)
-	if bakeState.CurrentSet().OriginalMotion != nil {
-		if copiedMotion, err := bakeState.CurrentSet().OriginalMotion.Copy(); err == nil {
-			cw.StoreMotion(1, bakeState.CurrentIndex(), copiedMotion)
-		}
-	}
-
-	for n := range bakeState.BakeSets {
-		cw.ClearDeltaMotion(0, n)
-		cw.ClearDeltaMotion(1, n)
-		cw.SetSaveDeltaIndex(0, 0)
-		cw.SetSaveDeltaIndex(1, 0)
-	}
+	bakeState.applicationService.PrepareForBaking(cw, bakeState.CurrentSet(), bakeState.CurrentIndex())
+	bakeState.applicationService.ClearDeltaMotions(cw, bakeState.BakeSets)
 
 	bakeState.BakedHistoryIndexEdit.SetValue(1.0)
 	bakeState.BakedHistoryIndexEdit.SetRange(1.0, 2.0)
@@ -199,56 +185,27 @@ func (bakeState *BakeState) LoadMotion(
 		bakeState.ClearOptions()
 	}
 
-	if err := bakeState.bakeUsecase.LoadMotion(bakeState.CurrentSet(), path); err != nil {
+	if err := bakeState.applicationService.LoadMotionForBakeSet(
+		bakeState.CurrentSet(), path, cw, bakeState.CurrentIndex()); err != nil {
 		return err
 	}
 
-	if bakeState.CurrentSet().OriginalMotion != nil {
-		cw.StoreMotion(0, bakeState.CurrentIndex(), bakeState.CurrentSet().OriginalMotion)
-	}
-
-	if bakeState.CurrentSet().OutputMotion != nil {
-		cw.StoreMotion(1, bakeState.CurrentIndex(), bakeState.CurrentSet().OutputMotion)
-	}
-
-	for n := range bakeState.BakeSets {
-		cw.ClearDeltaMotion(0, n)
-		cw.ClearDeltaMotion(1, n)
-		cw.SetSaveDeltaIndex(0, 0)
-		cw.SetSaveDeltaIndex(1, 0)
-	}
+	bakeState.applicationService.ClearDeltaMotions(cw, bakeState.BakeSets)
 
 	bakeState.BakedHistoryIndexEdit.SetValue(1.0)
 	bakeState.BakedHistoryIndexEdit.SetRange(1.0, 2.0)
 
 	if bakeState.CurrentSet().OriginalMotion != nil {
-		// 出力ボーン定義に行追加
-		bakeState.CurrentSet().OutputTableModel = domain.NewOutputTableModel()
-		bakeState.CurrentSet().OutputTableModel.AddRecord(
-			bakeState.CurrentSet().OriginalModel,
-			0,
-			bakeState.CurrentSet().OriginalMotion.MaxFrame())
+		// テーブル初期化処理をApplication Serviceに委譲
+		bakeState.applicationService.InitializeOutputTable(bakeState.CurrentSet())
 		bakeState.OutputTableView.SetModel(bakeState.CurrentSet().OutputTableModel)
 
-		// 物理定義に行追加
-		bakeState.CurrentSet().PhysicsTableModel = domain.NewPhysicsTableModel()
-		bakeState.CurrentSet().PhysicsTableModel.AddRecord(
-			bakeState.CurrentSet().OriginalModel,
-			0,
-			bakeState.CurrentSet().OriginalMotion.MaxFrame())
+		bakeState.applicationService.InitializePhysicsTable(bakeState.CurrentSet())
 		bakeState.PhysicsTableView.SetModel(bakeState.CurrentSet().PhysicsTableModel)
 	}
 
-	{
-		maxFrames := make([]float32, len(bakeState.BakeSets))
-		for i, set := range bakeState.BakeSets {
-			if set.OriginalMotion != nil {
-				maxFrames[i] = set.OriginalMotion.MaxFrame()
-			}
-		}
-		// モーションプレイヤーのリセット
-		bakeState.Player.Reset(mmath.Max(maxFrames))
-	}
+	// モーションプレイヤーのリセット
+	bakeState.Player.Reset(bakeState.applicationService.CalculateMaxFrame(bakeState.BakeSets))
 
 	bakeState.OutputMotionPicker.SetPath(bakeState.CurrentSet().OutputMotionPath)
 	bakeState.SetWidgetEnabled(true)

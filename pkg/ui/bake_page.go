@@ -4,6 +4,7 @@ import (
 	"path/filepath"
 	"time"
 
+	"github.com/miu200521358/bone_baker/pkg/application"
 	"github.com/miu200521358/bone_baker/pkg/domain"
 	"github.com/miu200521358/bone_baker/pkg/usecase"
 	"github.com/miu200521358/mlib_go/pkg/config/mconfig"
@@ -23,9 +24,10 @@ import (
 func NewBakePage(mWidgets *controller.MWidgets) declarative.TabPage {
 	var bakeTab *walk.TabPage
 
-	// Usecaseの依存性注入
+	// Application Serviceの依存性注入
 	bakeUsecase := usecase.NewBakeUsecase()
-	bakeState := NewBakeState(bakeUsecase)
+	bakeApplicationService := application.NewBakeApplicationService(bakeUsecase)
+	bakeState := NewBakeState(bakeApplicationService)
 
 	bakeState.Player = widget.NewMotionPlayer()
 	bakeState.Player.SetLabelTexts(mi18n.T("焼き込み停止"), mi18n.T("焼き込み再生"))
