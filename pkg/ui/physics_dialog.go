@@ -242,8 +242,8 @@ func (p *PhysicsTableViewDialog) updateEditValues(treeView *walk.TreeView, sizeX
 
 	// 選択されたアイテムの情報を更新
 	currentItem := treeView.CurrentItem().(*domain.PhysicsItem)
-	sizeXEdit.ChangeValue(currentItem.SizeRatio().X)
-	massEdit.ChangeValue(currentItem.MassRatio())
+	sizeXEdit.ChangeValue(currentItem.SizeRatio.X)
+	massEdit.ChangeValue(currentItem.MassRatio)
 }
 
 // handleDialogOK ダイアログOK処理

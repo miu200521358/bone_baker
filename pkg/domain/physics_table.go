@@ -9,8 +9,8 @@ import (
 type PhysicsTableModel struct {
 	walk.TableModelBase
 	tv       *walk.TableView
-	Records  []*PhysicsBoneRecord
-	TreeView *walk.TreeView // 物理ボーンツリー
+	Records  []*PhysicsBoneRecord `json:"records"` // 物理ボーンレコード
+	TreeView *walk.TreeView       // 物理ボーンツリー
 }
 
 func NewPhysicsTableModel() *PhysicsTableModel {
@@ -80,17 +80,17 @@ func (m *PhysicsTableModel) RemoveRow(index int) {
 }
 
 type PhysicsBoneRecord struct {
-	StartFrame     float32                    // 区間開始フレーム
-	EndFrame       float32                    // 区間終了フレーム
-	MaxStartFrame  float32                    // 最大値開始フレーム
-	MaxEndFrame    float32                    // 最大値終了フレーム
-	Gravity        float64                    // 重力
-	MaxSubSteps    int                        // 最大演算回数
-	FixedTimeStep  float64                    // 物理演算頻度
-	IsStartDeform  bool                       // 開始用整形有無
-	SizeRatio      *mmath.MVec3               // 大きさの比率
-	MassRatio      float64                    // 質量の比率
-	TensionRatio   float64                    // 張りの比率
-	StiffnessRatio float64                    // 硬さの比率
-	TreeModel      *PhysicsRigidBodyTreeModel // 出力ボーンツリー
+	StartFrame     float32                    `json:"start_frame"`     // 区間開始フレーム
+	EndFrame       float32                    `json:"end_frame"`       // 区間終了フレーム
+	MaxStartFrame  float32                    `json:"max_start_frame"` // 最大値開始フレーム
+	MaxEndFrame    float32                    `json:"max_end_frame"`   // 最大値終了フレーム
+	Gravity        float64                    `json:"gravity"`         // 重力
+	MaxSubSteps    int                        `json:"max_sub_steps"`   // 最大演算回数
+	FixedTimeStep  float64                    `json:"fixed_time_step"` // 物理演算頻度
+	IsStartDeform  bool                       `json:"is_start_deform"` // 開始用整形有無
+	SizeRatio      *mmath.MVec3               `json:"size_ratio"`      // 大きさの比率
+	MassRatio      float64                    `json:"mass_ratio"`      // 質量の比率
+	TensionRatio   float64                    `json:"tension_ratio"`   // 張りの比率
+	StiffnessRatio float64                    `json:"stiffness_ratio"` // 硬さの比率
+	TreeModel      *PhysicsRigidBodyTreeModel `json:"tree"`            // 出力ボーンツリー
 }
