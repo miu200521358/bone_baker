@@ -183,8 +183,8 @@ func (wf *WidgetFactory) createOriginalModelFilePicker() *widget.FilePicker {
 
 func (wf *WidgetFactory) createAddSetButton() *widget.MPushButton {
 	btn := widget.NewMPushButton()
-	btn.SetLabel(mi18n.T("セット追加"))
-	btn.SetTooltip(mi18n.T("セット追加説明"))
+	btn.SetLabel(mi18n.T("設定追加"))
+	btn.SetTooltip(mi18n.T("設定追加説明"))
 	btn.SetMaxSize(declarative.Size{Width: 100, Height: 20})
 	btn.SetOnClicked(func(cw *controller.ControlWindow) {
 		wf.bakeState.BakeSets = append(wf.bakeState.BakeSets,
@@ -196,8 +196,8 @@ func (wf *WidgetFactory) createAddSetButton() *widget.MPushButton {
 
 func (wf *WidgetFactory) createResetSetButton() *widget.MPushButton {
 	btn := widget.NewMPushButton()
-	btn.SetLabel(mi18n.T("セット全削除"))
-	btn.SetTooltip(mi18n.T("セット全削除説明"))
+	btn.SetLabel(mi18n.T("設定全削除"))
+	btn.SetTooltip(mi18n.T("設定全削除説明"))
 	btn.SetMaxSize(declarative.Size{Width: 100, Height: 20})
 	btn.SetOnClicked(func(cw *controller.ControlWindow) {
 		for n := range 2 {
@@ -213,8 +213,8 @@ func (wf *WidgetFactory) createResetSetButton() *widget.MPushButton {
 
 func (wf *WidgetFactory) createLoadSetButton() *widget.MPushButton {
 	btn := widget.NewMPushButton()
-	btn.SetLabel(mi18n.T("セット設定読込"))
-	btn.SetTooltip(mi18n.T("セット設定読込説明"))
+	btn.SetLabel(mi18n.T("設定設定読込"))
+	btn.SetTooltip(mi18n.T("設定設定読込説明"))
 	btn.SetMaxSize(declarative.Size{Width: 100, Height: 20})
 	btn.SetOnClicked(func(cw *controller.ControlWindow) {
 		choices := mconfig.LoadUserConfig("physics_set_path")
@@ -242,8 +242,8 @@ func (wf *WidgetFactory) createLoadSetButton() *widget.MPushButton {
 
 func (wf *WidgetFactory) createSaveSetButton() *widget.MPushButton {
 	btn := widget.NewMPushButton()
-	btn.SetLabel(mi18n.T("セット設定保存"))
-	btn.SetTooltip(mi18n.T("セット設定保存説明"))
+	btn.SetLabel(mi18n.T("設定設定保存"))
+	btn.SetTooltip(mi18n.T("設定設定保存説明"))
 	btn.SetMaxSize(declarative.Size{Width: 100, Height: 20})
 	btn.SetOnClicked(func(cw *controller.ControlWindow) {
 		initialDirPath := filepath.Dir(wf.bakeState.CurrentSet().OriginalMotionPath())
