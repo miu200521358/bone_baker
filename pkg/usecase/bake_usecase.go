@@ -14,10 +14,11 @@ type BakeUsecase struct {
 func NewBakeUsecase(
 	bakeSetRepository domain.BakeSetRepository,
 	modelRepository domain.ModelRepository,
+	motionRepository domain.MotionRepository,
 ) *BakeUsecase {
 	return &BakeUsecase{
 		modelUsecase:      NewModelUsecase(modelRepository),
-		motionUsecase:     NewMotionUsecase(),
+		motionUsecase:     NewMotionUsecase(motionRepository),
 		bakeSetRepository: bakeSetRepository,
 	}
 }

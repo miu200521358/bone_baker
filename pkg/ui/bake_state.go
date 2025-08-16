@@ -93,12 +93,6 @@ func (ss *BakeState) ChangeCurrentAction(index int) {
 	ss.OriginalMotionPicker.ChangePath(ss.CurrentSet().OriginalMotionPath())
 	ss.OutputModelPicker.ChangePath(ss.CurrentSet().OutputModelPath())
 	ss.OutputMotionPicker.ChangePath(ss.CurrentSet().OutputMotionPath())
-
-	// // 物理ツリーのモデル変更
-	// if ss.CurrentSet().PhysicsBoneTreeModel == nil {
-	// 	ss.CurrentSet().PhysicsBoneTreeModel = domain.NewPhysicsBoneTreeModel()
-	// }
-	// ss.PhysicsTreeView.SetModel(ss.CurrentSet().PhysicsBoneTreeModel)
 }
 
 func (ss *BakeState) ClearOptions() {
@@ -272,12 +266,4 @@ func (bakeState *BakeState) SetWidgetPlayingEnabled(enabled bool) {
 	bakeState.Player.SetEnabled(enabled)
 
 	bakeState.PhysicsTableView.SetEnabled(enabled)
-
-	// bakeState.GravityEdit.SetEnabled(enabled)
-	// bakeState.MaxSubStepsEdit.SetEnabled(enabled)
-	// bakeState.FixedTimeStepEdit.SetEnabled(enabled)
-	// bakeState.MassEdit.SetEnabled(enabled)
-	// bakeState.StiffnessEdit.SetEnabled(enabled)
-	// bakeState.TensionEdit.SetEnabled(enabled)
-	// bakeState.PhysicsTreeView.SetEnabled(enabled)
 }

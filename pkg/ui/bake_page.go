@@ -27,7 +27,8 @@ func NewBakePage(mWidgets *controller.MWidgets) declarative.TabPage {
 	// Repository パターンの依存性注入
 	bakeSetRepository := infrastructure.NewFileBakeSetRepository()
 	modelRepository := infrastructure.NewPmxModelRepository()
-	bakeUsecase := usecase.NewBakeUsecase(bakeSetRepository, modelRepository)
+	motionRepository := infrastructure.NewVmdMotionRepository()
+	bakeUsecase := usecase.NewBakeUsecase(bakeSetRepository, modelRepository, motionRepository)
 	bakeState := NewBakeState(bakeUsecase)
 
 	bakeState.Player = widget.NewMotionPlayer()
@@ -1227,7 +1228,6 @@ func newBakedHistoryWidgets(bakeState *BakeState, mWidgets *controller.MWidgets)
 
 				// 物理ありのモーションを取得
 				outputMotion := mWidgets.Window().LoadDeltaMotion(0, currentSet.Index, deltaIndex)
-				// mlog.I("変形情報呼び出し: [motion(%d)] %p", deltaIndex, outputMotion)
 				// 物理確認用として設定
 				mWidgets.Window().StoreMotion(1, currentSet.Index, outputMotion)
 				mWidgets.Window().TriggerPhysicsReset()

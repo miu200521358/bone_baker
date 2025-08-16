@@ -30,6 +30,9 @@ type BakeSet struct {
 
 	PhysicsTableModel *PhysicsTableModel `json:"physics_table"` // 物理ボーンツリー
 	OutputTableModel  *OutputTableModel  `json:"output_table"`  // 出力定義テーブル
+
+	// Helper依存注入（効率化）
+	helper *BakeSetHelper `json:"-"` // ビジネスロジックヘルパー
 }
 
 func NewPhysicsSet(index int) *BakeSet {
@@ -41,6 +44,7 @@ func NewPhysicsSet(index int) *BakeSet {
 		originalModelPath:  NewFilePath(""),
 		outputMotionPath:   NewFilePath(""),
 		outputModelPath:    NewFilePath(""),
+		helper:             NewBakeSetHelper(), // Helper注入
 	}
 }
 
@@ -100,13 +104,11 @@ func (ss *BakeSet) MaxFrame() float32 {
 	return ss.OriginalMotion.MaxFrame()
 }
 func (ss *BakeSet) CreateOutputModelPath() string {
-	helper := NewBakeSetHelper()
-	return helper.CreateOutputModelPath(ss.OriginalModel)
+	return ss.helper.CreateOutputModelPath(ss.OriginalModel)
 }
 
 func (ss *BakeSet) CreateOutputMotionPath() string {
-	helper := NewBakeSetHelper()
-	return helper.CreateOutputMotionPath(ss.OriginalMotion, ss.BakedModel)
+	return ss.helper.CreateOutputMotionPath(ss.OriginalMotion, ss.BakedModel)
 }
 
 func (ss *BakeSet) setMotion(originalMotion, outputMotion *vmd.VmdMotion) {
@@ -149,13 +151,12 @@ func (ss *BakeSet) SetModels(originalModel, bakedModel *pmx.PmxModel) error {
 	}
 
 	// ヘルパーを使用してビジネスロジックを実行
-	helper := NewBakeSetHelper()
-	if err := helper.ProcessModelsForBakeSet(originalModel, bakedModel); err != nil {
+	if err := ss.helper.ProcessModelsForBakeSet(originalModel, bakedModel); err != nil {
 		return err
 	}
 
 	ss.setModels(originalModel, bakedModel)
-	ss.SetOutputModelPath(helper.CreateOutputModelPath(originalModel))
+	ss.SetOutputModelPath(ss.helper.CreateOutputModelPath(originalModel))
 
 	return nil
 }
@@ -194,8 +195,7 @@ func (ss *BakeSet) Delete() {
 
 // GetOutputMotionOnlyChecked 物理ボーンだけ残す（ヘルパーに委譲）
 func (ss *BakeSet) GetOutputMotionOnlyChecked(records []*OutputBoneRecord) ([]*vmd.VmdMotion, error) {
-	helper := NewBakeSetHelper()
-	return helper.ProcessOutputMotion(
+	return ss.helper.ProcessOutputMotion(
 		ss.OriginalModel,
 		ss.OriginalMotion,
 		ss.OutputMotion,
