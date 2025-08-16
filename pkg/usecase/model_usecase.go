@@ -2,20 +2,19 @@ package usecase
 
 import (
 	"github.com/miu200521358/bone_baker/pkg/domain"
-	"github.com/miu200521358/mlib_go/pkg/config/mi18n"
-	"github.com/miu200521358/mlib_go/pkg/config/mlog"
 	"github.com/miu200521358/mlib_go/pkg/domain/pmx"
-	"github.com/miu200521358/mlib_go/pkg/infrastructure/repository"
 )
 
 // ModelUsecase モデル操作専用のユースケース
 type ModelUsecase struct {
-	pmxRepo repository.PmxRepository
+	modelRepository domain.ModelRepository
 }
 
 // NewModelUsecase コンストラクタ
-func NewModelUsecase() *ModelUsecase {
-	return &ModelUsecase{}
+func NewModelUsecase(modelRepository domain.ModelRepository) *ModelUsecase {
+	return &ModelUsecase{
+		modelRepository: modelRepository,
+	}
 }
 
 // LoadModelPair 元モデルと焼き込み用モデルのペアを読み込み
@@ -51,18 +50,5 @@ func (uc *ModelUsecase) ClearModelsInBakeSet(bakeSet *domain.BakeSet) {
 
 // loadModelWithPhysics 物理設定を考慮したモデル読み込み（内部メソッド）
 func (uc *ModelUsecase) loadModelWithPhysics(path string, enablePhysics bool) (*pmx.PmxModel, error) {
-	pmxRep := repository.NewPmxRepository(enablePhysics)
-	data, err := pmxRep.Load(path)
-	if err != nil {
-		mlog.ET(mi18n.T("読み込み失敗"), err, "")
-		return nil, err
-	}
-
-	model := data.(*pmx.PmxModel)
-	if err := model.Bones.InsertShortageOverrideBones(); err != nil {
-		mlog.ET(mi18n.T("システム用ボーン追加失敗"), err, "")
-		return nil, err
-	}
-
-	return model, nil
+	return uc.modelRepository.LoadWithPhysics(path, enablePhysics)
 }

@@ -26,7 +26,8 @@ func NewBakePage(mWidgets *controller.MWidgets) declarative.TabPage {
 
 	// Repository パターンの依存性注入
 	bakeSetRepository := infrastructure.NewFileBakeSetRepository()
-	bakeUsecase := usecase.NewBakeUsecase(bakeSetRepository)
+	modelRepository := infrastructure.NewPmxModelRepository()
+	bakeUsecase := usecase.NewBakeUsecase(bakeSetRepository, modelRepository)
 	bakeState := NewBakeState(bakeUsecase)
 
 	bakeState.Player = widget.NewMotionPlayer()

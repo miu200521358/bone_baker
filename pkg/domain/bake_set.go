@@ -1,15 +1,8 @@
 package domain
 
 import (
-	"errors"
-	"fmt"
-
-	"github.com/miu200521358/mlib_go/pkg/config/mi18n"
-	"github.com/miu200521358/mlib_go/pkg/config/mlog"
-	"github.com/miu200521358/mlib_go/pkg/domain/mmath"
 	"github.com/miu200521358/mlib_go/pkg/domain/pmx"
 	"github.com/miu200521358/mlib_go/pkg/domain/vmd"
-	"github.com/miu200521358/mlib_go/pkg/infrastructure/mfile"
 )
 
 type BakeSet struct {
@@ -107,24 +100,13 @@ func (ss *BakeSet) MaxFrame() float32 {
 	return ss.OriginalMotion.MaxFrame()
 }
 func (ss *BakeSet) CreateOutputModelPath() string {
-	if ss.OriginalModel == nil {
-		return ""
-	}
-
-	// 物理焼き込み先モデルが指定されている場合、ファイル名を含める
-	return mfile.CreateOutputPath(ss.OriginalModel.Path(), "BB")
+	helper := NewBakeSetHelper()
+	return helper.CreateOutputModelPath(ss.OriginalModel)
 }
 
 func (ss *BakeSet) CreateOutputMotionPath() string {
-	if ss.OriginalMotion == nil || ss.BakedModel == nil {
-		return ""
-	}
-
-	// 物理焼き込み先モデルが指定されている場合、ファイル名を含める
-	_, fileName, _ := mfile.SplitPath(ss.BakedModel.Path())
-
-	return mfile.CreateOutputPath(
-		ss.OriginalMotion.Path(), fmt.Sprintf("BB_%s", fileName))
+	helper := NewBakeSetHelper()
+	return helper.CreateOutputMotionPath(ss.OriginalMotion, ss.BakedModel)
 }
 
 func (ss *BakeSet) setMotion(originalMotion, outputMotion *vmd.VmdMotion) {
@@ -166,19 +148,14 @@ func (ss *BakeSet) SetModels(originalModel, bakedModel *pmx.PmxModel) error {
 		return nil
 	}
 
-	// ドメインサービスを使用
-	physicsBoneService := NewPhysicsBoneService()
-
-	// ドメインルールの適用
-	physicsBoneService.ProcessPhysicsBones(originalModel)
-	physicsBoneService.ProcessPhysicsBones(bakedModel)
-
-	if bakedModel != nil {
-		physicsBoneService.FixPhysicsRigidBodies(bakedModel)
+	// ヘルパーを使用してビジネスロジックを実行
+	helper := NewBakeSetHelper()
+	if err := helper.ProcessModelsForBakeSet(originalModel, bakedModel); err != nil {
+		return err
 	}
 
 	ss.setModels(originalModel, bakedModel)
-	ss.SetOutputModelPath(ss.CreateOutputModelPath())
+	ss.SetOutputModelPath(helper.CreateOutputModelPath(originalModel))
 
 	return nil
 }
@@ -215,109 +192,16 @@ func (ss *BakeSet) Delete() {
 	ss.OutputMotion = nil
 }
 
-// 物理ボーンだけ残す
+// GetOutputMotionOnlyChecked 物理ボーンだけ残す（ヘルパーに委譲）
 func (ss *BakeSet) GetOutputMotionOnlyChecked(records []*OutputBoneRecord) ([]*vmd.VmdMotion, error) {
-	motions := make([]*vmd.VmdMotion, 0)
-
-	if ss.OriginalModel == nil || ss.OutputMotion == nil || len(records) == 0 {
-		return motions, errors.New(mi18n.T("物理焼き込みセットの元モデルまたは出力モーションが設定されていません"))
-	}
-
-	var bakedMotion *vmd.VmdMotion
-
-	// まずは既存モーションに焼き込みボーンを追加挿入する
-	var err error
-	bakedMotion, err = ss.OriginalMotion.Copy()
-	bakedMotion.SetPath(ss.OutputMotionPath())
-	if err != nil {
-		return motions, fmt.Errorf(mi18n.T("元モーションのコピーに失敗しました: %w"), err)
-	}
-
-	keyCounts := make([]int, int(ss.OriginalMotion.MaxFrame()+1+1))
-	for _, record := range records {
-		if record == nil || record.OutputBoneTreeModel == nil {
-			continue
-		}
-
-		for f := record.StartFrame; f <= record.EndFrame; f++ {
-			for _, boneName := range record.TargetBoneNames {
-				bf := ss.OutputMotion.BoneFrames.Get(boneName).Get(f)
-
-				if bf == nil {
-					continue
-				}
-
-				if bone, err := ss.OriginalModel.Bones.GetByName(boneName); err == nil {
-					if bone.HasPhysics() {
-						bf.DisablePhysics = true
-					}
-					bakedMotion.AppendBoneFrame(boneName, bf)
-					keyCounts[int(f)]++
-
-					// 次のキーフレ物理有効で登録しておく
-					if bone.HasPhysics() {
-						bf := ss.OutputMotion.BoneFrames.Get(boneName).Get(f + 1)
-						if bf == nil {
-							continue
-						}
-						bf.DisablePhysics = false
-						bakedMotion.AppendBoneFrame(boneName, bf)
-						keyCounts[int(f)]++
-					}
-				}
-			}
-		}
-	}
-
-	if mmath.Sum(keyCounts) == 0 {
-		return motions, errors.New(mi18n.T("焼き込み対象キーフレームなし"))
-	}
-
-	dirPath, fileName, ext := mfile.SplitPath(ss.OutputMotionPath())
-	motion := vmd.NewVmdMotion("")
-	motion.SetPath(fmt.Sprintf("%s%s_%04d%s", dirPath, fileName, 0, ext))
-	motion.MorphFrames, _ = ss.OriginalMotion.MorphFrames.Copy()
-
-	frameCount := 0
-	logFrameCount := 0
-
-	for f := 0; f <= len(keyCounts); f++ {
-		if f < len(keyCounts)-1 && frameCount+keyCounts[int(f+1)] > vmd.MAX_BONE_FRAMES {
-			// キーフレーム数が上限を超える場合は切り替える
-			motions = append(motions, motion)
-
-			dirPath, fileName, ext := mfile.SplitPath(ss.OutputMotionPath())
-			motion = vmd.NewVmdMotion(fmt.Sprintf("%s%s_%04d%s", dirPath, fileName, f, ext))
-			motion.MorphFrames, _ = ss.OriginalMotion.MorphFrames.Copy()
-
-			mlog.I(fmt.Sprintf(mi18n.T("キーフレーム数が上限を超えるため、モーションを切り替えます[%04dF]: %d -> %d"),
-				f, frameCount, vmd.MAX_BONE_FRAMES))
-
-			frameCount = 0
-			logFrameCount = 0
-		}
-
-		if frameCount/100000 > logFrameCount/100000 {
-			mlog.I(fmt.Sprintf(mi18n.T("- 物理焼き込み中... [%04dF] %dキーフレーム"), f, frameCount))
-			logFrameCount = frameCount
-		}
-
-		ss.OriginalModel.Bones.ForEach(func(boneIndex int, bone *pmx.Bone) bool {
-			if bakedMotion.BoneFrames.Get(bone.Name()).Contains(float32(f)) {
-				// キーフレームがある場合は登録
-				motion.AppendBoneFrame(bone.Name(), bakedMotion.BoneFrames.Get(bone.Name()).Get(float32(f)))
-			}
-
-			return true
-		})
-
-		if f < len(keyCounts)-1 {
-			frameCount += keyCounts[int(f)]
-		}
-	}
-
-	motions = append(motions, motion)
-	return motions, nil
+	helper := NewBakeSetHelper()
+	return helper.ProcessOutputMotion(
+		ss.OriginalModel,
+		ss.OriginalMotion,
+		ss.OutputMotion,
+		ss.OutputMotionPath(),
+		records,
+	)
 }
 
 // // SetOutputChildrenChecked は指定されたアイテムの子どもを再帰的にチェック状態を設定する

@@ -11,9 +11,12 @@ type BakeUsecase struct {
 }
 
 // NewBakeUsecase コンストラクタ
-func NewBakeUsecase(bakeSetRepository domain.BakeSetRepository) *BakeUsecase {
+func NewBakeUsecase(
+	bakeSetRepository domain.BakeSetRepository,
+	modelRepository domain.ModelRepository,
+) *BakeUsecase {
 	return &BakeUsecase{
-		modelUsecase:      NewModelUsecase(),
+		modelUsecase:      NewModelUsecase(modelRepository),
 		motionUsecase:     NewMotionUsecase(),
 		bakeSetRepository: bakeSetRepository,
 	}
