@@ -4,7 +4,6 @@ import (
 	"path/filepath"
 	"time"
 
-	"github.com/miu200521358/bone_baker/pkg/application"
 	"github.com/miu200521358/bone_baker/pkg/domain"
 	"github.com/miu200521358/bone_baker/pkg/infrastructure"
 	"github.com/miu200521358/bone_baker/pkg/usecase"
@@ -28,8 +27,7 @@ func NewBakePage(mWidgets *controller.MWidgets) declarative.TabPage {
 	// Repository パターンの依存性注入
 	bakeSetRepository := infrastructure.NewFileBakeSetRepository()
 	bakeUsecase := usecase.NewBakeUsecase(bakeSetRepository)
-	bakeApplicationService := application.NewBakeApplicationService(bakeUsecase)
-	bakeState := NewBakeState(bakeApplicationService)
+	bakeState := NewBakeState(bakeUsecase)
 
 	bakeState.Player = widget.NewMotionPlayer()
 	bakeState.Player.SetLabelTexts(mi18n.T("焼き込み停止"), mi18n.T("焼き込み再生"))

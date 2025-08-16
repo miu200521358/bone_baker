@@ -3,8 +3,8 @@ package ui
 import (
 	"fmt"
 
-	"github.com/miu200521358/bone_baker/pkg/application"
 	"github.com/miu200521358/bone_baker/pkg/domain"
+	"github.com/miu200521358/bone_baker/pkg/usecase"
 	"github.com/miu200521358/mlib_go/pkg/interface/controller"
 	"github.com/miu200521358/mlib_go/pkg/interface/controller/widget"
 	"github.com/miu200521358/walk/pkg/walk"
@@ -29,15 +29,15 @@ type BakeState struct {
 	OutputTableView       *walk.TableView      // 出力定義テーブル
 	BakeSets              []*domain.BakeSet    `json:"bake_sets"` // ボーン焼き込みセット
 
-	// Application Service（依存性注入）
-	applicationService *application.BakeApplicationService
+	// 直接Usecaseを使用（Application Serviceを削除）
+	bakeUsecase *usecase.BakeUsecase
 }
 
-func NewBakeState(applicationService *application.BakeApplicationService) *BakeState {
+func NewBakeState(bakeUsecase *usecase.BakeUsecase) *BakeState {
 	return &BakeState{
-		applicationService: applicationService,
-		BakeSets:           make([]*domain.BakeSet, 0),
-		currentIndex:       -1,
+		bakeUsecase:  bakeUsecase,
+		BakeSets:     make([]*domain.BakeSet, 0),
+		currentIndex: -1,
 	}
 }
 
@@ -132,14 +132,14 @@ func (ss *BakeState) CurrentSet() *domain.BakeSet {
 	return ss.BakeSets[ss.currentIndex]
 }
 
-// SaveSet セット情報を保存
+// SaveSet セット情報を保存（直接Usecaseを呼び出し）
 func (ss *BakeState) SaveSet(jsonPath string) error {
-	return ss.applicationService.SaveBakeSetToFile(ss.BakeSets, jsonPath)
+	return ss.bakeUsecase.SaveBakeSet(ss.BakeSets, jsonPath)
 }
 
-// LoadSet セット情報を読み込む
+// LoadSet セット情報を読み込む（直接Usecaseを呼び出し）
 func (ss *BakeState) LoadSet(jsonPath string) error {
-	bakeSets, err := ss.applicationService.LoadBakeSetFromFile(jsonPath)
+	bakeSets, err := ss.bakeUsecase.LoadBakeSet(jsonPath)
 	if err != nil {
 		return err
 	}
@@ -148,7 +148,7 @@ func (ss *BakeState) LoadSet(jsonPath string) error {
 	return nil
 }
 
-// LoadModel 元モデルを読み込む
+// LoadModel 元モデルを読み込む（Application Serviceの処理をインライン化）
 func (bakeState *BakeState) LoadModel(
 	cw *controller.ControlWindow, path string,
 ) error {
@@ -157,13 +157,23 @@ func (bakeState *BakeState) LoadModel(
 	// オプションクリア
 	bakeState.ClearOptions()
 
-	if err := bakeState.applicationService.LoadModelForBakeSet(
-		bakeState.CurrentSet(), path, cw, bakeState.CurrentIndex()); err != nil {
+	// 直接Usecaseを呼び出し（Application Serviceの処理をインライン化）
+	if err := bakeState.bakeUsecase.LoadModelForBakeSet(bakeState.CurrentSet(), path); err != nil {
 		return err
 	}
 
-	bakeState.applicationService.PrepareForBaking(cw, bakeState.CurrentSet(), bakeState.CurrentIndex())
-	bakeState.applicationService.ClearDeltaMotions(cw, bakeState.BakeSets)
+	// UI反映処理（旧PrepareForBakingWithUI相当）
+	currentSet := bakeState.CurrentSet()
+	cw.StoreModel(0, bakeState.CurrentIndex(), currentSet.OriginalModel)
+	cw.StoreModel(1, bakeState.CurrentIndex(), currentSet.BakedModel)
+
+	// 履歴クリア処理（旧ClearDeltaMotions相当）
+	for n := range len(bakeState.BakeSets) {
+		cw.ClearDeltaMotion(0, n)
+		cw.ClearDeltaMotion(1, n)
+		cw.SetSaveDeltaIndex(0, 0)
+		cw.SetSaveDeltaIndex(1, 0)
+	}
 
 	bakeState.BakedHistoryIndexEdit.SetValue(1.0)
 	bakeState.BakedHistoryIndexEdit.SetRange(1.0, 2.0)
@@ -174,7 +184,7 @@ func (bakeState *BakeState) LoadModel(
 	return nil
 }
 
-// LoadMotion 物理焼き込みモーションを読み込む
+// LoadMotion 物理焼き込みモーションを読み込む（Application Serviceの処理をインライン化）
 func (bakeState *BakeState) LoadMotion(
 	cw *controller.ControlWindow, path string, isClear bool,
 ) error {
@@ -185,27 +195,52 @@ func (bakeState *BakeState) LoadMotion(
 		bakeState.ClearOptions()
 	}
 
-	if err := bakeState.applicationService.LoadMotionForBakeSet(
-		bakeState.CurrentSet(), path, cw, bakeState.CurrentIndex()); err != nil {
+	// 直接Usecaseを呼び出し（Application Serviceの処理をインライン化）
+	if err := bakeState.bakeUsecase.LoadMotionForBakeSet(bakeState.CurrentSet(), path); err != nil {
 		return err
 	}
 
-	bakeState.applicationService.ClearDeltaMotions(cw, bakeState.BakeSets)
+	// UI反映処理（旧LoadMotionForBakeSetWithUI相当）
+	currentSet := bakeState.CurrentSet()
+	if currentSet.OriginalMotion != nil {
+		cw.StoreMotion(0, bakeState.CurrentIndex(), currentSet.OriginalMotion)
+	}
+	if currentSet.OutputMotion != nil {
+		cw.StoreMotion(1, bakeState.CurrentIndex(), currentSet.OutputMotion)
+	}
+
+	// 履歴クリア処理（旧ClearDeltaMotions相当）
+	for n := range len(bakeState.BakeSets) {
+		cw.ClearDeltaMotion(0, n)
+		cw.ClearDeltaMotion(1, n)
+		cw.SetSaveDeltaIndex(0, 0)
+		cw.SetSaveDeltaIndex(1, 0)
+	}
 
 	bakeState.BakedHistoryIndexEdit.SetValue(1.0)
 	bakeState.BakedHistoryIndexEdit.SetRange(1.0, 2.0)
 
 	if bakeState.CurrentSet().OriginalMotion != nil {
-		// テーブル初期化処理をApplication Serviceに委譲
-		bakeState.applicationService.InitializeOutputTable(bakeState.CurrentSet())
+		// テーブル初期化処理（旧Application Serviceのロジックをインライン化）
+		// 出力テーブルの初期化
+		bakeState.CurrentSet().OutputTableModel = domain.NewOutputTableModel()
+		bakeState.CurrentSet().OutputTableModel.AddRecord(
+			bakeState.CurrentSet().OriginalModel,
+			0,
+			bakeState.CurrentSet().OriginalMotion.MaxFrame())
 		bakeState.OutputTableView.SetModel(bakeState.CurrentSet().OutputTableModel)
 
-		bakeState.applicationService.InitializePhysicsTable(bakeState.CurrentSet())
+		// 物理テーブルの初期化
+		bakeState.CurrentSet().PhysicsTableModel = domain.NewPhysicsTableModel()
+		bakeState.CurrentSet().PhysicsTableModel.AddRecord(
+			bakeState.CurrentSet().OriginalModel,
+			0,
+			bakeState.CurrentSet().OriginalMotion.MaxFrame())
 		bakeState.PhysicsTableView.SetModel(bakeState.CurrentSet().PhysicsTableModel)
 	}
 
-	// モーションプレイヤーのリセット
-	bakeState.Player.Reset(bakeState.applicationService.CalculateMaxFrame(bakeState.BakeSets))
+	// モーションプレイヤーのリセット（旧CalculateMaxFrameをインライン化）
+	bakeState.Player.Reset(bakeState.MaxFrame())
 
 	bakeState.OutputMotionPicker.SetPath(bakeState.CurrentSet().OutputMotionPath())
 	bakeState.SetWidgetEnabled(true)

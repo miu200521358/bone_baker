@@ -8,12 +8,13 @@ import (
 
 // BakeApplicationService アプリケーションサービス
 // UIとドメイン層の橋渡しを行い、複数のユースケースを組み合わせたビジネスフローを提供
+// BakeApplicationServiceInterfaceを実装
 type BakeApplicationService struct {
 	bakeUsecase *usecase.BakeUsecase
 }
 
 // NewBakeApplicationService コンストラクタ
-func NewBakeApplicationService(bakeUsecase *usecase.BakeUsecase) *BakeApplicationService {
+func NewBakeApplicationService(bakeUsecase *usecase.BakeUsecase) BakeApplicationServiceInterface {
 	return &BakeApplicationService{
 		bakeUsecase: bakeUsecase,
 	}
@@ -36,17 +37,57 @@ func (s *BakeApplicationService) SaveBakeSetToFile(bakeSets []*domain.BakeSet, j
 	return s.bakeUsecase.SaveBakeSet(bakeSets, jsonPath)
 }
 
-// ファイル操作関連のメソッド
+// ファイル操作関連のメソッド（インターフェース実装）
 
-// LoadModelForBakeSet セット用のモデル読み込み処理
+// LoadModelForBakeSet セット用のモデル読み込み処理（UI依存を排除）
 func (s *BakeApplicationService) LoadModelForBakeSet(
+	bakeSet *domain.BakeSet,
+	path string,
+) (*ModelLoadResult, error) {
+	// BakeUsecase経由でモデル読み込み
+	if err := s.bakeUsecase.LoadModelForBakeSet(bakeSet, path); err != nil {
+		return &ModelLoadResult{
+			Success:      false,
+			ErrorMessage: err.Error(),
+		}, err
+	}
+
+	return &ModelLoadResult{
+		OriginalModel: bakeSet,
+		BakedModel:    bakeSet,
+		Success:       true,
+	}, nil
+}
+
+// LoadMotionForBakeSet セット用のモーション読み込み処理（UI依存を排除）
+func (s *BakeApplicationService) LoadMotionForBakeSet(
+	bakeSet *domain.BakeSet,
+	path string,
+) (*MotionLoadResult, error) {
+	// BakeUsecase経由でモーション読み込み
+	if err := s.bakeUsecase.LoadMotionForBakeSet(bakeSet, path); err != nil {
+		return &MotionLoadResult{
+			Success:      false,
+			ErrorMessage: err.Error(),
+		}, err
+	}
+
+	return &MotionLoadResult{
+		BakeSet: bakeSet,
+		Success: true,
+	}, nil
+}
+
+// LoadModelForBakeSetWithUI セット用のモデル読み込み処理（UI依存版）
+func (s *BakeApplicationService) LoadModelForBakeSetWithUI(
 	bakeSet *domain.BakeSet,
 	path string,
 	cw *controller.ControlWindow,
 	setIndex int,
 ) error {
-	// BakeUsecase経由でモデル読み込み
-	if err := s.bakeUsecase.LoadModelForBakeSet(bakeSet, path); err != nil {
+	// インターフェース版を呼び出し
+	_, err := s.LoadModelForBakeSet(bakeSet, path)
+	if err != nil {
 		return err
 	}
 
@@ -57,15 +98,16 @@ func (s *BakeApplicationService) LoadModelForBakeSet(
 	return nil
 }
 
-// LoadMotionForBakeSet セット用のモーション読み込み処理
-func (s *BakeApplicationService) LoadMotionForBakeSet(
+// LoadMotionForBakeSetWithUI セット用のモーション読み込み処理（UI依存版）
+func (s *BakeApplicationService) LoadMotionForBakeSetWithUI(
 	bakeSet *domain.BakeSet,
 	path string,
 	cw *controller.ControlWindow,
 	setIndex int,
 ) error {
-	// BakeUsecase経由でモーション読み込み
-	if err := s.bakeUsecase.LoadMotionForBakeSet(bakeSet, path); err != nil {
+	// インターフェース版を呼び出し
+	_, err := s.LoadMotionForBakeSet(bakeSet, path)
+	if err != nil {
 		return err
 	}
 
@@ -130,13 +172,46 @@ func (s *BakeApplicationService) ClearDeltaMotions(
 	}
 }
 
-// PrepareForBaking 焼き込み準備処理
-func (s *BakeApplicationService) PrepareForBaking(
+// PrepareForBaking 焼き込み準備処理（UI依存を排除）
+func (s *BakeApplicationService) PrepareForBaking(bakeSet *domain.BakeSet) *BakingPreparationResult {
+	if bakeSet == nil {
+		return &BakingPreparationResult{
+			Success:      false,
+			ErrorMessage: "BakeSet is nil",
+		}
+	}
+
+	preparedOriginalMotion := bakeSet.OriginalMotion != nil
+	preparedOutputMotion := false
+
+	if bakeSet.OriginalMotion != nil {
+		// 出力モーション準備の検証
+		if _, err := bakeSet.OriginalMotion.Copy(); err == nil {
+			preparedOutputMotion = true
+		}
+	}
+
+	return &BakingPreparationResult{
+		BakeSet:                bakeSet,
+		PreparedOriginalMotion: preparedOriginalMotion,
+		PreparedOutputMotion:   preparedOutputMotion,
+		Success:                preparedOriginalMotion && preparedOutputMotion,
+	}
+}
+
+// PrepareForBakingWithUI 焼き込み準備処理（UI依存版）
+func (s *BakeApplicationService) PrepareForBakingWithUI(
 	cw *controller.ControlWindow,
 	bakeSet *domain.BakeSet,
 	setIndex int,
 ) {
-	// 物理世界モーション・モデルモーションの準備
+	// インターフェース版を呼び出し
+	result := s.PrepareForBaking(bakeSet)
+	if !result.Success {
+		return
+	}
+
+	// ウィンドウへの反映
 	cw.StoreMotion(0, setIndex, bakeSet.OriginalMotion)
 	if bakeSet.OriginalMotion != nil {
 		if copiedMotion, err := bakeSet.OriginalMotion.Copy(); err == nil {
