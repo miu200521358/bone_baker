@@ -76,7 +76,7 @@ func (h *BakeSetHelper) ProcessOutputMotion(
 	// 新規モーションを作成（焼き込み用のみとする）
 	bakedMotion := vmd.NewVmdMotion(outputMotionPath)
 
-	keyCounts := make([]int, int(originalMotion.MaxFrame()+1+1))
+	keyCounts := make([]int, int(originalMotion.MaxFrame()*2))
 	for _, record := range records {
 		if record == nil || record.OutputBoneTreeModel == nil {
 			continue
