@@ -73,12 +73,8 @@ func (h *BakeSetHelper) ProcessOutputMotion(
 		return motions, errors.New(mi18n.T("物理焼き込みセットの元モデルまたは出力モーションが設定されていません"))
 	}
 
-	// 既存モーションに焼き込みボーンを追加挿入
-	bakedMotion, err := originalMotion.Copy()
-	if err != nil {
-		return motions, fmt.Errorf(mi18n.T("元モーションのコピーに失敗しました: %w"), err)
-	}
-	bakedMotion.SetPath(outputMotionPath)
+	// 新規モーションを作成（焼き込み用のみとする）
+	bakedMotion := vmd.NewVmdMotion(outputMotionPath)
 
 	keyCounts := make([]int, int(originalMotion.MaxFrame()+1+1))
 	for _, record := range records {
@@ -92,12 +88,15 @@ func (h *BakeSetHelper) ProcessOutputMotion(
 				if bf == nil {
 					continue
 				}
+				bakedBf := vmd.NewBoneFrame(f)
+				bakedBf.Position = bf.FilledPosition().Copy()
+				bakedBf.Rotation = bf.FilledUnitRotation().Copy() // (モーフ・付与親含む)トータル回転も保存
 
 				if bone, err := originalModel.Bones.GetByName(boneName); err == nil {
 					if bone.HasPhysics() {
-						bf.DisablePhysics = true
+						bakedBf.DisablePhysics = true
 					}
-					bakedMotion.AppendBoneFrame(boneName, bf)
+					bakedMotion.AppendBoneFrame(boneName, bakedBf)
 					keyCounts[int(f)]++
 
 					// 次のキーフレ物理有効で登録
@@ -115,6 +114,8 @@ func (h *BakeSetHelper) ProcessOutputMotion(
 		}
 	}
 
+	// TODO: 焼き込み結果を挿入する場合の分割処理
+
 	if mmath.Sum(keyCounts) == 0 {
 		return motions, errors.New(mi18n.T("焼き込み対象キーフレームなし"))
 	}
@@ -123,7 +124,7 @@ func (h *BakeSetHelper) ProcessOutputMotion(
 	return h.splitMotions(bakedMotion, keyCounts, outputMotionPath, originalModel, originalMotion)
 }
 
-// splitMotions モーション分割処理（内部メソッド）
+// splitMotions モーション分割処理
 func (h *BakeSetHelper) splitMotions(
 	bakedMotion *vmd.VmdMotion,
 	keyCounts []int,
