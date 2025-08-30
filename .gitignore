@@ -34,3 +34,5 @@ cmd/user_config.json
 
 配布/
 user_config.json
+cmd/*.json
+
