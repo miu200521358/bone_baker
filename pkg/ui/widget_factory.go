@@ -5,6 +5,7 @@ import (
 	"path/filepath"
 
 	"github.com/miu200521358/bone_baker/pkg/domain"
+	"github.com/miu200521358/bone_baker/pkg/usecase"
 	"github.com/miu200521358/mlib_go/pkg/config/mconfig"
 	"github.com/miu200521358/mlib_go/pkg/config/merr"
 	"github.com/miu200521358/mlib_go/pkg/config/mi18n"
@@ -19,15 +20,17 @@ import (
 
 // WidgetFactory UIウィジェット作成のファクトリー
 type WidgetFactory struct {
-	bakeState *BakeState
-	mWidgets  *controller.MWidgets
+	bakeState      *BakeState
+	mWidgets       *controller.MWidgets
+	physicsUsecase *usecase.PhysicsUsecase
 }
 
 // NewWidgetFactory コンストラクタ
 func NewWidgetFactory(bakeState *BakeState, mWidgets *controller.MWidgets) *WidgetFactory {
 	return &WidgetFactory{
-		bakeState: bakeState,
-		mWidgets:  mWidgets,
+		bakeState:      bakeState,
+		mWidgets:       mWidgets,
+		physicsUsecase: usecase.NewPhysicsUsecase(),
 	}
 }
 
@@ -77,7 +80,7 @@ func (wf *WidgetFactory) CreatePhysicsTableView() declarative.TableView {
 			{Title: mi18n.T("開始時用整形"), Width: 100},
 			{Title: mi18n.T("調整剛体"), Width: 300},
 		},
-		OnItemClicked: wf.createPhysicsTableViewDialog(),
+		OnItemClicked: wf.createPhysicsTableViewDialog(false),
 	}
 }
 
@@ -346,7 +349,7 @@ func (wf *WidgetFactory) createAddPhysicsButton() *widget.MPushButton {
 	btn.SetTooltip(mi18n.T("物理設定追加説明"))
 	btn.SetMaxSize(declarative.Size{Width: 100, Height: 20})
 	btn.SetOnClicked(func(cw *controller.ControlWindow) {
-		wf.createPhysicsTableViewDialog()() // ダイアログを表示
+		wf.createPhysicsTableViewDialog(true)() // ダイアログを表示
 	})
 	return btn
 }
@@ -423,10 +426,21 @@ func (wf *WidgetFactory) createOnChangePlayingPre() func(playing bool) {
 	}
 }
 
-func (wf *WidgetFactory) createPhysicsTableViewDialog() func() {
+func (wf *WidgetFactory) createPhysicsTableViewDialog(isAdd bool) func() {
 	return func() {
+		var record *domain.PhysicsBoneRecord
+		recordIndex := -1
+		switch isAdd {
+		case true:
+			record = domain.NewPhysicsBoneRecord(wf.bakeState.CurrentSet().OriginalModel,
+				wf.bakeState.CurrentSet().OriginalMotion.MinFrame(),
+				wf.bakeState.CurrentSet().OriginalMotion.MaxFrame())
+		case false:
+			record = wf.bakeState.CurrentSet().PhysicsTableModel.Records[wf.bakeState.PhysicsTableView.CurrentIndex()]
+			recordIndex = wf.bakeState.PhysicsTableView.CurrentIndex()
+		}
 		dialog := NewPhysicsTableViewDialog(wf.bakeState, wf.mWidgets)
-		dialog.Show()
+		dialog.Show(record, recordIndex)
 	}
 }
 
@@ -480,19 +494,18 @@ func (wf *WidgetFactory) handleLoadSet(filePath string) {
 		wf.bakeState.AddAction()
 	}
 
+	physicsWorldMotion := wf.mWidgets.Window().LoadPhysicsWorldMotion(0)
+
 	for index := range wf.bakeState.BakeSets {
 		wf.bakeState.ChangeCurrentAction(index)
 		wf.bakeState.OriginalModelPicker.SetForcePath(wf.bakeState.BakeSets[index].OriginalModelPath)
 		wf.bakeState.OriginalMotionPicker.SetForcePath(wf.bakeState.BakeSets[index].OriginalMotionPath)
 
-		// wf.bakeState.LoadModel(cw, wf.bakeState.BakeSets[index].OriginalModelPath)
-		// wf.bakeState.LoadMotion(cw, wf.bakeState.BakeSets[index].OriginalMotionPath, true)
-
 		physicsTable := wf.bakeState.BakeSets[index].PhysicsTableModel
 		newPhysicsTable := domain.NewPhysicsTableModel()
 		for _, record := range physicsTable.Records {
 			newPhysicsTable.AddRecord(
-				wf.bakeState.CurrentSet().OriginalModel,
+				wf.bakeState.BakeSets[index].OriginalModel,
 				record.StartFrame,
 				record.EndFrame,
 			)
@@ -512,10 +525,25 @@ func (wf *WidgetFactory) handleLoadSet(filePath string) {
 			latestRecord.TreeModel.UpdateModifiedNodes(nil, record.TreeModel.Nodes)
 		}
 
+		physicsModelMotion := wf.mWidgets.Window().LoadPhysicsModelMotion(0, index)
+
+		wf.physicsUsecase.ApplyPhysicsMotion(
+			physicsWorldMotion, physicsModelMotion,
+			wf.bakeState.BakeSets[index].PhysicsTableModel.Records,
+			wf.bakeState.BakeSets[index].OriginalModel,
+		)
+
+		wf.mWidgets.Window().StorePhysicsModelMotion(0, index, physicsModelMotion)
+
 		// 物理設定
 		wf.bakeState.BakeSets[index].PhysicsTableModel = newPhysicsTable
-		wf.bakeState.PhysicsTableView.SetModel(newPhysicsTable)
+		if wf.bakeState.CurrentIndex() == index {
+			wf.bakeState.PhysicsTableView.SetModel(newPhysicsTable)
+		}
 	}
+
+	wf.mWidgets.Window().StorePhysicsWorldMotion(0, physicsWorldMotion)
+	wf.mWidgets.Window().TriggerPhysicsReset()
 
 	wf.bakeState.SetCurrentIndex(0)
 	wf.bakeState.SetWidgetEnabled(true)

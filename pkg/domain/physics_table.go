@@ -63,8 +63,8 @@ func (m *PhysicsTableModel) Value(row, col int) any {
 	panic("unexpected col")
 }
 
-func (m *PhysicsTableModel) AddRecord(model *pmx.PmxModel, startFrame, endFrame float32) {
-	item := &PhysicsBoneRecord{
+func NewPhysicsBoneRecord(model *pmx.PmxModel, startFrame, endFrame float32) *PhysicsBoneRecord {
+	return &PhysicsBoneRecord{
 		StartFrame:    startFrame,
 		EndFrame:      endFrame,
 		MaxStartFrame: startFrame,
@@ -75,7 +75,10 @@ func (m *PhysicsTableModel) AddRecord(model *pmx.PmxModel, startFrame, endFrame 
 		IsStartDeform: false, // 開始用整形の初期値
 		TreeModel:     NewPhysicsRigidBodyTreeModel(model),
 	}
-	m.Records = append(m.Records, item)
+}
+
+func (m *PhysicsTableModel) AddRecord(model *pmx.PmxModel, startFrame, endFrame float32) {
+	m.Records = append(m.Records, NewPhysicsBoneRecord(model, startFrame, endFrame))
 }
 
 func (m *PhysicsTableModel) RemoveRow(index int) {
