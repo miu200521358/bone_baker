@@ -11,23 +11,26 @@ import (
 )
 
 type BakeState struct {
-	AddSetButton          *widget.MPushButton  // セット追加ボタン
-	ResetSetButton        *widget.MPushButton  // セットリセットボタン
-	SaveSetButton         *widget.MPushButton  // セット保存ボタン
-	LoadSetButton         *widget.MPushButton  // セット読込ボタン
-	NavToolBar            *walk.ToolBar        // セットツールバー
-	currentIndex          int                  // 現在のインデックス
-	OriginalMotionPicker  *widget.FilePicker   // 元モーション
-	OriginalModelPicker   *widget.FilePicker   // 物理焼き込み先モデル
-	OutputMotionPicker    *widget.FilePicker   // 出力モーション
-	OutputModelPicker     *widget.FilePicker   // 出力モデル
-	BakedHistoryIndexEdit *walk.NumberEdit     // 出力モーションインデックスプルダウン
-	SaveModelButton       *widget.MPushButton  // モデル保存ボタン
-	SaveMotionButton      *widget.MPushButton  // モーション保存ボタン
-	Player                *widget.MotionPlayer // モーションプレイヤー
-	PhysicsTableView      *walk.TableView      // 物理ボーン表示テーブル
-	OutputTableView       *walk.TableView      // 出力定義テーブル
-	BakeSets              []*domain.BakeSet    `json:"bake_sets"` // ボーン焼き込みセット
+	AddSetButton           *widget.MPushButton  // 設定追加ボタン
+	ResetSetButton         *widget.MPushButton  // 設定リセットボタン
+	SaveSetButton          *widget.MPushButton  // 設定保存ボタン
+	LoadSetButton          *widget.MPushButton  // 設定読込ボタン
+	NavToolBar             *walk.ToolBar        // 設定ツールバー
+	currentIndex           int                  // 現在のインデックス
+	OriginalMotionPicker   *widget.FilePicker   // 元モーション
+	OriginalModelPicker    *widget.FilePicker   // 物理焼き込み先モデル
+	OutputMotionPicker     *widget.FilePicker   // 出力モーション
+	OutputModelPicker      *widget.FilePicker   // 出力モデル
+	BakedHistoryIndexEdit  *walk.NumberEdit     // 出力モーションインデックスプルダウン
+	BakeHistoryClearButton *widget.MPushButton  // 焼き込み履歴クリアボタン
+	SaveModelButton        *widget.MPushButton  // モデル保存ボタン
+	SaveMotionButton       *widget.MPushButton  // モーション保存ボタン
+	Player                 *widget.MotionPlayer // モーションプレイヤー
+	AddPhysicsButton       *widget.MPushButton  // 物理設定追加ボタン
+	PhysicsTableView       *walk.TableView      // 物理ボーン表示テーブル
+	AddOutputButton        *widget.MPushButton  // 出力設定追加ボタン
+	OutputTableView        *walk.TableView      // 出力定義テーブル
+	BakeSets               []*domain.BakeSet    `json:"bake_sets"` // ボーン焼き込みセット
 
 	// 直接Usecaseを使用（Application Serviceを削除）
 	bakeUsecase *usecase.BakeUsecase
@@ -88,7 +91,7 @@ func (ss *BakeState) ChangeCurrentAction(index int) {
 	ss.currentIndex = index
 	ss.NavToolBar.Actions().At(index).SetChecked(true)
 
-	// 物理焼き込みセットの情報を表示
+	// 物理焼き込み設定の情報を表示
 	ss.OriginalModelPicker.ChangePath(ss.CurrentSet().OriginalModelPath())
 	ss.OriginalMotionPicker.ChangePath(ss.CurrentSet().OriginalMotionPath())
 	ss.OutputModelPicker.ChangePath(ss.CurrentSet().OutputModelPath())
@@ -126,12 +129,12 @@ func (ss *BakeState) CurrentSet() *domain.BakeSet {
 	return ss.BakeSets[ss.currentIndex]
 }
 
-// SaveSet セット情報を保存（直接Usecaseを呼び出し）
+// SaveSet 設定情報を保存（直接Usecaseを呼び出し）
 func (ss *BakeState) SaveSet(jsonPath string) error {
 	return ss.bakeUsecase.SaveBakeSet(ss.BakeSets, jsonPath)
 }
 
-// LoadSet セット情報を読み込む（直接Usecaseを呼び出し）
+// LoadSet 設定情報を読み込む（直接Usecaseを呼び出し）
 func (ss *BakeState) LoadSet(jsonPath string) error {
 	bakeSets, err := ss.bakeUsecase.LoadBakeSet(jsonPath)
 	if err != nil {
@@ -142,7 +145,7 @@ func (ss *BakeState) LoadSet(jsonPath string) error {
 	return nil
 }
 
-// LoadModel 元モデルを読み込む（Application Serviceの処理をインライン化）
+// LoadModel 元モデルを読み込む
 func (bakeState *BakeState) LoadModel(
 	cw *controller.ControlWindow, path string,
 ) error {
@@ -151,7 +154,7 @@ func (bakeState *BakeState) LoadModel(
 	// オプションクリア
 	bakeState.ClearOptions()
 
-	// 直接Usecaseを呼び出し（Application Serviceの処理をインライン化）
+	// 直接Usecaseを呼び出し
 	if err := bakeState.bakeUsecase.LoadModelForBakeSet(bakeState.CurrentSet(), path); err != nil {
 		return err
 	}
@@ -178,7 +181,7 @@ func (bakeState *BakeState) LoadModel(
 	return nil
 }
 
-// LoadMotion 物理焼き込みモーションを読み込む（Application Serviceの処理をインライン化）
+// LoadMotion 物理焼き込みモーションを読み込む
 func (bakeState *BakeState) LoadMotion(
 	cw *controller.ControlWindow, path string, isClear bool,
 ) error {
@@ -189,7 +192,7 @@ func (bakeState *BakeState) LoadMotion(
 		bakeState.ClearOptions()
 	}
 
-	// 直接Usecaseを呼び出し（Application Serviceの処理をインライン化）
+	// 直接Usecaseを呼び出し
 	if err := bakeState.bakeUsecase.LoadMotionForBakeSet(bakeState.CurrentSet(), path); err != nil {
 		return err
 	}
@@ -214,25 +217,6 @@ func (bakeState *BakeState) LoadMotion(
 	bakeState.BakedHistoryIndexEdit.SetValue(1.0)
 	bakeState.BakedHistoryIndexEdit.SetRange(1.0, 2.0)
 
-	if bakeState.CurrentSet().OriginalMotion != nil {
-		// テーブル初期化処理（旧Application Serviceのロジックをインライン化）
-		// 出力テーブルの初期化
-		bakeState.CurrentSet().OutputTableModel = domain.NewOutputTableModel()
-		bakeState.CurrentSet().OutputTableModel.AddRecord(
-			bakeState.CurrentSet().OriginalModel,
-			0,
-			bakeState.CurrentSet().OriginalMotion.MaxFrame())
-		bakeState.OutputTableView.SetModel(bakeState.CurrentSet().OutputTableModel)
-
-		// 物理テーブルの初期化
-		bakeState.CurrentSet().PhysicsTableModel = domain.NewPhysicsTableModel()
-		bakeState.CurrentSet().PhysicsTableModel.AddRecord(
-			bakeState.CurrentSet().OriginalModel,
-			0,
-			bakeState.CurrentSet().OriginalMotion.MaxFrame())
-		bakeState.PhysicsTableView.SetModel(bakeState.CurrentSet().PhysicsTableModel)
-	}
-
 	// モーションプレイヤーのリセット（旧CalculateMaxFrameをインライン化）
 	bakeState.Player.Reset(bakeState.MaxFrame())
 
@@ -256,8 +240,16 @@ func (bakeState *BakeState) SetWidgetEnabled(enabled bool) {
 	bakeState.OutputMotionPicker.SetEnabled(enabled)
 	bakeState.OutputModelPicker.SetEnabled(enabled)
 
+	bakeState.BakedHistoryIndexEdit.SetEnabled(enabled)
+	bakeState.BakeHistoryClearButton.SetEnabled(enabled)
+
+	bakeState.AddPhysicsButton.SetEnabled(enabled)
+
 	bakeState.SaveModelButton.SetEnabled(enabled)
 	bakeState.SaveMotionButton.SetEnabled(enabled)
+
+	bakeState.AddOutputButton.SetEnabled(enabled)
+	bakeState.OutputTableView.SetEnabled(enabled)
 
 	bakeState.SetWidgetPlayingEnabled(enabled)
 }
