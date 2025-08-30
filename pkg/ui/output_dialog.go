@@ -35,6 +35,8 @@ func (o *OutputTableViewDialog) Show() {
 	var treeView *walk.TreeView
 	var ikCheckBox *walk.CheckBox
 	var physicsCheckBox *walk.CheckBox
+	var standardCheckBox *walk.CheckBox
+	var fingerCheckBox *walk.CheckBox
 
 	builder := declarative.NewBuilder(o.mWidgets.Window())
 
@@ -51,8 +53,8 @@ func (o *OutputTableViewDialog) Show() {
 		},
 		Children: []declarative.Widget{
 			declarative.Composite{
-				Layout:   declarative.Grid{Columns: 6},
-				Children: o.createFormWidgets(&treeView, &ikCheckBox, &physicsCheckBox),
+				Layout:   declarative.Grid{Columns: 5},
+				Children: o.createFormWidgets(&treeView, &ikCheckBox, &physicsCheckBox, &standardCheckBox, &fingerCheckBox),
 			},
 			declarative.Composite{
 				Layout: declarative.HBox{
@@ -80,7 +82,8 @@ func (o *OutputTableViewDialog) Show() {
 }
 
 // createFormWidgets フォームウィジェットを作成
-func (o *OutputTableViewDialog) createFormWidgets(treeView **walk.TreeView, ikCheckBox, physicsCheckBox **walk.CheckBox) []declarative.Widget {
+func (o *OutputTableViewDialog) createFormWidgets(treeView **walk.TreeView,
+	ikCheckBox, physicsCheckBox, standardCheckBox, fingerCheckBox **walk.CheckBox) []declarative.Widget {
 	return []declarative.Widget{
 		declarative.Label{
 			Text: mi18n.T("出力開始フレーム"),
@@ -106,19 +109,11 @@ func (o *OutputTableViewDialog) createFormWidgets(treeView **walk.TreeView, ikCh
 			MinValue:           0,
 			MaxValue:           float64(o.bakeState.CurrentSet().MaxFrame() + 1),
 		},
-		declarative.Label{
-			Text: mi18n.T("焼き込み対象ボーン"),
-		},
 		declarative.HSpacer{
 			ColumnSpan: 1,
 		},
-		declarative.CheckBox{
-			AssignTo: ikCheckBox,
-			Text:     mi18n.T("IK焼き込み対象"),
-			OnClicked: func() {
-				(*treeView).Model().(*domain.OutputBoneTreeModel).SetOutputIkChecked(*treeView, nil, (*ikCheckBox).Checked())
-			},
-			ColumnSpan: 2,
+		declarative.Label{
+			Text: mi18n.T("焼き込み対象ボーン"),
 		},
 		declarative.CheckBox{
 			AssignTo: physicsCheckBox,
@@ -126,7 +121,27 @@ func (o *OutputTableViewDialog) createFormWidgets(treeView **walk.TreeView, ikCh
 			OnClicked: func() {
 				(*treeView).Model().(*domain.OutputBoneTreeModel).SetOutputPhysicsChecked(*treeView, nil, (*physicsCheckBox).Checked())
 			},
-			ColumnSpan: 2,
+		},
+		declarative.CheckBox{
+			AssignTo: ikCheckBox,
+			Text:     mi18n.T("IK焼き込み対象"),
+			OnClicked: func() {
+				(*treeView).Model().(*domain.OutputBoneTreeModel).SetOutputIkChecked(*treeView, nil, (*ikCheckBox).Checked())
+			},
+		},
+		declarative.CheckBox{
+			AssignTo: standardCheckBox,
+			Text:     mi18n.T("準標準焼き込み対象"),
+			OnClicked: func() {
+				(*treeView).Model().(*domain.OutputBoneTreeModel).SetOutputStandardChecked(*treeView, nil, (*standardCheckBox).Checked())
+			},
+		},
+		declarative.CheckBox{
+			AssignTo: fingerCheckBox,
+			Text:     mi18n.T("指焼き込み対象"),
+			OnClicked: func() {
+				(*treeView).Model().(*domain.OutputBoneTreeModel).SetOutputFingerChecked(*treeView, nil, (*fingerCheckBox).Checked())
+			},
 		},
 		declarative.TreeView{
 			AssignTo:   treeView,
@@ -177,15 +192,11 @@ func (o *OutputTableViewDialog) createButtonWidgets(okBtn, cancelBtn **walk.Push
 
 // handleDialogOK ダイアログOK処理
 func (o *OutputTableViewDialog) handleDialogOK() {
-	// 次の作業用の行を追加して、更新
+	// チェックされたボーン名一覧を取得
 	currentIndex := o.bakeState.OutputTableView.CurrentIndex()
-	o.bakeState.CurrentSet().OutputTableModel.Records[currentIndex].TargetBoneNames = o.bakeState.CurrentSet().OutputTableModel.Records[currentIndex].OutputBoneTreeModel.GetCheckedBoneNames()
-	if currentIndex == len(o.bakeState.CurrentSet().OutputTableModel.Records)-1 {
-		// 最後の行が選択されている場合は、新しい行を追加
-		o.bakeState.CurrentSet().OutputTableModel.AddRecord(
-			o.bakeState.CurrentSet().OriginalModel,
-			0,
-			o.bakeState.CurrentSet().MaxFrame())
-	}
+	o.bakeState.CurrentSet().OutputTableModel.Records[currentIndex].TargetBoneNames =
+		o.bakeState.CurrentSet().OutputTableModel.Records[currentIndex].OutputBoneTreeModel.GetCheckedBoneNames()
+
+	// 更新
 	o.bakeState.OutputTableView.SetModel(o.bakeState.CurrentSet().OutputTableModel)
 }
