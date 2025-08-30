@@ -86,7 +86,8 @@ func (o *OutputTableViewDialog) createFormWidgets(treeView **walk.TreeView,
 	ikCheckBox, physicsCheckBox, standardCheckBox, fingerCheckBox **walk.CheckBox) []declarative.Widget {
 	return []declarative.Widget{
 		declarative.Label{
-			Text: mi18n.T("出力開始フレーム"),
+			Text:        mi18n.T("出力開始フレーム"),
+			ToolTipText: mi18n.T("出力開始フレーム説明"),
 		},
 		declarative.NumberEdit{
 			Value:              declarative.Bind("StartFrame"),
@@ -98,7 +99,8 @@ func (o *OutputTableViewDialog) createFormWidgets(treeView **walk.TreeView,
 			MaxValue:           float64(o.bakeState.CurrentSet().MaxFrame() + 1),
 		},
 		declarative.Label{
-			Text: mi18n.T("出力終了フレーム"),
+			Text:        mi18n.T("出力終了フレーム"),
+			ToolTipText: mi18n.T("出力終了フレーム説明"),
 		},
 		declarative.NumberEdit{
 			Value:              declarative.Bind("EndFrame"),
@@ -116,29 +118,33 @@ func (o *OutputTableViewDialog) createFormWidgets(treeView **walk.TreeView,
 			Text: mi18n.T("焼き込み対象ボーン"),
 		},
 		declarative.CheckBox{
-			AssignTo: physicsCheckBox,
-			Text:     mi18n.T("物理焼き込み対象"),
+			AssignTo:    physicsCheckBox,
+			Text:        mi18n.T("物理焼き込み対象"),
+			ToolTipText: mi18n.T("物理焼き込み対象説明"),
 			OnClicked: func() {
 				(*treeView).Model().(*domain.OutputBoneTreeModel).SetOutputPhysicsChecked(*treeView, nil, (*physicsCheckBox).Checked())
 			},
 		},
 		declarative.CheckBox{
-			AssignTo: ikCheckBox,
-			Text:     mi18n.T("IK焼き込み対象"),
+			AssignTo:    ikCheckBox,
+			Text:        mi18n.T("IK焼き込み対象"),
+			ToolTipText: mi18n.T("IK焼き込み対象説明"),
 			OnClicked: func() {
 				(*treeView).Model().(*domain.OutputBoneTreeModel).SetOutputIkChecked(*treeView, nil, (*ikCheckBox).Checked())
 			},
 		},
 		declarative.CheckBox{
-			AssignTo: standardCheckBox,
-			Text:     mi18n.T("準標準焼き込み対象"),
+			AssignTo:    standardCheckBox,
+			Text:        mi18n.T("準標準焼き込み対象"),
+			ToolTipText: mi18n.T("準標準焼き込み対象説明"),
 			OnClicked: func() {
 				(*treeView).Model().(*domain.OutputBoneTreeModel).SetOutputStandardChecked(*treeView, nil, (*standardCheckBox).Checked())
 			},
 		},
 		declarative.CheckBox{
-			AssignTo: fingerCheckBox,
-			Text:     mi18n.T("指焼き込み対象"),
+			AssignTo:    fingerCheckBox,
+			Text:        mi18n.T("指焼き込み対象"),
+			ToolTipText: mi18n.T("指焼き込み対象説明"),
 			OnClicked: func() {
 				(*treeView).Model().(*domain.OutputBoneTreeModel).SetOutputFingerChecked(*treeView, nil, (*fingerCheckBox).Checked())
 			},
@@ -157,8 +163,9 @@ func (o *OutputTableViewDialog) createFormWidgets(treeView **walk.TreeView,
 func (o *OutputTableViewDialog) createButtonWidgets(okBtn, cancelBtn **walk.PushButton, dlg **walk.Dialog, db **walk.DataBinder) []declarative.Widget {
 	return []declarative.Widget{
 		declarative.PushButton{
-			AssignTo: okBtn,
-			Text:     mi18n.T("登録"),
+			AssignTo:    okBtn,
+			Text:        mi18n.T("登録"),
+			ToolTipText: mi18n.T("出力登録説明"),
 			OnClicked: func() {
 				if err := (*db).Submit(); err != nil {
 					mlog.ET(mi18n.T("焼き込み設定変更エラー"), err, "")
@@ -168,8 +175,9 @@ func (o *OutputTableViewDialog) createButtonWidgets(okBtn, cancelBtn **walk.Push
 			},
 		},
 		declarative.PushButton{
-			AssignTo: cancelBtn,
-			Text:     mi18n.T("削除"),
+			AssignTo:    cancelBtn,
+			Text:        mi18n.T("削除"),
+			ToolTipText: mi18n.T("出力削除説明"),
 			OnClicked: func() {
 				// 削除処理
 				o.bakeState.CurrentSet().OutputTableModel.RemoveRow(o.bakeState.OutputTableView.CurrentIndex())
@@ -181,8 +189,9 @@ func (o *OutputTableViewDialog) createButtonWidgets(okBtn, cancelBtn **walk.Push
 			},
 		},
 		declarative.PushButton{
-			AssignTo: cancelBtn,
-			Text:     mi18n.T("キャンセル"),
+			AssignTo:    cancelBtn,
+			Text:        mi18n.T("キャンセル"),
+			ToolTipText: mi18n.T("出力キャンセル説明"),
 			OnClicked: func() {
 				(*dlg).Cancel()
 			},

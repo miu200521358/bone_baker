@@ -376,8 +376,9 @@ func (p *PhysicsTableViewDialog) createPhysicsEditWidgets(sizeXEdit, sizeYEdit, 
 func (p *PhysicsTableViewDialog) createButtonWidgets(okBtn, cancelBtn **walk.PushButton, dlg **walk.Dialog, db **walk.DataBinder) []declarative.Widget {
 	return []declarative.Widget{
 		declarative.PushButton{
-			AssignTo: okBtn,
-			Text:     mi18n.T("登録"),
+			AssignTo:    okBtn,
+			Text:        mi18n.T("登録"),
+			ToolTipText: mi18n.T("物理設定登録説明"),
 			OnClicked: func() {
 				if err := (*db).Submit(); err != nil {
 					mlog.ET(mi18n.T("焼き込み設定変更エラー"), err, "")
@@ -387,8 +388,9 @@ func (p *PhysicsTableViewDialog) createButtonWidgets(okBtn, cancelBtn **walk.Pus
 			},
 		},
 		declarative.PushButton{
-			AssignTo: cancelBtn,
-			Text:     mi18n.T("削除"),
+			AssignTo:    cancelBtn,
+			Text:        mi18n.T("削除"),
+			ToolTipText: mi18n.T("物理設定削除説明"),
 			OnClicked: func() {
 				// 削除処理
 				p.bakeState.CurrentSet().PhysicsTableModel.RemoveRow(p.bakeState.PhysicsTableView.CurrentIndex())
@@ -400,8 +402,9 @@ func (p *PhysicsTableViewDialog) createButtonWidgets(okBtn, cancelBtn **walk.Pus
 			},
 		},
 		declarative.PushButton{
-			AssignTo: cancelBtn,
-			Text:     mi18n.T("キャンセル"),
+			AssignTo:    cancelBtn,
+			Text:        mi18n.T("キャンセル"),
+			ToolTipText: mi18n.T("物理設定キャンセル説明"),
 			OnClicked: func() {
 				(*dlg).Cancel()
 			},
