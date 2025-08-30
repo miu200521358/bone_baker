@@ -21,11 +21,20 @@ func NewOutputItem(bone *pmx.Bone, parent walk.TreeItem) *OutputItem {
 }
 
 func (pi *OutputItem) AsIk() bool {
-	return pi.bone.IsIK() || len(pi.bone.IkLinkBoneIndexes) > 0
+	return pi.bone.IsVisible() && (pi.bone.IsIK() || len(pi.bone.IkLinkBoneIndexes) > 0)
+}
+
+// 全親・足D・指・目以外の準標準ボーン
+func (pi *OutputItem) AsStandard() bool {
+	return pi.bone.IsVisible() && pi.bone.Config() != nil && pi.bone.Config().IsStandard && !pi.bone.Config().IsFinger() && !pi.bone.Config().IsLegD() && !pi.bone.Config().IsRoot() && !pi.bone.Config().IsEye()
+}
+
+func (pi *OutputItem) AsFinger() bool {
+	return pi.bone.IsVisible() && pi.bone.Config() != nil && pi.bone.Config().IsStandard && pi.bone.Config().IsFinger()
 }
 
 func (pi *OutputItem) AsPhysics() bool {
-	return pi.bone.HasPhysics()
+	return pi.bone.IsVisible() && pi.bone.HasPhysics()
 }
 
 func (pi *OutputItem) SetChecked(checked bool) {
@@ -198,6 +207,62 @@ func (pm *OutputBoneTreeModel) SetOutputIkChecked(treeView *walk.TreeView, item 
 
 		// 子どもアイテムのチェック状態を設定
 		pm.SetOutputIkChecked(treeView, child, checked)
+	}
+}
+
+func (pm *OutputBoneTreeModel) SetOutputStandardChecked(treeView *walk.TreeView, item walk.TreeItem, checked bool) {
+	if item == nil {
+		for _, node := range pm.nodes {
+			pm.SetOutputStandardChecked(treeView, node, checked)
+		}
+		return
+	}
+
+	// 子どもの数を取得
+	for i := range item.ChildCount() {
+		child := item.ChildAt(i)
+		if child == nil {
+			continue
+		}
+
+		// 出力準標準ボーンのチェック状態を設定
+		if outputItem, ok := child.(*OutputItem); ok {
+			if outputItem.AsStandard() {
+				outputItem.SetChecked(checked)
+				treeView.SetChecked(outputItem, checked)
+			}
+		}
+
+		// 子どもアイテムのチェック状態を設定
+		pm.SetOutputStandardChecked(treeView, child, checked)
+	}
+}
+
+func (pm *OutputBoneTreeModel) SetOutputFingerChecked(treeView *walk.TreeView, item walk.TreeItem, checked bool) {
+	if item == nil {
+		for _, node := range pm.nodes {
+			pm.SetOutputFingerChecked(treeView, node, checked)
+		}
+		return
+	}
+
+	// 子どもの数を取得
+	for i := range item.ChildCount() {
+		child := item.ChildAt(i)
+		if child == nil {
+			continue
+		}
+
+		// 出力指ボーンのチェック状態を設定
+		if outputItem, ok := child.(*OutputItem); ok {
+			if outputItem.AsFinger() {
+				outputItem.SetChecked(checked)
+				treeView.SetChecked(outputItem, checked)
+			}
+		}
+
+		// 子どもアイテムのチェック状態を設定
+		pm.SetOutputFingerChecked(treeView, child, checked)
 	}
 }
 
