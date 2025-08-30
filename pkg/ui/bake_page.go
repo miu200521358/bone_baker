@@ -33,10 +33,15 @@ func NewBakePage(mWidgets *controller.MWidgets) declarative.TabPage {
 		bakeState.OriginalModelPicker, bakeState.OutputMotionPicker,
 		bakeState.OutputModelPicker, bakeState.AddSetButton, bakeState.ResetSetButton,
 		bakeState.LoadSetButton, bakeState.SaveSetButton, bakeState.SaveMotionButton,
-		bakeState.SaveModelButton)
+		bakeState.SaveModelButton, bakeState.AddPhysicsButton, bakeState.AddOutputButton,
+		bakeState.BakeHistoryClearButton)
 	mWidgets.SetOnLoaded(func() {
 		bakeState.BakeSets = append(bakeState.BakeSets, domain.NewPhysicsSet(len(bakeState.BakeSets)))
 		bakeState.AddAction()
+		bakeState.AddPhysicsButton.SetEnabled(false)
+		bakeState.AddOutputButton.SetEnabled(false)
+		bakeState.SaveModelButton.SetEnabled(false)
+		bakeState.SaveMotionButton.SetEnabled(false)
 	})
 
 	return declarative.TabPage{
@@ -86,11 +91,20 @@ func NewBakePage(mWidgets *controller.MWidgets) declarative.TabPage {
 					bakeState.OriginalModelPicker.Widgets(),
 					bakeState.OriginalMotionPicker.Widgets(),
 					declarative.VSeparator{},
-					declarative.TextLabel{
-						Text:        mi18n.T("物理設定オプションテーブル"),
-						ToolTipText: mi18n.T("物理設定オプションテーブル説明"),
-						OnMouseDown: func(x, y int, button walk.MouseButton) {
-							mlog.ILT(mi18n.T("物理設定オプションテーブル"), mi18n.T("物理設定オプションテーブル説明"))
+					declarative.Composite{
+						Layout:  declarative.HBox{},
+						MinSize: declarative.Size{Width: 200, Height: 40},
+						MaxSize: declarative.Size{Width: 2560, Height: 40},
+						Children: []declarative.Widget{
+							declarative.TextLabel{
+								Text:        mi18n.T("物理設定テーブル"),
+								ToolTipText: mi18n.T("物理設定テーブル説明"),
+								OnMouseDown: func(x, y int, button walk.MouseButton) {
+									mlog.ILT(mi18n.T("物理設定テーブル"), mi18n.T("物理設定テーブル説明"))
+								},
+							},
+							declarative.HSpacer{},
+							bakeState.AddPhysicsButton.Widgets(),
 						},
 					},
 					widgetFactory.CreatePhysicsTableView(),
@@ -100,16 +114,24 @@ func NewBakePage(mWidgets *controller.MWidgets) declarative.TabPage {
 					declarative.VSeparator{},
 					bakeState.OutputMotionPicker.Widgets(),
 					declarative.Composite{
-						Layout:   declarative.Grid{Columns: 6},
+						Layout:   declarative.Grid{Columns: 4},
 						Children: widgetFactory.CreateBakedHistoryWidgets(),
 					},
-					declarative.TextLabel{
-						Text:        mi18n.T("焼き込み保存設定テーブル"),
-						ToolTipText: mi18n.T("焼き込み保存設定テーブル説明"),
-						OnMouseDown: func(x, y int, button walk.MouseButton) {
-							mlog.ILT(mi18n.T("焼き込み保存設定テーブル"), mi18n.T("焼き込み保存設定テーブル説明"))
+					declarative.Composite{
+						Layout:  declarative.HBox{},
+						MinSize: declarative.Size{Width: 200, Height: 40},
+						MaxSize: declarative.Size{Width: 2560, Height: 40},
+						Children: []declarative.Widget{
+							declarative.TextLabel{
+								Text:        mi18n.T("焼き込み保存設定テーブル"),
+								ToolTipText: mi18n.T("焼き込み保存設定テーブル説明"),
+								OnMouseDown: func(x, y int, button walk.MouseButton) {
+									mlog.ILT(mi18n.T("焼き込み保存設定テーブル"), mi18n.T("焼き込み保存設定テーブル説明"))
+								},
+							},
+							declarative.HSpacer{},
+							bakeState.AddOutputButton.Widgets(),
 						},
-						ColumnSpan: 6,
 					},
 					widgetFactory.CreateOutputTableView(),
 					bakeState.SaveMotionButton.Widgets(),
