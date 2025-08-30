@@ -245,7 +245,7 @@ func (wf *WidgetFactory) createSaveSetButton() *widget.MPushButton {
 	btn.SetTooltip(mi18n.T("設定設定保存説明"))
 	btn.SetMaxSize(declarative.Size{Width: 100, Height: 20})
 	btn.SetOnClicked(func(cw *controller.ControlWindow) {
-		initialDirPath := filepath.Dir(wf.bakeState.CurrentSet().OriginalMotionPath())
+		initialDirPath := filepath.Dir(wf.bakeState.CurrentSet().OriginalMotionPath)
 
 		dlg := walk.FileDialog{
 			Title: mi18n.T(
@@ -275,9 +275,9 @@ func (wf *WidgetFactory) createSaveModelButton() *widget.MPushButton {
 		wf.bakeState.SetWidgetEnabled(false)
 
 		for _, physicsSet := range wf.bakeState.BakeSets {
-			if physicsSet.OutputModelPath() != "" && physicsSet.OriginalModel != nil {
+			if physicsSet.OutputModelPath != "" && physicsSet.OriginalModel != nil {
 				rep := repository.NewPmxRepository(true)
-				if err := rep.Save(physicsSet.OutputModelPath(), physicsSet.OriginalModel, false); err != nil {
+				if err := rep.Save(physicsSet.OutputModelPath, physicsSet.OriginalModel, false); err != nil {
 					mlog.ET(mi18n.T("モデル保存失敗"), err, "")
 					if ok := merr.ShowErrorDialog(cw.AppConfig(), err); ok {
 						wf.bakeState.SetWidgetEnabled(true)
@@ -302,7 +302,7 @@ func (wf *WidgetFactory) createSaveMotionButton() *widget.MPushButton {
 		wf.bakeState.SetWidgetEnabled(false)
 
 		for _, physicsSet := range wf.bakeState.BakeSets {
-			if physicsSet.OutputMotionPath() != "" && physicsSet.OutputMotion != nil {
+			if physicsSet.OutputMotionPath != "" && physicsSet.OutputMotion != nil {
 				// チェックボーンのみ残す
 				motions, err := physicsSet.GetOutputMotionOnlyChecked(
 					wf.bakeState.OutputTableView.Model().(*domain.OutputTableModel).Records,
@@ -451,8 +451,8 @@ func (wf *WidgetFactory) createHistoryIndexChangeHandler() func() {
 
 		// 出力モーションを更新
 		currentSet.OutputMotion = outputMotion
-		currentSet.SetOutputMotionPath(currentSet.CreateOutputMotionPath())
-		wf.bakeState.OutputMotionPicker.ChangePath(currentSet.OutputMotionPath())
+		currentSet.OutputMotionPath = currentSet.CreateOutputMotionPath()
+		wf.bakeState.OutputMotionPicker.ChangePath(currentSet.OutputMotionPath)
 	}
 }
 
@@ -478,8 +478,8 @@ func (wf *WidgetFactory) handleLoadSet(filePath string) {
 
 	for index := range wf.bakeState.BakeSets {
 		wf.bakeState.ChangeCurrentAction(index)
-		wf.bakeState.OriginalMotionPicker.SetForcePath(wf.bakeState.BakeSets[index].OriginalMotionPath())
-		wf.bakeState.OutputModelPicker.SetForcePath(wf.bakeState.BakeSets[index].OutputModelPath())
+		wf.bakeState.OriginalMotionPicker.SetForcePath(wf.bakeState.BakeSets[index].OriginalMotionPath)
+		wf.bakeState.OutputModelPicker.SetForcePath(wf.bakeState.BakeSets[index].OutputModelPath)
 	}
 
 	wf.bakeState.SetCurrentIndex(0)

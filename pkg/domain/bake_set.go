@@ -10,14 +10,10 @@ type BakeSet struct {
 	IsTerminate bool // 処理停止フラグ
 
 	// Value Objectsを使用したファイルパス
-	originalMotionPath *FilePath `json:"-"` // 元モーションパス（Value Object）
-	originalModelPath  *FilePath `json:"-"` // 元モデルパス（Value Object）
-	outputMotionPath   *FilePath `json:"-"` // 出力モーションパス（Value Object）
-	outputModelPath    *FilePath `json:"-"` // 出力モデルパス（Value Object）
-
-	// JSONシリアライズ用の文字列フィールド（後方互換性）
-	OriginalMotionPathStr string `json:"original_motion_path"` // 元モーションパス
-	OriginalModelPathStr  string `json:"original_model_path"`  // 元モデルパス
+	OriginalMotionPath string `json:"original_motion_path"` // 元モーションパス
+	OriginalModelPath  string `json:"original_model_path"`  // 元モデルパス
+	OutputMotionPath   string `json:"-"`                    // 出力モーションパス
+	OutputModelPath    string `json:"-"`                    // 出力モデルパス
 
 	OriginalMotionName string `json:"-"` // 元モーション名
 	OriginalModelName  string `json:"-"` // 元モーション名
@@ -37,63 +33,11 @@ type BakeSet struct {
 
 func NewPhysicsSet(index int) *BakeSet {
 	return &BakeSet{
-		Index:              index,
-		PhysicsTableModel:  NewPhysicsTableModel(),
-		OutputTableModel:   NewOutputTableModel(),
-		originalMotionPath: NewFilePath(""),
-		originalModelPath:  NewFilePath(""),
-		outputMotionPath:   NewFilePath(""),
-		outputModelPath:    NewFilePath(""),
-		helper:             NewBakeSetHelper(), // Helper注入
+		Index:             index,
+		PhysicsTableModel: NewPhysicsTableModel(),
+		OutputTableModel:  NewOutputTableModel(),
+		helper:            NewBakeSetHelper(), // Helper注入
 	}
-}
-
-// Getter methods for Value Objects
-func (ss *BakeSet) OriginalMotionPath() string {
-	if ss.originalMotionPath == nil {
-		return ""
-	}
-	return ss.originalMotionPath.Value()
-}
-
-func (ss *BakeSet) OriginalModelPath() string {
-	if ss.originalModelPath == nil {
-		return ""
-	}
-	return ss.originalModelPath.Value()
-}
-
-func (ss *BakeSet) OutputMotionPath() string {
-	if ss.outputMotionPath == nil {
-		return ""
-	}
-	return ss.outputMotionPath.Value()
-}
-
-func (ss *BakeSet) OutputModelPath() string {
-	if ss.outputModelPath == nil {
-		return ""
-	}
-	return ss.outputModelPath.Value()
-}
-
-// Setter methods for Value Objects
-func (ss *BakeSet) SetOriginalMotionPath(path string) {
-	ss.originalMotionPath = NewFilePath(path)
-	ss.OriginalMotionPathStr = path
-}
-
-func (ss *BakeSet) SetOriginalModelPath(path string) {
-	ss.originalModelPath = NewFilePath(path)
-	ss.OriginalModelPathStr = path
-}
-
-func (ss *BakeSet) SetOutputMotionPath(path string) {
-	ss.outputMotionPath = NewFilePath(path)
-}
-
-func (ss *BakeSet) SetOutputModelPath(path string) {
-	ss.outputModelPath = NewFilePath(path)
 }
 
 func (ss *BakeSet) MaxFrame() float32 {
@@ -113,16 +57,17 @@ func (ss *BakeSet) CreateOutputMotionPath() string {
 
 func (ss *BakeSet) setMotion(originalMotion, outputMotion *vmd.VmdMotion) {
 	if originalMotion == nil || outputMotion == nil {
-		ss.SetOriginalMotionPath("")
+		ss.OriginalMotionPath = ""
 		ss.OriginalMotionName = ""
 		ss.OriginalMotion = nil
 
-		ss.SetOutputMotionPath("")
+		ss.OutputMotionPath = ""
 		ss.OutputMotion = vmd.NewVmdMotion("")
 
 		return
 	}
 
+	ss.OriginalMotionPath = originalMotion.Path()
 	ss.OriginalMotionName = originalMotion.Name()
 	ss.OriginalMotion = originalMotion
 	ss.OutputMotion = outputMotion
@@ -130,14 +75,14 @@ func (ss *BakeSet) setMotion(originalMotion, outputMotion *vmd.VmdMotion) {
 
 func (ss *BakeSet) setModels(originalModel, physicsBakedModel *pmx.PmxModel) {
 	if originalModel == nil {
-		ss.SetOriginalModelPath("")
+		ss.OriginalModelPath = ""
 		ss.OriginalModelName = ""
 		ss.OriginalModel = nil
 		ss.BakedModel = nil
 		return
 	}
 
-	ss.SetOriginalModelPath(originalModel.Path())
+	ss.OriginalModelPath = originalModel.Path()
 	ss.OriginalModelName = originalModel.Name()
 	ss.OriginalModel = originalModel
 	ss.BakedModel = physicsBakedModel
@@ -156,7 +101,7 @@ func (ss *BakeSet) SetModels(originalModel, bakedModel *pmx.PmxModel) error {
 	}
 
 	ss.setModels(originalModel, bakedModel)
-	ss.SetOutputModelPath(ss.helper.CreateOutputModelPath(originalModel))
+	ss.OutputModelPath = ss.helper.CreateOutputModelPath(originalModel)
 
 	return nil
 }
@@ -169,7 +114,7 @@ func (ss *BakeSet) ClearModels() {
 // SetMotions ドメインロジックでモーションを設定（公開メソッド）
 func (ss *BakeSet) SetMotions(originalMotion, outputMotion *vmd.VmdMotion) error {
 	ss.setMotion(originalMotion, outputMotion)
-	ss.SetOutputMotionPath(ss.CreateOutputMotionPath())
+	ss.OutputMotionPath = ss.CreateOutputMotionPath()
 	return nil
 }
 
@@ -179,10 +124,10 @@ func (ss *BakeSet) ClearMotions() {
 }
 
 func (ss *BakeSet) Delete() {
-	ss.SetOriginalMotionPath("")
-	ss.SetOriginalModelPath("")
-	ss.SetOutputMotionPath("")
-	ss.SetOutputModelPath("")
+	ss.OriginalMotionPath = ""
+	ss.OriginalModelPath = ""
+	ss.OutputModelPath = ""
+	ss.OutputMotionPath = ""
 
 	ss.OriginalMotionName = ""
 	ss.OriginalModelName = ""
@@ -199,7 +144,7 @@ func (ss *BakeSet) GetOutputMotionOnlyChecked(records []*OutputBoneRecord) ([]*v
 		ss.OriginalModel,
 		ss.OriginalMotion,
 		ss.OutputMotion,
-		ss.OutputMotionPath(),
+		ss.OutputMotionPath,
 		records,
 	)
 }
