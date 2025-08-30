@@ -45,6 +45,9 @@ func (wf *WidgetFactory) CreateButtonWidgets() {
 	wf.bakeState.SaveSetButton = wf.createSaveSetButton()
 	wf.bakeState.SaveModelButton = wf.createSaveModelButton()
 	wf.bakeState.SaveMotionButton = wf.createSaveMotionButton()
+	wf.bakeState.AddPhysicsButton = wf.createAddPhysicsButton()
+	wf.bakeState.AddOutputButton = wf.createAddOutputButton()
+	wf.bakeState.BakeHistoryClearButton = wf.createBakeHistoryClearButton()
 }
 
 // CreatePlayerWidget プレイヤーウィジェットを作成
@@ -95,9 +98,6 @@ func (wf *WidgetFactory) CreateOutputTableView() declarative.TableView {
 // CreateBakedHistoryWidgets 焼き込み履歴ウィジェットを作成
 func (wf *WidgetFactory) CreateBakedHistoryWidgets() []declarative.Widget {
 	return []declarative.Widget{
-		declarative.HSpacer{
-			ColumnSpan: 3,
-		},
 		declarative.TextLabel{
 			Text:        mi18n.T("焼き込み履歴INDEX"),
 			ToolTipText: mi18n.T("焼き込み履歴INDEX説明"),
@@ -111,10 +111,9 @@ func (wf *WidgetFactory) CreateBakedHistoryWidgets() []declarative.Widget {
 			MaxValue:           2,
 			OnValueChanged:     wf.createHistoryIndexChangeHandler(),
 		},
-		declarative.PushButton{
-			Text:        mi18n.T("焼き込み履歴クリア"),
-			ToolTipText: mi18n.T("焼き込み履歴クリア説明"),
-			OnClicked:   wf.createHistoryClearHandler(),
+		wf.bakeState.BakeHistoryClearButton.Widgets(),
+		declarative.HSpacer{
+			ColumnSpan: 1,
 		},
 	}
 }
@@ -331,6 +330,57 @@ func (wf *WidgetFactory) createSaveMotionButton() *widget.MPushButton {
 	return btn
 }
 
+func (wf *WidgetFactory) createAddPhysicsButton() *widget.MPushButton {
+	btn := widget.NewMPushButton()
+	btn.SetLabel(mi18n.T("物理設定追加"))
+	btn.SetTooltip(mi18n.T("物理設定追加説明"))
+	btn.SetMaxSize(declarative.Size{Width: 100, Height: 20})
+	btn.SetOnClicked(func(cw *controller.ControlWindow) {
+		wf.bakeState.CurrentSet().PhysicsTableModel.AddRecord(
+			wf.bakeState.CurrentSet().OriginalModel,
+			0,
+			wf.bakeState.CurrentSet().MaxFrame())
+		wf.bakeState.PhysicsTableView.SetModel(wf.bakeState.CurrentSet().PhysicsTableModel)
+		wf.bakeState.PhysicsTableView.SetCurrentIndex(len(wf.bakeState.CurrentSet().PhysicsTableModel.Records) - 1)
+		wf.createPhysicsTableViewDialog()() // ダイアログを表示
+	})
+	return btn
+}
+
+func (wf *WidgetFactory) createAddOutputButton() *widget.MPushButton {
+	btn := widget.NewMPushButton()
+	btn.SetLabel(mi18n.T("出力設定追加"))
+	btn.SetTooltip(mi18n.T("出力設定追加説明"))
+	btn.SetMaxSize(declarative.Size{Width: 100, Height: 20})
+	btn.SetOnClicked(func(cw *controller.ControlWindow) {
+		wf.bakeState.CurrentSet().OutputTableModel.AddRecord(
+			wf.bakeState.CurrentSet().OriginalModel,
+			0,
+			wf.bakeState.CurrentSet().MaxFrame())
+		wf.bakeState.OutputTableView.SetModel(wf.bakeState.CurrentSet().OutputTableModel)
+		wf.bakeState.OutputTableView.SetCurrentIndex(len(wf.bakeState.CurrentSet().OutputTableModel.Records) - 1)
+		wf.createOutputTableViewDialog()() // ダイアログを表示
+	})
+	return btn
+}
+
+func (wf *WidgetFactory) createBakeHistoryClearButton() *widget.MPushButton {
+	btn := widget.NewMPushButton()
+	btn.SetLabel(mi18n.T("焼き込み履歴クリア"))
+	btn.SetTooltip(mi18n.T("焼き込み履歴クリア説明"))
+	btn.SetMaxSize(declarative.Size{Width: 100, Height: 20})
+	btn.SetOnClicked(func(cw *controller.ControlWindow) {
+		wf.mWidgets.Window().ClearDeltaMotion(0, wf.bakeState.CurrentIndex())
+		wf.mWidgets.Window().ClearDeltaMotion(1, wf.bakeState.CurrentIndex())
+		wf.mWidgets.Window().SetSaveDeltaIndex(0, 0)
+		wf.mWidgets.Window().SetSaveDeltaIndex(1, 0)
+
+		wf.bakeState.BakedHistoryIndexEdit.SetValue(1.0)
+		wf.bakeState.BakedHistoryIndexEdit.SetRange(1.0, 2.0)
+	})
+	return btn
+}
+
 // Event handler methods
 
 func (wf *WidgetFactory) createEnabledPlaying() func(playing bool) {
@@ -363,10 +413,8 @@ func (wf *WidgetFactory) createOnChangePlayingPre() func(playing bool) {
 			mlog.IL(mi18n.T("焼き込み再生開始: 焼き込み履歴INDEX[%d]"), deltaIndex+1)
 			wf.mWidgets.Window().SetFrame(wf.mWidgets.Window().Frame() - 2)
 		} else {
-			// 焼き込み完了時に範囲を更新
-			deltaCnt := wf.mWidgets.Window().GetDeltaMotionCount(0, wf.bakeState.CurrentIndex())
-			wf.bakeState.BakedHistoryIndexEdit.SetRange(1, float64(deltaCnt))
-			wf.bakeState.BakedHistoryIndexEdit.SetValue(float64(deltaCnt))
+			// 焼き込み完了時に出力モーションを取得
+			wf.createHistoryIndexChangeHandler()()
 		}
 	}
 }
@@ -405,18 +453,6 @@ func (wf *WidgetFactory) createHistoryIndexChangeHandler() func() {
 		currentSet.OutputMotion = outputMotion
 		currentSet.SetOutputMotionPath(currentSet.CreateOutputMotionPath())
 		wf.bakeState.OutputMotionPicker.ChangePath(currentSet.OutputMotionPath())
-	}
-}
-
-func (wf *WidgetFactory) createHistoryClearHandler() func() {
-	return func() {
-		wf.mWidgets.Window().ClearDeltaMotion(0, wf.bakeState.CurrentIndex())
-		wf.mWidgets.Window().ClearDeltaMotion(1, wf.bakeState.CurrentIndex())
-		wf.mWidgets.Window().SetSaveDeltaIndex(0, 0)
-		wf.mWidgets.Window().SetSaveDeltaIndex(1, 0)
-
-		wf.bakeState.BakedHistoryIndexEdit.SetValue(1.0)
-		wf.bakeState.BakedHistoryIndexEdit.SetRange(1.0, 2.0)
 	}
 }
 
