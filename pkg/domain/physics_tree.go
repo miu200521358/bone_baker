@@ -1,6 +1,7 @@
 package domain
 
 import (
+	"encoding/json"
 	"fmt"
 
 	"github.com/miu200521358/mlib_go/pkg/config/mi18n"
@@ -10,20 +11,22 @@ import (
 )
 
 type PhysicsItem struct {
-	bones          *pmx.Bones     // ボーン一覧
-	bone           *pmx.Bone      // 剛体に紐付くボーン情報
-	rigidBody      *pmx.RigidBody // 剛体情報
-	parent         walk.TreeItem
-	children       []walk.TreeItem
-	SizeRatio      *mmath.MVec3 `json:"size_ratio"`      // 大きさ比率
-	MassRatio      float64      `json:"mass_ratio"`      // 質量比率
-	StiffnessRatio float64      `json:"stiffness_ratio"` // 硬さ比率
-	TensionRatio   float64      `json:"tension_ratio"`   // 張り比率
-	Modified       bool         `json:"modified"`        // 変更されたかどうか
+	parent         walk.TreeItem   // 親要素
+	children       []walk.TreeItem // 子要素
+	bones          *pmx.Bones      // ボーン一覧
+	bone           *pmx.Bone       // 剛体に紐付くボーン情報
+	rigidBody      *pmx.RigidBody  // 剛体情報
+	SizeRatio      *mmath.MVec3    `json:"size_ratio"`       // 大きさ比率
+	MassRatio      float64         `json:"mass_ratio"`       // 質量比率
+	StiffnessRatio float64         `json:"stiffness_ratio"`  // 硬さ比率
+	TensionRatio   float64         `json:"tension_ratio"`    // 張り比率
+	Modified       bool            `json:"modified"`         // 変更されたかどうか
+	RigidBodyIndex int             `json:"rigid_body_index"` // 剛体インデックス
+	RigidBodyName  string          `json:"rigid_body_name"`  // 剛体名
 }
 
 func NewPhysicsItem(bones *pmx.Bones, bone *pmx.Bone, rigidBody *pmx.RigidBody, parent walk.TreeItem) *PhysicsItem {
-	return &PhysicsItem{
+	item := &PhysicsItem{
 		bones:          bones,
 		bone:           bone,
 		rigidBody:      rigidBody,
@@ -34,6 +37,13 @@ func NewPhysicsItem(bones *pmx.Bones, bone *pmx.Bone, rigidBody *pmx.RigidBody, 
 		StiffnessRatio: 1.0,
 		TensionRatio:   1.0,
 	}
+
+	if rigidBody != nil {
+		item.RigidBodyIndex = rigidBody.Index()
+		item.RigidBodyName = rigidBody.Name()
+	}
+
+	return item
 }
 
 func (pi *PhysicsItem) Text() string {
@@ -228,7 +238,7 @@ func (pi *PhysicsItem) AtByRigidBodyIndex(rigidBodyIndex int) *PhysicsItem {
 
 type PhysicsRigidBodyTreeModel struct {
 	*walk.TreeModelBase
-	Nodes []*PhysicsItem `json:"nodes"` // 物理剛体ノード
+	Nodes []*PhysicsItem // 物理剛体ノード
 }
 
 func NewPhysicsRigidBodyTreeModel(model *pmx.PmxModel) *PhysicsRigidBodyTreeModel {
@@ -269,6 +279,77 @@ func NewPhysicsRigidBodyTreeModel(model *pmx.PmxModel) *PhysicsRigidBodyTreeMode
 	tree.SaveOnlyPhysicsItems()
 
 	return tree
+}
+
+func (pm *PhysicsRigidBodyTreeModel) MarshalJSON() ([]byte, error) {
+	// 変更のあったノードのみを収集
+	modifiedNodes := pm.ModifiedNodes(nil)
+
+	// 変更のあったフィールドのみを含める
+	return json.Marshal(&struct {
+		Nodes []*PhysicsItem `json:"nodes"`
+	}{
+		Nodes: modifiedNodes,
+	})
+}
+
+// func (pm *PhysicsRigidBodyTreeModel) UnmarshalJSON(data []byte) error {
+// 	// JSONをデコード
+// 	var obj struct {
+// 		Nodes []*PhysicsItem `json:"nodes"`
+// 	}
+
+// 	if err := json.Unmarshal(data, &obj); err != nil {
+// 		return err
+// 	}
+
+// 	pm.AddModifiedNodes(nil, obj.Nodes)
+
+// 	return nil
+// }
+
+func (pm *PhysicsRigidBodyTreeModel) ModifiedNodes(node *PhysicsItem) []*PhysicsItem {
+	modifiedNodes := make([]*PhysicsItem, 0)
+	if node == nil {
+		for _, node := range pm.Nodes {
+			modifiedNodes = append(modifiedNodes, pm.ModifiedNodes(node)...)
+		}
+		return modifiedNodes
+	}
+
+	if node.Modified {
+		modifiedNodes = append(modifiedNodes, node)
+	}
+
+	for _, child := range node.children {
+		modifiedNodes = append(modifiedNodes, pm.ModifiedNodes(child.(*PhysicsItem))...)
+	}
+
+	return modifiedNodes
+}
+
+func (pm *PhysicsRigidBodyTreeModel) UpdateModifiedNodes(node *PhysicsItem, modifiedNodes []*PhysicsItem) {
+	if node == nil {
+		for _, n := range pm.Nodes {
+			pm.UpdateModifiedNodes(n, modifiedNodes)
+		}
+		return
+	}
+
+	for _, mNodes := range modifiedNodes {
+		// 同じ剛体インデックスと名前を持つノードの場合、更新
+		if mNodes.RigidBodyIndex == node.RigidBodyIndex && mNodes.RigidBodyName == node.RigidBodyName {
+			node.SizeRatio = mNodes.SizeRatio
+			node.MassRatio = mNodes.MassRatio
+			node.StiffnessRatio = mNodes.StiffnessRatio
+			node.TensionRatio = mNodes.TensionRatio
+			node.Modified = mNodes.Modified
+		}
+	}
+
+	for _, child := range node.children {
+		pm.UpdateModifiedNodes(child.(*PhysicsItem), modifiedNodes)
+	}
 }
 
 func (pm *PhysicsRigidBodyTreeModel) AddNode(node *PhysicsItem) {

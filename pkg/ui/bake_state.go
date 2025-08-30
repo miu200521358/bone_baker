@@ -159,7 +159,7 @@ func (bakeState *BakeState) LoadModel(
 		return err
 	}
 
-	// UI反映処理（旧PrepareForBakingWithUI相当）
+	// UI反映処理
 	currentSet := bakeState.CurrentSet()
 	cw.StoreModel(0, bakeState.CurrentIndex(), currentSet.OriginalModel)
 	cw.StoreModel(1, bakeState.CurrentIndex(), currentSet.BakedModel)

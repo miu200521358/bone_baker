@@ -1,6 +1,8 @@
 package domain
 
 import (
+	"encoding/json"
+
 	"github.com/miu200521358/mlib_go/pkg/domain/pmx"
 	"github.com/miu200521358/mlib_go/pkg/domain/vmd"
 )
@@ -38,6 +40,24 @@ func NewPhysicsSet(index int) *BakeSet {
 		OutputTableModel:  NewOutputTableModel(),
 		helper:            NewBakeSetHelper(), // Helper注入
 	}
+}
+
+func (ss *BakeSet) UnmarshalJSON(data []byte) error {
+	type Alias BakeSet
+	aux := &struct {
+		*Alias
+	}{
+		Alias: (*Alias)(ss),
+	}
+	if err := json.Unmarshal(data, &aux); err != nil {
+		return err
+	}
+
+	// aux.PhysicsTableModel = NewPhysicsTableModel()
+	// aux.OutputTableModel = NewOutputTableModel()
+	aux.helper = NewBakeSetHelper()
+
+	return nil
 }
 
 func (ss *BakeSet) MaxFrame() float32 {

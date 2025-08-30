@@ -1,6 +1,8 @@
 package domain
 
 import (
+	"strings"
+
 	"github.com/miu200521358/mlib_go/pkg/domain/mmath"
 	"github.com/miu200521358/mlib_go/pkg/domain/pmx"
 	"github.com/miu200521358/walk/pkg/walk"
@@ -8,9 +10,9 @@ import (
 
 type PhysicsTableModel struct {
 	walk.TableModelBase
-	tv       *walk.TableView
+	tv       *walk.TableView      `json:"-"`       // テーブルビュー
 	Records  []*PhysicsBoneRecord `json:"records"` // 物理ボーンレコード
-	TreeView *walk.TreeView       // 物理ボーンツリー
+	TreeView *walk.TreeView       `json:"-"`       // 物理ボーンツリー
 }
 
 func NewPhysicsTableModel() *PhysicsTableModel {
@@ -49,6 +51,13 @@ func (m *PhysicsTableModel) Value(row, col int) any {
 		return item.FixedTimeStep
 	case 6:
 		return item.IsStartDeform
+	case 7:
+		nodes := item.TreeModel.ModifiedNodes(nil)
+		nodeNames := make([]string, 0, len(nodes))
+		for _, n := range nodes {
+			nodeNames = append(nodeNames, n.RigidBodyName)
+		}
+		return strings.Join(nodeNames, ", ")
 	}
 
 	panic("unexpected col")

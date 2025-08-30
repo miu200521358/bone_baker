@@ -1,6 +1,7 @@
 package ui
 
 import (
+	"fmt"
 	"path/filepath"
 
 	"github.com/miu200521358/bone_baker/pkg/domain"
@@ -8,6 +9,7 @@ import (
 	"github.com/miu200521358/mlib_go/pkg/config/merr"
 	"github.com/miu200521358/mlib_go/pkg/config/mi18n"
 	"github.com/miu200521358/mlib_go/pkg/config/mlog"
+	"github.com/miu200521358/mlib_go/pkg/infrastructure/mfile"
 	"github.com/miu200521358/mlib_go/pkg/infrastructure/repository"
 	"github.com/miu200521358/mlib_go/pkg/interface/controller"
 	"github.com/miu200521358/mlib_go/pkg/interface/controller/widget"
@@ -73,6 +75,7 @@ func (wf *WidgetFactory) CreatePhysicsTableView() declarative.TableView {
 			{Title: mi18n.T("最大演算回数"), Width: 100},
 			{Title: mi18n.T("物理演算頻度"), Width: 100},
 			{Title: mi18n.T("開始時用整形"), Width: 100},
+			{Title: mi18n.T("調整剛体"), Width: 300},
 		},
 		OnItemClicked: wf.createPhysicsTableViewDialog(),
 	}
@@ -246,6 +249,12 @@ func (wf *WidgetFactory) createSaveSetButton() *widget.MPushButton {
 	btn.SetMaxSize(declarative.Size{Width: 100, Height: 20})
 	btn.SetOnClicked(func(cw *controller.ControlWindow) {
 		initialDirPath := filepath.Dir(wf.bakeState.CurrentSet().OriginalMotionPath)
+		filePath := ""
+		if wf.bakeState.CurrentSet().OriginalModel != nil {
+			// モーション側にモデルファイル名でJSONデフォルト名を入れる
+			_, name, _ := mfile.SplitPath(wf.bakeState.CurrentSet().OriginalModel.Path())
+			filePath = fmt.Sprintf("%s.json", name)
+		}
 
 		dlg := walk.FileDialog{
 			Title: mi18n.T(
@@ -254,6 +263,7 @@ func (wf *WidgetFactory) createSaveSetButton() *widget.MPushButton {
 			Filter:         "Json files (*.json)|*.json",
 			FilterIndex:    1,
 			InitialDirPath: initialDirPath,
+			FilePath:       filePath,
 		}
 		if ok, err := dlg.ShowSave(nil); err != nil {
 			walk.MsgBox(nil, mi18n.T("ファイル選択ダイアログ選択エラー"), err.Error(), walk.MsgBoxIconError)
@@ -336,12 +346,6 @@ func (wf *WidgetFactory) createAddPhysicsButton() *widget.MPushButton {
 	btn.SetTooltip(mi18n.T("物理設定追加説明"))
 	btn.SetMaxSize(declarative.Size{Width: 100, Height: 20})
 	btn.SetOnClicked(func(cw *controller.ControlWindow) {
-		wf.bakeState.CurrentSet().PhysicsTableModel.AddRecord(
-			wf.bakeState.CurrentSet().OriginalModel,
-			0,
-			wf.bakeState.CurrentSet().MaxFrame())
-		wf.bakeState.PhysicsTableView.SetModel(wf.bakeState.CurrentSet().PhysicsTableModel)
-		wf.bakeState.PhysicsTableView.SetCurrentIndex(len(wf.bakeState.CurrentSet().PhysicsTableModel.Records) - 1)
 		wf.createPhysicsTableViewDialog()() // ダイアログを表示
 	})
 	return btn
@@ -478,8 +482,39 @@ func (wf *WidgetFactory) handleLoadSet(filePath string) {
 
 	for index := range wf.bakeState.BakeSets {
 		wf.bakeState.ChangeCurrentAction(index)
+		wf.bakeState.OriginalModelPicker.SetForcePath(wf.bakeState.BakeSets[index].OriginalModelPath)
 		wf.bakeState.OriginalMotionPicker.SetForcePath(wf.bakeState.BakeSets[index].OriginalMotionPath)
-		wf.bakeState.OutputModelPicker.SetForcePath(wf.bakeState.BakeSets[index].OutputModelPath)
+
+		// wf.bakeState.LoadModel(cw, wf.bakeState.BakeSets[index].OriginalModelPath)
+		// wf.bakeState.LoadMotion(cw, wf.bakeState.BakeSets[index].OriginalMotionPath, true)
+
+		physicsTable := wf.bakeState.BakeSets[index].PhysicsTableModel
+		newPhysicsTable := domain.NewPhysicsTableModel()
+		for _, record := range physicsTable.Records {
+			newPhysicsTable.AddRecord(
+				wf.bakeState.CurrentSet().OriginalModel,
+				record.StartFrame,
+				record.EndFrame,
+			)
+			latestRecord := newPhysicsTable.Records[len(newPhysicsTable.Records)-1]
+			latestRecord.Gravity = record.Gravity
+			latestRecord.MaxStartFrame = record.MaxStartFrame
+			latestRecord.MaxEndFrame = record.MaxEndFrame
+			latestRecord.MaxSubSteps = record.MaxSubSteps
+			latestRecord.FixedTimeStep = record.FixedTimeStep
+			latestRecord.IsStartDeform = record.IsStartDeform
+			latestRecord.SizeRatio = record.SizeRatio
+			latestRecord.MassRatio = record.MassRatio
+			latestRecord.TensionRatio = record.TensionRatio
+			latestRecord.StiffnessRatio = record.StiffnessRatio
+
+			// JSONから復元したツリー情報を設定
+			latestRecord.TreeModel.UpdateModifiedNodes(nil, record.TreeModel.Nodes)
+		}
+
+		// 物理設定
+		wf.bakeState.BakeSets[index].PhysicsTableModel = newPhysicsTable
+		wf.bakeState.PhysicsTableView.SetModel(newPhysicsTable)
 	}
 
 	wf.bakeState.SetCurrentIndex(0)

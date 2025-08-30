@@ -442,6 +442,13 @@ func (p *PhysicsTableViewDialog) updateEditValues(treeView *walk.TreeView, sizeX
 func (p *PhysicsTableViewDialog) handleDialogOK() {
 	p.bakeState.SetWidgetEnabled(false)
 
+	p.bakeState.CurrentSet().PhysicsTableModel.AddRecord(
+		p.bakeState.CurrentSet().OriginalModel,
+		0,
+		p.bakeState.CurrentSet().MaxFrame())
+	p.bakeState.PhysicsTableView.SetModel(p.bakeState.CurrentSet().PhysicsTableModel)
+	p.bakeState.PhysicsTableView.SetCurrentIndex(len(p.bakeState.CurrentSet().PhysicsTableModel.Records) - 1)
+
 	physicsWorldMotion := p.mWidgets.Window().LoadPhysicsWorldMotion(0)
 	physicsModelMotion := p.mWidgets.Window().LoadPhysicsModelMotion(0, p.bakeState.CurrentIndex())
 
