@@ -412,6 +412,8 @@ func (wf *WidgetFactory) createOnChangePlayingPre() func(playing bool) {
 
 		// 情報表示
 		wf.mWidgets.Window().SetCheckedShowInfoEnabled(playing)
+		// フレームドロップOFF
+		wf.mWidgets.Window().SetFrameDropEnabled(false)
 
 		if playing {
 			// 焼き込み開始時にINDEX加算
@@ -420,11 +422,15 @@ func (wf *WidgetFactory) createOnChangePlayingPre() func(playing bool) {
 				// 既に焼き込みが1回以上行われている場合はインクリメント
 				deltaIndex += 1
 			}
-			wf.mWidgets.Window().SetSaveDeltaIndex(0, deltaIndex)
+			wf.mWidgets.Window().SetSaveDeltaIndex(0, deltaIndex+1)
 
 			// 再生フレーム
 			mlog.IL(mi18n.T("焼き込み再生開始: 焼き込み履歴INDEX[%d]"), deltaIndex+1)
 		} else {
+			deltaIndex := wf.mWidgets.Window().GetDeltaMotionCount(0, wf.bakeState.CurrentIndex())
+			wf.bakeState.BakedHistoryIndexEdit.SetRange(1.0, float64(deltaIndex))
+			wf.bakeState.BakedHistoryIndexEdit.SetValue(float64(deltaIndex))
+
 			// 焼き込み完了時に出力モーションを取得
 			wf.createHistoryIndexChangeHandler()()
 		}

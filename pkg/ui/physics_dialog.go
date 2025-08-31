@@ -401,7 +401,8 @@ func (p *PhysicsTableViewDialog) createButtonWidgets(okBtn, cancelBtn **walk.Pus
 					mlog.ET(mi18n.T("焼き込み設定変更エラー"), err, "")
 					return
 				}
-				(*dlg).Accept()
+				p.bakeState.PhysicsTableView.SetModel(p.bakeState.CurrentSet().PhysicsTableModel)
+				(*dlg).Cancel()
 			},
 		},
 		declarative.PushButton{

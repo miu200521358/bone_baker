@@ -33,8 +33,8 @@ func (pi *OutputItem) AsFinger() bool {
 	return pi.bone.IsVisible() && pi.bone.Config() != nil && pi.bone.Config().IsStandard && pi.bone.Config().IsFinger()
 }
 
-func (pi *OutputItem) AsPhysics() bool {
-	return pi.bone.IsVisible() && pi.bone.HasPhysics()
+func (pi *OutputItem) AsDynamicPhysics() bool {
+	return pi.bone.IsVisible() && pi.bone.HasDynamicPhysics()
 }
 
 func (pi *OutputItem) SetChecked(checked bool) {
@@ -283,7 +283,7 @@ func (pm *OutputBoneTreeModel) SetOutputPhysicsChecked(treeView *walk.TreeView, 
 
 		// 出力物理ボーンのチェック状態を設定
 		if outputItem, ok := child.(*OutputItem); ok {
-			if outputItem.AsPhysics() {
+			if outputItem.AsDynamicPhysics() {
 				outputItem.SetChecked(checked)
 				treeView.SetChecked(outputItem, checked)
 			}

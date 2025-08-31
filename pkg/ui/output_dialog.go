@@ -185,7 +185,8 @@ func (o *OutputTableViewDialog) createButtonWidgets(okBtn, cancelBtn **walk.Push
 					mlog.ET(mi18n.T("焼き込み設定変更エラー"), err, "")
 					return
 				}
-				(*dlg).Accept()
+				o.bakeState.OutputTableView.SetModel(o.bakeState.CurrentSet().OutputTableModel)
+				(*dlg).Cancel()
 			},
 		},
 		declarative.PushButton{
