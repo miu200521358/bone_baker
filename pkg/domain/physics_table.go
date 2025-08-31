@@ -53,9 +53,9 @@ func (m *PhysicsTableModel) Value(row, col int) any {
 		return item.MaxSubSteps
 	case 7:
 		return item.FixedTimeStep
+	// case 8:
+	// 	return item.IsStartDeform
 	case 8:
-		return item.IsStartDeform
-	case 9:
 		nodes := item.TreeModel.ModifiedNodes(nil)
 		nodeNames := make([]string, 0, len(nodes))
 		for _, n := range nodes {

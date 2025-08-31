@@ -83,7 +83,7 @@ func (wf *WidgetFactory) CreatePhysicsTableView() declarative.TableView {
 			{Title: mi18n.T("重力"), Width: 60},
 			{Title: mi18n.T("最大演算回数"), Width: 100},
 			{Title: mi18n.T("物理演算頻度"), Width: 100},
-			{Title: mi18n.T("開始時用整形"), Width: 100},
+			// {Title: mi18n.T("開始時用整形"), Width: 100},
 			{Title: mi18n.T("調整剛体"), Width: 300},
 		},
 		OnItemClicked: wf.createPhysicsTableViewDialog(false),

@@ -105,13 +105,16 @@ func (p *PhysicsTableViewDialog) createFormWidgets(gravityEdit, sizeXEdit, sizeY
 			MinValue:           0,
 			MaxValue:           float64(p.bakeState.CurrentSet().MaxFrame() + 1),
 		},
-		declarative.Label{
-			Text:        mi18n.T("開始時用整形"),
-			ToolTipText: mi18n.T("開始時用整形説明"),
-		},
-		declarative.CheckBox{
-			Checked:     declarative.Bind("IsStartDeform"),
-			ToolTipText: mi18n.T("開始時用整形説明"),
+		// declarative.Label{
+		// 	Text:        mi18n.T("開始時用整形"),
+		// 	ToolTipText: mi18n.T("開始時用整形説明"),
+		// },
+		// declarative.CheckBox{
+		// 	Checked:     declarative.Bind("IsStartDeform"),
+		// 	ToolTipText: mi18n.T("開始時用整形説明"),
+		// },
+		declarative.HSpacer{
+			ColumnSpan: 2,
 		},
 		declarative.TextLabel{
 			Text:        mi18n.T("重力"),
