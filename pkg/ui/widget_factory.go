@@ -10,6 +10,7 @@ import (
 	"github.com/miu200521358/mlib_go/pkg/config/merr"
 	"github.com/miu200521358/mlib_go/pkg/config/mi18n"
 	"github.com/miu200521358/mlib_go/pkg/config/mlog"
+	"github.com/miu200521358/mlib_go/pkg/domain/vmd"
 	"github.com/miu200521358/mlib_go/pkg/infrastructure/mfile"
 	"github.com/miu200521358/mlib_go/pkg/infrastructure/repository"
 	"github.com/miu200521358/mlib_go/pkg/interface/controller"
@@ -61,6 +62,9 @@ func (wf *WidgetFactory) CreatePlayerWidget() {
 	wf.bakeState.Player.SetLabelTexts(mi18n.T("焼き込み停止"), mi18n.T("焼き込み再生"))
 	wf.bakeState.Player.SetOnEnabledInPlaying(wf.createEnabledPlaying())
 	wf.bakeState.Player.SetOnChangePlayingPre(wf.createOnChangePlayingPre())
+	wf.bakeState.Player.SetStartPlayingResetType(func() vmd.PhysicsResetType {
+		return vmd.PHYSICS_RESET_TYPE_START_FIT_FRAME
+	})
 }
 
 // CreateTableViews テーブルビューを作成
@@ -420,7 +424,6 @@ func (wf *WidgetFactory) createOnChangePlayingPre() func(playing bool) {
 
 			// 再生フレーム
 			mlog.IL(mi18n.T("焼き込み再生開始: 焼き込み履歴INDEX[%d]"), deltaIndex+1)
-			wf.mWidgets.Window().SetFrame(wf.mWidgets.Window().Frame() - 2)
 		} else {
 			// 焼き込み完了時に出力モーションを取得
 			wf.createHistoryIndexChangeHandler()()
