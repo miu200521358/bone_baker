@@ -546,5 +546,13 @@
     {
         "id": "調整剛体",
         "translation": "調整剛体"
+    },
+    {
+        "id": "最大開始F",
+        "translation": "最大開始F"
+    },
+    {
+        "id": "最大終了F",
+        "translation": "最大終了F"
     }
 ]

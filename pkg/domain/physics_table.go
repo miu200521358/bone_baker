@@ -42,16 +42,20 @@ func (m *PhysicsTableModel) Value(row, col int) any {
 	case 1:
 		return int(item.StartFrame)
 	case 2:
-		return int(item.EndFrame)
+		return int(item.MaxStartFrame)
 	case 3:
-		return item.Gravity
+		return int(item.MaxEndFrame)
 	case 4:
-		return item.MaxSubSteps
+		return int(item.EndFrame)
 	case 5:
-		return item.FixedTimeStep
+		return item.Gravity
 	case 6:
-		return item.IsStartDeform
+		return item.MaxSubSteps
 	case 7:
+		return item.FixedTimeStep
+	case 8:
+		return item.IsStartDeform
+	case 9:
 		nodes := item.TreeModel.ModifiedNodes(nil)
 		nodeNames := make([]string, 0, len(nodes))
 		for _, n := range nodes {

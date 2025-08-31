@@ -73,6 +73,8 @@ func (wf *WidgetFactory) CreatePhysicsTableView() declarative.TableView {
 		Columns: []declarative.TableViewColumn{
 			{Title: "#", Width: 30},
 			{Title: mi18n.T("開始F"), Width: 60},
+			{Title: mi18n.T("最大開始F"), Width: 60},
+			{Title: mi18n.T("最大終了F"), Width: 60},
 			{Title: mi18n.T("終了F"), Width: 60},
 			{Title: mi18n.T("重力"), Width: 60},
 			{Title: mi18n.T("最大演算回数"), Width: 100},
