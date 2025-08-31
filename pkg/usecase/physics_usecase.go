@@ -70,13 +70,6 @@ func (u *PhysicsUsecase) ApplyPhysicsMotion(
 				rigidBodyItem := record.TreeModel.AtByRigidBodyIndex(rb.Index())
 
 				if rigidBodyItem == nil || !rigidBodyItem.(*domain.PhysicsItem).Modified {
-					physicsModelMotion.AppendRigidBodyFrame(rb.Name(),
-						vmd.NewRigidBodyFrameByValues(
-							f,
-							rb.Size,
-							rb.RigidBodyParam.Mass,
-						))
-
 					return true
 				}
 
@@ -104,34 +97,12 @@ func (u *PhysicsUsecase) ApplyPhysicsMotion(
 
 				if rigidBodyItemA == nil && rigidBodyItemB == nil {
 					// ジョイントの両端が未設定の場合はスキップ
-					physicsModelMotion.AppendJointFrame(joint.Name(),
-						vmd.NewJointFrameByValues(
-							f,
-							joint.JointParam.TranslationLimitMin,
-							joint.JointParam.TranslationLimitMax,
-							joint.JointParam.RotationLimitMin,
-							joint.JointParam.RotationLimitMax,
-							joint.JointParam.SpringConstantTranslation,
-							joint.JointParam.SpringConstantRotation,
-						))
-
 					return true
 				}
 
 				if ((rigidBodyItemA != nil && !rigidBodyItemA.(*domain.PhysicsItem).Modified) || rigidBodyItemA == nil) &&
 					((rigidBodyItemB != nil && !rigidBodyItemB.(*domain.PhysicsItem).Modified) || rigidBodyItemB == nil) {
 					// 両方の剛体が未変更の場合はスキップ
-					physicsModelMotion.AppendJointFrame(joint.Name(),
-						vmd.NewJointFrameByValues(
-							f,
-							joint.JointParam.TranslationLimitMin,
-							joint.JointParam.TranslationLimitMax,
-							joint.JointParam.RotationLimitMin,
-							joint.JointParam.RotationLimitMax,
-							joint.JointParam.SpringConstantTranslation,
-							joint.JointParam.SpringConstantRotation,
-						))
-
 					return true
 				}
 
