@@ -16,9 +16,9 @@ func NewPmxModelRepository() domain.ModelRepository {
 	return &PmxModelRepository{}
 }
 
-// LoadWithPhysics 物理設定を考慮したモデル読み込み
-func (r *PmxModelRepository) LoadWithPhysics(path string, enablePhysics bool) (*pmx.PmxModel, error) {
-	pmxRep := repository.NewPmxRepository(enablePhysics)
+// Load モデル読み込み
+func (r *PmxModelRepository) Load(path string, isLog bool) (*pmx.PmxModel, error) {
+	pmxRep := repository.NewPmxRepository(isLog)
 	data, err := pmxRep.Load(path)
 	if err != nil {
 		mlog.ET(mi18n.T("読み込み失敗"), err, "")

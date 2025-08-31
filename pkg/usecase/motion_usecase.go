@@ -33,7 +33,7 @@ func (uc *MotionUsecase) LoadMotionPair(path string) (*vmd.VmdMotion, *vmd.VmdMo
 	wg.Add(1)
 	go func() {
 		defer wg.Done()
-		if motion, err := uc.motionRepository.LoadWithPhysics(path, false); err == nil {
+		if motion, err := uc.motionRepository.Load(path, false); err == nil {
 			originalMotion = motion
 		} else {
 			errChan <- err
@@ -44,7 +44,7 @@ func (uc *MotionUsecase) LoadMotionPair(path string) (*vmd.VmdMotion, *vmd.VmdMo
 	wg.Add(1)
 	go func() {
 		defer wg.Done()
-		if motion, err := uc.motionRepository.LoadWithPhysics(path, true); err == nil {
+		if motion, err := uc.motionRepository.Load(path, true); err == nil {
 			outputMotion = motion
 		} else {
 			errChan <- err

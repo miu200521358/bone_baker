@@ -6,6 +6,6 @@ import (
 
 // ModelRepository モデル永続化の抽象インターフェース
 type ModelRepository interface {
-	// LoadWithPhysics 物理設定を考慮したモデル読み込み
-	LoadWithPhysics(path string, enablePhysics bool) (*pmx.PmxModel, error)
+	// Load モデル読み込み
+	Load(path string, enablePhysics bool) (*pmx.PmxModel, error)
 }

@@ -21,12 +21,3 @@ type PhysicsBoneNamer interface {
 type PhysicsRigidBodyFixer interface {
 	FixPhysicsRigidBodies(model *pmx.PmxModel)
 }
-
-// PhysicsBoneManager 物理ボーン管理の複合インターフェース
-// 必要に応じて複数の機能を組み合わせて使用
-type PhysicsBoneManager interface {
-	PhysicsBoneProcessor
-	PhysicsBoneDisplayManager
-	PhysicsBoneNamer
-	PhysicsRigidBodyFixer
-}

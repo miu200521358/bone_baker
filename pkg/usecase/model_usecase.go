@@ -48,7 +48,7 @@ func (uc *ModelUsecase) ClearModelsInBakeSet(bakeSet *domain.BakeSet) {
 	bakeSet.ClearModels()
 }
 
-// loadModelWithPhysics 物理設定を考慮したモデル読み込み（内部メソッド）
+// loadModelWithPhysics モデル読み込み（内部メソッド）
 func (uc *ModelUsecase) loadModelWithPhysics(path string, enablePhysics bool) (*pmx.PmxModel, error) {
-	return uc.modelRepository.LoadWithPhysics(path, enablePhysics)
+	return uc.modelRepository.Load(path, enablePhysics)
 }

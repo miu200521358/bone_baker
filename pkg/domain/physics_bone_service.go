@@ -16,31 +16,6 @@ func NewPhysicsBoneService() *PhysicsBoneService {
 	return &PhysicsBoneService{}
 }
 
-// NewPhysicsBoneManager PhysicsBoneManagerインターフェースとしてのコンストラクタ
-func NewPhysicsBoneManager() PhysicsBoneManager {
-	return &PhysicsBoneService{}
-}
-
-// NewPhysicsBoneProcessor PhysicsBoneProcessorインターフェースとしてのコンストラクタ
-func NewPhysicsBoneProcessor() PhysicsBoneProcessor {
-	return &PhysicsBoneService{}
-}
-
-// NewPhysicsBoneDisplayManager PhysicsBoneDisplayManagerインターフェースとしてのコンストラクタ
-func NewPhysicsBoneDisplayManager() PhysicsBoneDisplayManager {
-	return &PhysicsBoneService{}
-}
-
-// NewPhysicsBoneNamer PhysicsBoneNamerインターフェースとしてのコンストラクタ
-func NewPhysicsBoneNamer() PhysicsBoneNamer {
-	return &PhysicsBoneService{}
-}
-
-// NewPhysicsRigidBodyFixer PhysicsRigidBodyFixerインターフェースとしてのコンストラクタ
-func NewPhysicsRigidBodyFixer() PhysicsRigidBodyFixer {
-	return &PhysicsBoneService{}
-}
-
 // ProcessPhysicsBones 物理ボーンの全処理を実行
 func (s *PhysicsBoneService) ProcessPhysicsBones(model *pmx.PmxModel) {
 	if model == nil {

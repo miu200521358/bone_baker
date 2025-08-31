@@ -23,7 +23,7 @@ func NewBakeSetHelper() *BakeSetHelper {
 	}
 }
 
-// ProcessModelsForBakeSet BakeSet用のモデル処理（ビジネスロジック）
+// ProcessModelsForBakeSet BakeSet用のモデル処理
 func (h *BakeSetHelper) ProcessModelsForBakeSet(originalModel, bakedModel *pmx.PmxModel) error {
 	if originalModel == nil {
 		return nil

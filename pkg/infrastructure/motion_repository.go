@@ -16,9 +16,9 @@ func NewVmdMotionRepository() domain.MotionRepository {
 	return &VmdMotionRepository{}
 }
 
-// LoadWithPhysics 物理設定を考慮したモーション読み込み
-func (r *VmdMotionRepository) LoadWithPhysics(path string, enablePhysics bool) (*vmd.VmdMotion, error) {
-	vmdRep := repository.NewVmdVpdRepository(enablePhysics)
+// Load モーション読み込み
+func (r *VmdMotionRepository) Load(path string, isLog bool) (*vmd.VmdMotion, error) {
+	vmdRep := repository.NewVmdVpdRepository(isLog)
 	data, err := vmdRep.Load(path)
 	if err != nil {
 		mlog.ET(mi18n.T("読み込み失敗"), err, "")
