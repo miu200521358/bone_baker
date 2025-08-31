@@ -155,8 +155,8 @@ func (u *PhysicsUsecase) ApplyPhysicsMotion(
 		if record.StartFrame > 0 {
 			physicsWorldMotion.AppendPhysicsResetFrame(vmd.NewPhysicsResetFrameByValue(record.StartFrame-1, vmd.PHYSICS_RESET_TYPE_NONE))
 		}
-		// 最後のフレームの後に物理リセットする
-		physicsWorldMotion.AppendPhysicsResetFrame(vmd.NewPhysicsResetFrameByValue(record.EndFrame+1, vmd.PHYSICS_RESET_TYPE_CONTINUE_FRAME))
+		// 最後のフレームの後に物理更新停止する
+		physicsWorldMotion.AppendPhysicsResetFrame(vmd.NewPhysicsResetFrameByValue(record.EndFrame+1, vmd.PHYSICS_RESET_TYPE_NONE))
 	}
 
 }
