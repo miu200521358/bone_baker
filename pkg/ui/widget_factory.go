@@ -432,9 +432,15 @@ func (wf *WidgetFactory) createPhysicsTableViewDialog(isAdd bool) func() {
 		recordIndex := -1
 		switch isAdd {
 		case true:
-			record = domain.NewPhysicsBoneRecord(wf.bakeState.CurrentSet().OriginalModel,
-				wf.bakeState.CurrentSet().OriginalMotion.MinFrame(),
-				wf.bakeState.CurrentSet().OriginalMotion.MaxFrame())
+			if wf.bakeState.CurrentSet().OriginalMotion == nil {
+				record = domain.NewPhysicsBoneRecord(wf.bakeState.CurrentSet().OriginalModel,
+					0,
+					0)
+			} else {
+				record = domain.NewPhysicsBoneRecord(wf.bakeState.CurrentSet().OriginalModel,
+					wf.bakeState.CurrentSet().OriginalMotion.MinFrame(),
+					wf.bakeState.CurrentSet().OriginalMotion.MaxFrame())
+			}
 		case false:
 			record = wf.bakeState.CurrentSet().PhysicsTableModel.Records[wf.bakeState.PhysicsTableView.CurrentIndex()]
 			recordIndex = wf.bakeState.PhysicsTableView.CurrentIndex()
