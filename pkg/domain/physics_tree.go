@@ -247,8 +247,6 @@ func NewPhysicsRigidBodyTreeModel(model *pmx.PmxModel) *PhysicsRigidBodyTreeMode
 		Nodes:         make([]*PhysicsItem, 0),
 	}
 
-	registeredRigidBodyIndexes := make([]bool, model.RigidBodies.Length())
-
 	for _, boneIndex := range model.Bones.LayerSortedIndexes {
 		if bone, err := model.Bones.Get(boneIndex); err == nil {
 			parent := tree.AtByBoneIndex(bone.ParentIndex)
@@ -270,7 +268,6 @@ func NewPhysicsRigidBodyTreeModel(model *pmx.PmxModel) *PhysicsRigidBodyTreeMode
 				} else {
 					parent.(*PhysicsItem).AddChild(item)
 				}
-				registeredRigidBodyIndexes[rigidBody.Index()] = true
 			}
 		}
 	}
