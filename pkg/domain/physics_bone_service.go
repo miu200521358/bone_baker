@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"math"
 
+	"github.com/miu200521358/mlib_go/pkg/domain/mmath"
 	"github.com/miu200521358/mlib_go/pkg/domain/pmx"
 )
 
@@ -22,10 +23,55 @@ func (s *PhysicsBoneService) ProcessPhysicsBones(model *pmx.PmxModel) {
 		return
 	}
 
+	// // 各関節に球剛体を追加
+	// s.AddJointRigidBody(model)
 	// 物理ボーンの名前に接頭辞を追加
 	s.InsertPhysicsBonePrefix(model)
 	// 物理ボーンを表示枠に追加
 	s.AppendPhysicsBoneToDisplaySlots(model)
+}
+
+// 関節に球剛体を追加
+func (s *PhysicsBoneService) AddJointRigidBody(model *pmx.PmxModel) {
+	if model == nil {
+		return
+	}
+
+	vertexMap := model.Vertices.GetMapByBoneIndex(0.0)
+
+	// 各関節に球剛体を追加
+	model.Bones.ForEach(func(boneIndex int, bone *pmx.Bone) bool {
+		if bone.HasDynamicPhysics() {
+			// 物理剛体がくっついているやつはスキップ
+			return true
+		}
+
+		rigidBody := pmx.NewRigidBody()
+		rigidBody.SetName(fmt.Sprintf("bbj_%s", bone.Name()))
+		rigidBody.BoneIndex = bone.Index()
+		rigidBody.ShapeType = pmx.SHAPE_SPHERE
+		rigidBody.Position = bone.Position.Copy()
+		rigidBody.Bone = bone
+		rigidBody.IsSystem = true
+
+		if _, ok := vertexMap[bone.Index()]; ok {
+			// ウェイトが乗っているボーンの場合、サイズを合わせる
+			vectorPositions := make([]*mmath.MVec3, 0)
+			for _, v := range vertexMap[bone.Index()] {
+				vectorPositions = append(vectorPositions, v.Position)
+			}
+			minVertexPosition := mmath.MinVec3(vectorPositions)
+			medianVertexPosition := mmath.MedianVec3(vectorPositions)
+			rigidBody.Size = medianVertexPosition.Subed(minVertexPosition).MuledScalar(0.5)
+		} else {
+			rigidBody.Size = &mmath.MVec3{X: 0.2, Y: 0.2, Z: 0.2}
+		}
+
+		model.RigidBodies.Append(rigidBody)
+		return true
+	})
+
+	model.RigidBodies.Setup(model.Bones)
 }
 
 // AppendPhysicsBoneToDisplaySlots 物理ボーンを表示枠に追加
