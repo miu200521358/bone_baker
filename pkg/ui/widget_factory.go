@@ -525,21 +525,19 @@ func (wf *WidgetFactory) handleLoadSet(filePath string) {
 			latestRecord.TreeModel.UpdateModifiedNodes(nil, record.TreeModel.Nodes)
 		}
 
+		// 物理設定
+		wf.bakeState.BakeSets[index].PhysicsTableModel = newPhysicsTable
+		wf.bakeState.PhysicsTableView.SetModel(newPhysicsTable)
+
 		physicsModelMotion := wf.mWidgets.Window().LoadPhysicsModelMotion(0, index)
 
 		wf.physicsUsecase.ApplyPhysicsMotion(
 			physicsWorldMotion, physicsModelMotion,
-			wf.bakeState.BakeSets[index].PhysicsTableModel.Records,
+			newPhysicsTable.Records,
 			wf.bakeState.BakeSets[index].OriginalModel,
 		)
 
 		wf.mWidgets.Window().StorePhysicsModelMotion(0, index, physicsModelMotion)
-
-		// 物理設定
-		wf.bakeState.BakeSets[index].PhysicsTableModel = newPhysicsTable
-		if wf.bakeState.CurrentIndex() == index {
-			wf.bakeState.PhysicsTableView.SetModel(newPhysicsTable)
-		}
 	}
 
 	wf.mWidgets.Window().StorePhysicsWorldMotion(0, physicsWorldMotion)
