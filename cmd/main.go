@@ -13,6 +13,7 @@ import (
 	"github.com/miu200521358/walk/pkg/walk"
 
 	"github.com/miu200521358/bone_baker/pkg/ui"
+	"github.com/miu200521358/bone_baker/pkg/ui/page"
 	"github.com/miu200521358/mlib_go/pkg/config/mconfig"
 	"github.com/miu200521358/mlib_go/pkg/config/merr"
 	"github.com/miu200521358/mlib_go/pkg/config/mi18n"
@@ -64,7 +65,7 @@ func main() {
 
 			controlWindow, err = controller.NewControlWindow(shared, appConfig,
 				ui.NewMenuItems(), []declarative.TabPage{
-					ui.NewBakePage(widgets),
+					page.NewBakePage(widgets),
 				},
 				widths[0], heights[0], positionXs[0], positionYs[0], viewerCount)
 			if err != nil {
