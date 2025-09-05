@@ -1,8 +1,8 @@
-package physics
+package ui
 
 import (
+	"github.com/miu200521358/bone_baker/pkg/application/usecase"
 	"github.com/miu200521358/bone_baker/pkg/domain/entity"
-	"github.com/miu200521358/bone_baker/pkg/usecase"
 	"github.com/miu200521358/mlib_go/pkg/config/mi18n"
 	"github.com/miu200521358/mlib_go/pkg/config/mlog"
 	"github.com/miu200521358/mlib_go/pkg/interface/controller"
@@ -12,17 +12,15 @@ import (
 
 // PhysicsTableViewDialog 物理設定ダイアログのロジックを管理
 type PhysicsTableViewDialog struct {
-	baseSet        *entity.BakeSet
-	window         *controller.ControlWindow
+	store          *WidgetStore
 	physicsUsecase *usecase.PhysicsUsecase
 	doDelete       bool
 }
 
 // NewPhysicsTableViewDialog コンストラクタ
-func newPhysicsTableViewDialog(baseSet *entity.BakeSet, window *controller.ControlWindow) *PhysicsTableViewDialog {
+func NewPhysicsTableViewDialog(store *WidgetStore) *PhysicsTableViewDialog {
 	return &PhysicsTableViewDialog{
-		baseSet:        baseSet,
-		window:         window,
+		store:          store,
 		physicsUsecase: usecase.NewPhysicsUsecase(),
 	}
 }
@@ -41,7 +39,7 @@ func (p *PhysicsTableViewDialog) Show(record *entity.PhysicsRecord, recordIndex 
 	var maxSubStepsEdit *walk.NumberEdit   // 最大最大演算回数
 	var fixedTimeStepEdit *walk.NumberEdit // 固定タイムステップ入力
 
-	builder := declarative.NewBuilder(p.window)
+	builder := declarative.NewBuilder(p.store.Window())
 
 	dialog := &declarative.Dialog{
 		AssignTo:      &dlg,
@@ -49,7 +47,8 @@ func (p *PhysicsTableViewDialog) Show(record *entity.PhysicsRecord, recordIndex 
 		DefaultButton: &okBtn,
 		Title:         mi18n.T("物理設定"),
 		Layout:        declarative.VBox{},
-		MinSize:       declarative.Size{Width: 600, Height: 300},
+		MinSize:       declarative.Size{Width: 250, Height: 250},
+		MaxSize:       declarative.Size{Width: 250, Height: 250},
 		DataBinder: declarative.DataBinder{
 			AssignTo:   &db,
 			DataSource: record,
@@ -84,6 +83,8 @@ func (p *PhysicsTableViewDialog) createFormWidgets(startFrameEdit, endFrameEdit,
 			OnMouseDown: func(x, y int, button walk.MouseButton) {
 				mlog.IL("%s", mi18n.T("設定開始フレーム説明"))
 			},
+			MinSize: declarative.Size{Width: 100, Height: 20},
+			MaxSize: declarative.Size{Width: 100, Height: 20},
 		},
 		declarative.NumberEdit{
 			Value:              declarative.Bind("StartFrame"),
@@ -93,7 +94,9 @@ func (p *PhysicsTableViewDialog) createFormWidgets(startFrameEdit, endFrameEdit,
 			Decimals:           0,
 			Increment:          1,
 			MinValue:           0,
-			MaxValue:           float64(p.baseSet.OriginalMotion.MaxFrame() + 1),
+			MaxValue:           float64(p.store.CurrentSet().OriginalMotion.MaxFrame() + 1),
+			MinSize:            declarative.Size{Width: 100, Height: 20},
+			MaxSize:            declarative.Size{Width: 100, Height: 20},
 		},
 		declarative.Label{
 			Text:        mi18n.T("設定終了フレーム"),
@@ -101,6 +104,8 @@ func (p *PhysicsTableViewDialog) createFormWidgets(startFrameEdit, endFrameEdit,
 			OnMouseDown: func(x, y int, button walk.MouseButton) {
 				mlog.IL("%s", mi18n.T("設定終了フレーム説明"))
 			},
+			MinSize: declarative.Size{Width: 100, Height: 20},
+			MaxSize: declarative.Size{Width: 100, Height: 20},
 		},
 		declarative.NumberEdit{
 			Value:              declarative.Bind("EndFrame"),
@@ -110,7 +115,9 @@ func (p *PhysicsTableViewDialog) createFormWidgets(startFrameEdit, endFrameEdit,
 			Decimals:           0,
 			Increment:          1,
 			MinValue:           0,
-			MaxValue:           float64(p.baseSet.OriginalMotion.MaxFrame() + 1),
+			MaxValue:           float64(p.store.CurrentSet().OriginalMotion.MaxFrame() + 1),
+			MinSize:            declarative.Size{Width: 100, Height: 20},
+			MaxSize:            declarative.Size{Width: 100, Height: 20},
 		},
 		declarative.TextLabel{
 			Text:        mi18n.T("重力"),
@@ -119,6 +126,7 @@ func (p *PhysicsTableViewDialog) createFormWidgets(startFrameEdit, endFrameEdit,
 				mlog.IL("%s", mi18n.T("重力説明"))
 			},
 			MinSize: declarative.Size{Width: 100, Height: 20},
+			MaxSize: declarative.Size{Width: 100, Height: 20},
 		},
 		declarative.NumberEdit{
 			Value:              declarative.Bind("Gravity"),
@@ -128,6 +136,8 @@ func (p *PhysicsTableViewDialog) createFormWidgets(startFrameEdit, endFrameEdit,
 			Decimals:           1,      // 小数点以下の桁数
 			Increment:          0.1,    // 増分
 			SpinButtonsVisible: true,   // スピンボタンを表示
+			MinSize:            declarative.Size{Width: 100, Height: 20},
+			MaxSize:            declarative.Size{Width: 100, Height: 20},
 		},
 		declarative.TextLabel{
 			Text:        mi18n.T("最大演算回数"),
@@ -136,6 +146,7 @@ func (p *PhysicsTableViewDialog) createFormWidgets(startFrameEdit, endFrameEdit,
 				mlog.IL("%s", mi18n.T("最大演算回数説明"))
 			},
 			MinSize: declarative.Size{Width: 100, Height: 20},
+			MaxSize: declarative.Size{Width: 100, Height: 20},
 		},
 		declarative.NumberEdit{
 			Value:              declarative.Bind("MaxSubSteps"),
@@ -145,6 +156,8 @@ func (p *PhysicsTableViewDialog) createFormWidgets(startFrameEdit, endFrameEdit,
 			Decimals:           0,     // 小数点以下の桁数
 			Increment:          1.0,   // 増分
 			SpinButtonsVisible: true,  // スピンボタンを表示
+			MinSize:            declarative.Size{Width: 100, Height: 20},
+			MaxSize:            declarative.Size{Width: 100, Height: 20},
 		},
 		declarative.TextLabel{
 			Text:        mi18n.T("物理演算頻度"),
@@ -153,6 +166,7 @@ func (p *PhysicsTableViewDialog) createFormWidgets(startFrameEdit, endFrameEdit,
 				mlog.IL("%s", mi18n.T("物理演算頻度説明"))
 			},
 			MinSize: declarative.Size{Width: 100, Height: 20},
+			MaxSize: declarative.Size{Width: 100, Height: 20},
 		},
 		declarative.NumberEdit{
 			Value:              declarative.Bind("FixedTimeStep"),
@@ -163,6 +177,8 @@ func (p *PhysicsTableViewDialog) createFormWidgets(startFrameEdit, endFrameEdit,
 			Increment:          10.0,    // 増分
 			SpinButtonsVisible: true,    // スピンボタンを表示
 			StretchFactor:      20,
+			MinSize:            declarative.Size{Width: 100, Height: 20},
+			MaxSize:            declarative.Size{Width: 100, Height: 20},
 		},
 	}
 }
@@ -182,6 +198,8 @@ func (p *PhysicsTableViewDialog) createButtonWidgets(
 				}
 				(*dlg).Accept()
 			},
+			MinSize: declarative.Size{Width: 80, Height: 20},
+			MaxSize: declarative.Size{Width: 80, Height: 20},
 		},
 		declarative.PushButton{
 			AssignTo:    deleteBtn,
@@ -191,6 +209,8 @@ func (p *PhysicsTableViewDialog) createButtonWidgets(
 				p.doDelete = true
 				(*dlg).Accept()
 			},
+			MinSize: declarative.Size{Width: 80, Height: 20},
+			MaxSize: declarative.Size{Width: 80, Height: 20},
 		},
 		declarative.PushButton{
 			AssignTo:    cancelBtn,
@@ -199,9 +219,38 @@ func (p *PhysicsTableViewDialog) createButtonWidgets(
 			OnClicked: func() {
 				(*dlg).Cancel()
 			},
+			MinSize: declarative.Size{Width: 80, Height: 20},
+			MaxSize: declarative.Size{Width: 80, Height: 20},
 		},
 	}
 }
 
 func (p *PhysicsTableViewDialog) handleDialogOK(record *entity.PhysicsRecord, recordIndex int) {
+	p.store.setWidgetEnabled(false)
+
+	if recordIndex == -1 {
+		p.store.CurrentSet().PhysicsRecords =
+			append(p.store.CurrentSet().PhysicsRecords, record)
+		p.store.PhysicsTableView.SetCurrentIndex(len(p.store.CurrentSet().PhysicsRecords) - 1)
+	} else {
+		p.store.CurrentSet().PhysicsRecords[recordIndex] = record
+		p.store.PhysicsTableView.SetCurrentIndex(recordIndex)
+	}
+
+	physicsWorldMotion := p.store.mWidgets.Window().LoadPhysicsWorldMotion(0)
+
+	p.physicsUsecase.ApplyPhysicsWorldMotion(
+		physicsWorldMotion,
+		p.store.CurrentSet().PhysicsRecords,
+		p.store.CurrentSet().OriginalModel,
+	)
+
+	p.store.mWidgets.Window().StorePhysicsWorldMotion(0, physicsWorldMotion)
+	p.store.mWidgets.Window().TriggerPhysicsReset()
+
+	p.store.setWidgetEnabled(true)
+	controller.Beep()
+
+	// 更新
+	p.store.PhysicsTableView.SetModel(NewPhysicsTableModelWithRecords(p.store.CurrentSet().PhysicsRecords))
 }

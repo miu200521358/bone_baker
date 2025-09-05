@@ -1,17 +1,16 @@
-package physics
+package ui
 
 import (
 	"github.com/miu200521358/bone_baker/pkg/domain/entity"
 	"github.com/miu200521358/mlib_go/pkg/config/mi18n"
-	"github.com/miu200521358/mlib_go/pkg/interface/controller"
 	"github.com/miu200521358/walk/pkg/declarative"
 	"github.com/miu200521358/walk/pkg/walk"
 )
 
 // CreateTableViews テーブルビューを作成
-func CreatePhysicsTableView(bakeSet *entity.BakeSet, physicsTableView *walk.TableView, mWidgets *controller.MWidgets) declarative.TableView {
+func CreatePhysicsTableView(store *WidgetStore) declarative.TableView {
 	return declarative.TableView{
-		AssignTo:         &physicsTableView,
+		AssignTo:         &store.PhysicsTableView,
 		Model:            NewPhysicsTableModel(),
 		AlternatingRowBG: true,
 		MinSize:          declarative.Size{Width: 230, Height: 150},
@@ -23,28 +22,28 @@ func CreatePhysicsTableView(bakeSet *entity.BakeSet, physicsTableView *walk.Tabl
 			{Title: mi18n.T("最大演算回数"), Width: 100},
 			{Title: mi18n.T("物理演算頻度"), Width: 100},
 		},
-		OnItemClicked: createPhysicsTableViewDialog(bakeSet, physicsTableView, mWidgets, false),
+		OnItemClicked: createPhysicsTableViewDialog(store, false),
 	}
 }
 
-func createPhysicsTableViewDialog(bakeSet *entity.BakeSet, physicsTableView *walk.TableView, mWidgets *controller.MWidgets, isAdd bool) func() {
+func createPhysicsTableViewDialog(store *WidgetStore, isAdd bool) func() {
 	return func() {
 		var record *entity.PhysicsRecord
 		recordIndex := -1
 		switch isAdd {
 		case true:
-			if bakeSet.OriginalMotion == nil {
+			if store.CurrentSet().OriginalMotion == nil {
 				record = entity.NewPhysicsRecord(0, 0)
 			} else {
 				record = entity.NewPhysicsRecord(
-					bakeSet.OriginalMotion.MinFrame(),
-					bakeSet.OriginalMotion.MaxFrame())
+					store.CurrentSet().OriginalMotion.MinFrame(),
+					store.CurrentSet().OriginalMotion.MaxFrame())
 			}
 		case false:
-			record = bakeSet.PhysicsRecords[physicsTableView.CurrentIndex()]
-			recordIndex = physicsTableView.CurrentIndex()
+			record = store.CurrentSet().PhysicsRecords[store.PhysicsTableView.CurrentIndex()]
+			recordIndex = store.PhysicsTableView.CurrentIndex()
 		}
-		dialog := newPhysicsTableViewDialog(bakeSet, mWidgets.Window())
+		dialog := NewPhysicsTableViewDialog(store)
 		dialog.Show(record, recordIndex)
 	}
 }
@@ -59,6 +58,12 @@ type PhysicsTableModel struct {
 func NewPhysicsTableModel() *PhysicsTableModel {
 	m := new(PhysicsTableModel)
 	m.Records = make([]*entity.PhysicsRecord, 0)
+	return m
+}
+
+func NewPhysicsTableModelWithRecords(records []*entity.PhysicsRecord) *PhysicsTableModel {
+	m := new(PhysicsTableModel)
+	m.Records = records
 	return m
 }
 

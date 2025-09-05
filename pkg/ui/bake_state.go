@@ -4,8 +4,6 @@ import (
 	"fmt"
 
 	"github.com/miu200521358/bone_baker/pkg/domain"
-	"github.com/miu200521358/bone_baker/pkg/usecase"
-	"github.com/miu200521358/mlib_go/pkg/interface/controller"
 	"github.com/miu200521358/mlib_go/pkg/interface/controller/widget"
 	"github.com/miu200521358/walk/pkg/walk"
 )
@@ -32,13 +30,10 @@ type BakeState struct {
 	OutputTableView        *walk.TableView      // 出力定義テーブル
 	BakeSets               []*domain.BakeSet    `json:"bake_sets"` // ボーン焼き込みセット
 
-	// 直接Usecaseを使用（Application Serviceを削除）
-	bakeUsecase *usecase.BakeUsecase
 }
 
-func NewBakeState(bakeUsecase *usecase.BakeUsecase) *BakeState {
+func NewBakeState() *BakeState {
 	return &BakeState{
-		bakeUsecase:  bakeUsecase,
 		BakeSets:     make([]*domain.BakeSet, 0),
 		currentIndex: -1,
 	}
@@ -129,102 +124,102 @@ func (ss *BakeState) CurrentSet() *domain.BakeSet {
 	return ss.BakeSets[ss.currentIndex]
 }
 
-// SaveSet 設定情報を保存（直接Usecaseを呼び出し）
-func (ss *BakeState) SaveSet(jsonPath string) error {
-	return ss.bakeUsecase.SaveBakeSet(ss.BakeSets, jsonPath)
-}
+// // SaveSet 設定情報を保存（直接Usecaseを呼び出し）
+// func (ss *BakeState) SaveSet(jsonPath string) error {
+// 	return ss.bakeUsecase.SaveBakeSet(ss.BakeSets, jsonPath)
+// }
 
-// LoadSet 設定情報を読み込む（直接Usecaseを呼び出し）
-func (ss *BakeState) LoadSet(jsonPath string) error {
-	bakeSets, err := ss.bakeUsecase.LoadBakeSet(jsonPath)
-	if err != nil {
-		return err
-	}
+// // LoadSet 設定情報を読み込む（直接Usecaseを呼び出し）
+// func (ss *BakeState) LoadSet(jsonPath string) error {
+// 	bakeSets, err := ss.bakeUsecase.LoadBakeSet(jsonPath)
+// 	if err != nil {
+// 		return err
+// 	}
 
-	ss.BakeSets = bakeSets
-	return nil
-}
+// 	ss.BakeSets = bakeSets
+// 	return nil
+// }
 
-// LoadModel 元モデルを読み込む
-func (bakeState *BakeState) LoadModel(
-	cw *controller.ControlWindow, path string,
-) error {
-	bakeState.SetWidgetEnabled(false)
+// // LoadModel 元モデルを読み込む
+// func (bakeState *BakeState) LoadModel(
+// 	cw *controller.ControlWindow, path string,
+// ) error {
+// 	bakeState.SetWidgetEnabled(false)
 
-	// オプションクリア
-	bakeState.ClearOptions()
+// 	// オプションクリア
+// 	bakeState.ClearOptions()
 
-	// 直接Usecaseを呼び出し
-	if err := bakeState.bakeUsecase.LoadModelForBakeSet(bakeState.CurrentSet(), path); err != nil {
-		return err
-	}
+// 	// 直接Usecaseを呼び出し
+// 	if err := bakeState.bakeUsecase.LoadModelForBakeSet(bakeState.CurrentSet(), path); err != nil {
+// 		return err
+// 	}
 
-	// UI反映処理
-	currentSet := bakeState.CurrentSet()
-	cw.StoreModel(0, bakeState.CurrentIndex(), currentSet.OriginalModel)
-	cw.StoreModel(1, bakeState.CurrentIndex(), currentSet.BakedModel)
+// 	// UI反映処理
+// 	currentSet := bakeState.CurrentSet()
+// 	cw.StoreModel(0, bakeState.CurrentIndex(), currentSet.OriginalModel)
+// 	cw.StoreModel(1, bakeState.CurrentIndex(), currentSet.BakedModel)
 
-	// 履歴クリア処理（旧ClearDeltaMotions相当）
-	for n := range len(bakeState.BakeSets) {
-		cw.ClearDeltaMotion(0, n)
-		cw.ClearDeltaMotion(1, n)
-		cw.SetSaveDeltaIndex(0, 0)
-		cw.SetSaveDeltaIndex(1, 0)
-	}
+// 	// 履歴クリア処理（旧ClearDeltaMotions相当）
+// 	for n := range len(bakeState.BakeSets) {
+// 		cw.ClearDeltaMotion(0, n)
+// 		cw.ClearDeltaMotion(1, n)
+// 		cw.SetSaveDeltaIndex(0, 0)
+// 		cw.SetSaveDeltaIndex(1, 0)
+// 	}
 
-	bakeState.BakedHistoryIndexEdit.SetValue(1.0)
-	bakeState.BakedHistoryIndexEdit.SetRange(1.0, 2.0)
+// 	bakeState.BakedHistoryIndexEdit.SetValue(1.0)
+// 	bakeState.BakedHistoryIndexEdit.SetRange(1.0, 2.0)
 
-	bakeState.OutputModelPicker.ChangePath(bakeState.CurrentSet().OutputModelPath)
-	bakeState.SetWidgetEnabled(true)
+// 	bakeState.OutputModelPicker.ChangePath(bakeState.CurrentSet().OutputModelPath)
+// 	bakeState.SetWidgetEnabled(true)
 
-	return nil
-}
+// 	return nil
+// }
 
-// LoadMotion 物理焼き込みモーションを読み込む
-func (bakeState *BakeState) LoadMotion(
-	cw *controller.ControlWindow, path string, isClear bool,
-) error {
-	bakeState.SetWidgetEnabled(false)
+// // LoadMotion 物理焼き込みモーションを読み込む
+// func (bakeState *BakeState) LoadMotion(
+// 	cw *controller.ControlWindow, path string, isClear bool,
+// ) error {
+// 	bakeState.SetWidgetEnabled(false)
 
-	// オプションクリア
-	if isClear {
-		bakeState.ClearOptions()
-	}
+// 	// オプションクリア
+// 	if isClear {
+// 		bakeState.ClearOptions()
+// 	}
 
-	// 直接Usecaseを呼び出し
-	if err := bakeState.bakeUsecase.LoadMotionForBakeSet(bakeState.CurrentSet(), path); err != nil {
-		return err
-	}
+// 	// 直接Usecaseを呼び出し
+// 	if err := bakeState.bakeUsecase.LoadMotionForBakeSet(bakeState.CurrentSet(), path); err != nil {
+// 		return err
+// 	}
 
-	// UI反映処理（旧LoadMotionForBakeSetWithUI相当）
-	currentSet := bakeState.CurrentSet()
-	if currentSet.OriginalMotion != nil {
-		cw.StoreMotion(0, bakeState.CurrentIndex(), currentSet.OriginalMotion)
-	}
-	if currentSet.OutputMotion != nil {
-		cw.StoreMotion(1, bakeState.CurrentIndex(), currentSet.OutputMotion)
-	}
+// 	// UI反映処理（旧LoadMotionForBakeSetWithUI相当）
+// 	currentSet := bakeState.CurrentSet()
+// 	if currentSet.OriginalMotion != nil {
+// 		cw.StoreMotion(0, bakeState.CurrentIndex(), currentSet.OriginalMotion)
+// 	}
+// 	if currentSet.OutputMotion != nil {
+// 		cw.StoreMotion(1, bakeState.CurrentIndex(), currentSet.OutputMotion)
+// 	}
 
-	// 履歴クリア処理（旧ClearDeltaMotions相当）
-	for n := range len(bakeState.BakeSets) {
-		cw.ClearDeltaMotion(0, n)
-		cw.ClearDeltaMotion(1, n)
-		cw.SetSaveDeltaIndex(0, 0)
-		cw.SetSaveDeltaIndex(1, 0)
-	}
+// 	// 履歴クリア処理（旧ClearDeltaMotions相当）
+// 	for n := range len(bakeState.BakeSets) {
+// 		cw.ClearDeltaMotion(0, n)
+// 		cw.ClearDeltaMotion(1, n)
+// 		cw.SetSaveDeltaIndex(0, 0)
+// 		cw.SetSaveDeltaIndex(1, 0)
+// 	}
 
-	bakeState.BakedHistoryIndexEdit.SetValue(1.0)
-	bakeState.BakedHistoryIndexEdit.SetRange(1.0, 2.0)
+// 	bakeState.BakedHistoryIndexEdit.SetValue(1.0)
+// 	bakeState.BakedHistoryIndexEdit.SetRange(1.0, 2.0)
 
-	// モーションプレイヤーのリセット（旧CalculateMaxFrameをインライン化）
-	bakeState.Player.Reset(bakeState.MaxFrame())
+// 	// モーションプレイヤーのリセット（旧CalculateMaxFrameをインライン化）
+// 	bakeState.Player.Reset(bakeState.MaxFrame())
 
-	bakeState.OutputMotionPicker.SetPath(bakeState.CurrentSet().OutputMotionPath)
-	bakeState.SetWidgetEnabled(true)
+// 	bakeState.OutputMotionPicker.SetPath(bakeState.CurrentSet().OutputMotionPath)
+// 	bakeState.SetWidgetEnabled(true)
 
-	return nil
-}
+// 	return nil
+// }
 
 // SetWidgetEnabled 物理焼き込み有効無効設定
 func (bakeState *BakeState) SetWidgetEnabled(enabled bool) {

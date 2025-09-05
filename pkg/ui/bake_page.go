@@ -2,8 +2,6 @@ package ui
 
 import (
 	"github.com/miu200521358/bone_baker/pkg/domain"
-	"github.com/miu200521358/bone_baker/pkg/infrastructure"
-	"github.com/miu200521358/bone_baker/pkg/usecase"
 	"github.com/miu200521358/mlib_go/pkg/config/mi18n"
 	"github.com/miu200521358/mlib_go/pkg/config/mlog"
 	"github.com/miu200521358/mlib_go/pkg/interface/controller"
@@ -14,12 +12,12 @@ import (
 func NewBakePage(mWidgets *controller.MWidgets) declarative.TabPage {
 	var bakeTab *walk.TabPage
 
-	// Repository パターンの依存性注入
-	bakeSetRepository := infrastructure.NewFileBakeSetRepository()
-	modelRepository := infrastructure.NewPmxModelRepository()
-	motionRepository := infrastructure.NewVmdMotionRepository()
-	bakeUsecase := usecase.NewBakeUsecase(bakeSetRepository, modelRepository, motionRepository)
-	bakeState := NewBakeState(bakeUsecase)
+	// // Repository パターンの依存性注入
+	// bakeSetRepository := infrastructure.NewFileBakeSetRepository()
+	// modelRepository := infrastructure.NewPmxModelRepository()
+	// motionRepository := infrastructure.NewVmdMotionRepository()
+	// bakeUsecase := usecase.NewBakeUsecase(bakeSetRepository, modelRepository, motionRepository)
+	bakeState := NewBakeState()
 
 	// WidgetFactoryを使用してウィジェット作成
 	widgetFactory := NewWidgetFactory(bakeState, mWidgets)

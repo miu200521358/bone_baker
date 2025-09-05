@@ -1,4 +1,4 @@
-package page
+package ui
 
 import (
 	"fmt"
@@ -50,10 +50,10 @@ func (s *WidgetStore) setWidgetEnabled(enabled bool) {
 	s.OutputMotionPicker.SetEnabled(enabled)
 	s.OutputModelPicker.SetEnabled(enabled)
 
+	s.AddPhysicsButton.SetEnabled(enabled)
+
 	// s.BakedHistoryIndexEdit.SetEnabled(enabled)
 	// s.BakeHistoryClearButton.SetEnabled(enabled)
-
-	// s.AddPhysicsButton.SetEnabled(enabled)
 
 	// s.SaveModelButton.SetEnabled(enabled)
 	// s.SaveMotionButton.SetEnabled(enabled)
@@ -67,7 +67,7 @@ func (s *WidgetStore) setWidgetEnabled(enabled bool) {
 func (s *WidgetStore) setWidgetPlayingEnabled(enabled bool) {
 	s.Player.SetEnabled(enabled)
 
-	// s.PhysicsTableView.SetEnabled(enabled)
+	s.PhysicsTableView.SetEnabled(enabled)
 	// s.RigidBodyTableView.SetEnabled(enabled)
 }
 
@@ -345,7 +345,7 @@ func (s *WidgetStore) createAddPhysicsButton() *widget.MPushButton {
 	btn.SetTooltip(mi18n.T("物理設定追加説明"))
 	btn.SetMaxSize(declarative.Size{Width: 100, Height: 20})
 	btn.SetOnClicked(func(cw *controller.ControlWindow) {
-		// s.createPhysicsTableViewDialog(true)() // ダイアログを表示
+		createPhysicsTableViewDialog(s, true)() // ダイアログを表示
 	})
 	return btn
 }

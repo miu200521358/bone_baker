@@ -1,8 +1,7 @@
-package page
+package ui
 
 import (
 	"github.com/miu200521358/bone_baker/pkg/domain/entity"
-	"github.com/miu200521358/bone_baker/pkg/ui/physics"
 	"github.com/miu200521358/mlib_go/pkg/config/mi18n"
 	"github.com/miu200521358/mlib_go/pkg/config/mlog"
 	"github.com/miu200521358/mlib_go/pkg/interface/controller"
@@ -93,7 +92,7 @@ func NewBakePage(mWidgets *controller.MWidgets) declarative.TabPage {
 							store.AddPhysicsButton.Widgets(),
 						},
 					},
-					physics.CreatePhysicsTableView(store.CurrentSet(), store.PhysicsTableView, store.mWidgets),
+					CreatePhysicsTableView(store),
 					declarative.VSeparator{},
 					store.OutputModelPicker.Widgets(),
 					store.SaveModelButton.Widgets(),

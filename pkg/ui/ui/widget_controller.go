@@ -1,4 +1,4 @@
-package page
+package ui
 
 import "github.com/miu200521358/mlib_go/pkg/interface/controller"
 

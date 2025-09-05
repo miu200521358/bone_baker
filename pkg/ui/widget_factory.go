@@ -168,11 +168,11 @@ func (wf *WidgetFactory) createOriginalMotionFilePicker() *widget.FilePicker {
 		mi18n.T("モーション(Vmd)"),
 		mi18n.T("モーション説明"),
 		func(cw *controller.ControlWindow, rep repository.IRepository, path string) {
-			if err := wf.bakeState.LoadMotion(cw, path, true); err != nil {
-				if ok := merr.ShowErrorDialog(cw.AppConfig(), err); ok {
-					wf.bakeState.SetWidgetEnabled(true)
-				}
-			}
+			// if err := wf.bakeState.LoadMotion(cw, path, true); err != nil {
+			// 	if ok := merr.ShowErrorDialog(cw.AppConfig(), err); ok {
+			// 		wf.bakeState.SetWidgetEnabled(true)
+			// 	}
+			// }
 		},
 	)
 }
@@ -183,11 +183,11 @@ func (wf *WidgetFactory) createOriginalModelFilePicker() *widget.FilePicker {
 		mi18n.T("モデル(Pmx)"),
 		mi18n.T("モデル説明"),
 		func(cw *controller.ControlWindow, rep repository.IRepository, path string) {
-			if err := wf.bakeState.LoadModel(cw, path); err != nil {
-				if ok := merr.ShowErrorDialog(cw.AppConfig(), err); ok {
-					wf.bakeState.SetWidgetEnabled(true)
-				}
-			}
+			// if err := wf.bakeState.LoadModel(cw, path); err != nil {
+			// 	if ok := merr.ShowErrorDialog(cw.AppConfig(), err); ok {
+			// 		wf.bakeState.SetWidgetEnabled(true)
+			// 	}
+			// }
 		},
 	)
 }
@@ -277,7 +277,7 @@ func (wf *WidgetFactory) createSaveSetButton() *widget.MPushButton {
 		if ok, err := dlg.ShowSave(nil); err != nil {
 			walk.MsgBox(nil, mi18n.T("ファイル選択ダイアログ選択エラー"), err.Error(), walk.MsgBoxIconError)
 		} else if ok {
-			wf.bakeState.SaveSet(dlg.FilePath)
+			// wf.bakeState.SaveSet(dlg.FilePath)
 			mconfig.SaveUserConfig("physics_set_path", dlg.FilePath, 1)
 		}
 	})
@@ -505,7 +505,7 @@ func (wf *WidgetFactory) handleLoadSet(filePath string) {
 	}
 
 	wf.bakeState.ResetSet()
-	wf.bakeState.LoadSet(filePath)
+	// wf.bakeState.LoadSet(filePath)
 
 	for range len(wf.bakeState.BakeSets) - 1 {
 		wf.bakeState.AddAction()
