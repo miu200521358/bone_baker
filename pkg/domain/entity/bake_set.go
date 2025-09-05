@@ -34,20 +34,27 @@ func NewBakeSet(index int) *BakeSet {
 }
 
 func (s *BakeSet) Clear() {
-	s.OriginalMotionPath = ""
-	s.OriginalModelPath = ""
-	s.OutputModelPath = ""
-	s.OutputMotionPath = ""
-
-	s.OriginalMotionName = ""
-	s.OriginalModelName = ""
-	s.OutputModelName = ""
-
-	s.OriginalMotion = nil
-	s.OriginalModel = nil
-	s.BakedModel = nil
-	s.OutputMotion = nil
+	s.ClearModel()
+	s.ClearMotion()
 
 	s.PhysicsRecords = make([]*PhysicsRecord, 0)
 	s.RigidBodyRecords = make([]*RigidBodyRecord, 0)
+}
+
+func (s *BakeSet) ClearModel() {
+	s.OriginalModel = nil
+	s.BakedModel = nil
+	s.OriginalModelName = ""
+	s.OriginalModelPath = ""
+	s.OutputModelName = ""
+	s.OutputModelPath = ""
+}
+
+func (s *BakeSet) ClearMotion() {
+	s.OriginalMotion = nil
+	s.OutputMotion = nil
+	s.OutputMotion = nil
+	s.OriginalMotionName = ""
+	s.OriginalMotionPath = ""
+	s.OutputMotionPath = ""
 }

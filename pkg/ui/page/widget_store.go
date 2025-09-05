@@ -3,6 +3,7 @@ package page
 import (
 	"fmt"
 
+	"github.com/miu200521358/bone_baker/pkg/application/usecase"
 	"github.com/miu200521358/bone_baker/pkg/domain/entity"
 	"github.com/miu200521358/mlib_go/pkg/interface/controller"
 	"github.com/miu200521358/mlib_go/pkg/interface/controller/widget"
@@ -33,6 +34,8 @@ type WidgetStore struct {
 	AddOutputButton           *widget.MPushButton  // 出力設定追加ボタン
 	OutputTableView           *walk.TableView      // 出力定義テーブル
 	BakeSets                  []*entity.BakeSet    `json:"bake_sets"` // ボーン焼き込みセット
+
+	loadUsecase *usecase.LoadUsecase
 }
 
 func NewWidgetStore(mWidgets *controller.MWidgets) *WidgetStore {
@@ -40,6 +43,7 @@ func NewWidgetStore(mWidgets *controller.MWidgets) *WidgetStore {
 		mWidgets:     mWidgets,
 		BakeSets:     make([]*entity.BakeSet, 0),
 		CurrentIndex: -1,
+		loadUsecase:  usecase.NewLoadUsecase(),
 	}
 }
 

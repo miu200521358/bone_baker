@@ -40,8 +40,6 @@ func (s *WidgetStore) createEnabledPlaying() func(playing bool) {
 
 // setWidgetEnabled 物理焼き込み有効無効設定
 func (s *WidgetStore) setWidgetEnabled(enabled bool) {
-	s.OutputTableView.SetEnabled(enabled)
-
 	s.AddSetButton.SetEnabled(enabled)
 	s.ResetSetButton.SetEnabled(enabled)
 	s.SaveSetButton.SetEnabled(enabled)
@@ -52,16 +50,16 @@ func (s *WidgetStore) setWidgetEnabled(enabled bool) {
 	s.OutputMotionPicker.SetEnabled(enabled)
 	s.OutputModelPicker.SetEnabled(enabled)
 
-	s.BakedHistoryIndexEdit.SetEnabled(enabled)
-	s.BakeHistoryClearButton.SetEnabled(enabled)
+	// s.BakedHistoryIndexEdit.SetEnabled(enabled)
+	// s.BakeHistoryClearButton.SetEnabled(enabled)
 
-	s.AddPhysicsButton.SetEnabled(enabled)
+	// s.AddPhysicsButton.SetEnabled(enabled)
 
-	s.SaveModelButton.SetEnabled(enabled)
-	s.SaveMotionButton.SetEnabled(enabled)
+	// s.SaveModelButton.SetEnabled(enabled)
+	// s.SaveMotionButton.SetEnabled(enabled)
 
-	s.AddOutputButton.SetEnabled(enabled)
-	s.OutputTableView.SetEnabled(enabled)
+	// s.AddOutputButton.SetEnabled(enabled)
+	// s.OutputTableView.SetEnabled(enabled)
 
 	s.setWidgetPlayingEnabled(enabled)
 }
@@ -69,8 +67,8 @@ func (s *WidgetStore) setWidgetEnabled(enabled bool) {
 func (s *WidgetStore) setWidgetPlayingEnabled(enabled bool) {
 	s.Player.SetEnabled(enabled)
 
-	s.PhysicsTableView.SetEnabled(enabled)
-	s.RigidBodyTableView.SetEnabled(enabled)
+	// s.PhysicsTableView.SetEnabled(enabled)
+	// s.RigidBodyTableView.SetEnabled(enabled)
 }
 
 func (s *WidgetStore) createOnChangePlayingPre() func(playing bool) {
@@ -94,9 +92,9 @@ func (s *WidgetStore) createOnChangePlayingPre() func(playing bool) {
 			// 再生フレーム
 			mlog.IL(mi18n.T("焼き込み再生開始: 焼き込み履歴INDEX[%d]"), deltaIndex+1)
 		} else {
-			deltaIndex := s.Window().GetDeltaMotionCount(0, s.CurrentIndex)
-			s.BakedHistoryIndexEdit.SetRange(1.0, float64(deltaIndex))
-			s.BakedHistoryIndexEdit.SetValue(float64(deltaIndex))
+			// deltaIndex := s.Window().GetDeltaMotionCount(0, s.CurrentIndex)
+			// s.BakedHistoryIndexEdit.SetRange(1.0, float64(deltaIndex))
+			// s.BakedHistoryIndexEdit.SetValue(float64(deltaIndex))
 
 			// // 焼き込み完了時に出力モーションを取得
 			// s.createHistoryIndexChangeHandler()()
@@ -106,10 +104,10 @@ func (s *WidgetStore) createOnChangePlayingPre() func(playing bool) {
 
 // createFilePickerWidgets ファイルピッカーウィジェット群を作成
 func (s *WidgetStore) createFilePickerWidgets() {
-	s.OutputMotionPicker = s.createOutputMotionFilePicker()
-	s.OutputModelPicker = s.createOutputModelFilePicker()
-	s.OriginalMotionPicker = s.createOriginalMotionFilePicker()
 	s.OriginalModelPicker = s.createOriginalModelFilePicker()
+	s.OriginalMotionPicker = s.createOriginalMotionFilePicker()
+	s.OutputModelPicker = s.createOutputModelFilePicker()
+	s.OutputMotionPicker = s.createOutputMotionFilePicker()
 }
 
 // createButtonWidgets ボタンウィジェット群を作成
@@ -161,11 +159,11 @@ func (s *WidgetStore) createOriginalMotionFilePicker() *widget.FilePicker {
 		mi18n.T("モーション(Vmd)"),
 		mi18n.T("モーション説明"),
 		func(cw *controller.ControlWindow, rep repository.IRepository, path string) {
-			// if err := s.LoadMotion(cw, path, true); err != nil {
-			// 	if ok := merr.ShowErrorDialog(cw.AppConfig(), err); ok {
-			// 		s.setWidgetEnabled(true)
-			// 	}
-			// }
+			if err := s.LoadMotion(cw, path); err != nil {
+				if ok := merr.ShowErrorDialog(cw.AppConfig(), err); ok {
+					s.setWidgetEnabled(true)
+				}
+			}
 		},
 	)
 }
@@ -176,11 +174,11 @@ func (s *WidgetStore) createOriginalModelFilePicker() *widget.FilePicker {
 		mi18n.T("モデル(Pmx)"),
 		mi18n.T("モデル説明"),
 		func(cw *controller.ControlWindow, rep repository.IRepository, path string) {
-			// if err := s.LoadModel(cw, path); err != nil {
-			// 	if ok := merr.ShowErrorDialog(cw.AppConfig(), err); ok {
-			// 		s.setWidgetEnabled(true)
-			// 	}
-			// }
+			if err := s.LoadModel(cw, path); err != nil {
+				if ok := merr.ShowErrorDialog(cw.AppConfig(), err); ok {
+					s.setWidgetEnabled(true)
+				}
+			}
 		},
 	)
 }
