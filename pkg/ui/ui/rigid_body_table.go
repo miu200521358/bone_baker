@@ -21,7 +21,8 @@ type RigidBodyTable struct {
 // createRigidBodyTable グラフィカル剛体テーブル作成
 func createRigidBodyTable(store *WidgetStore) declarative.Widget {
 	return declarative.CustomWidget{
-		MinSize: declarative.Size{Width: 200, Height: 300},
+		AssignTo: &store.RigidBodyTableWidget,
+		MinSize:  declarative.Size{Width: 200, Height: 300},
 		Paint: func(canvas *walk.Canvas, updateBounds walk.Rectangle) error {
 			return drawGraphicalRigidBodyTable(canvas, updateBounds, store)
 		},

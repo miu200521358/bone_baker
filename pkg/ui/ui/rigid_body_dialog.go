@@ -413,8 +413,8 @@ func (p *RigidBodyTableViewDialog) handleDialogOK(record *entity.RigidBodyRecord
 	}
 
 	// 台形テーブルの再描画を強制
-	if p.store.RigidBodyTableView != nil {
-		p.store.RigidBodyTableView.Invalidate()
+	if p.store.RigidBodyTableWidget != nil {
+		p.store.RigidBodyTableWidget.Invalidate()
 	}
 
 	p.store.setWidgetEnabled(true)
