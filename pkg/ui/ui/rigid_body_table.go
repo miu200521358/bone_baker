@@ -18,8 +18,8 @@ type RigidBodyTable struct {
 	hoveredIndex int // ホバー中の台形インデックス (-1: なし)
 }
 
-// createGraphicalRigidBodyTable グラフィカル剛体テーブル作成
-func createGraphicalRigidBodyTable(store *WidgetStore) declarative.Widget {
+// createRigidBodyTable グラフィカル剛体テーブル作成
+func createRigidBodyTable(store *WidgetStore) declarative.Widget {
 	return declarative.CustomWidget{
 		MinSize: declarative.Size{Width: 200, Height: 300},
 		Paint: func(canvas *walk.Canvas, updateBounds walk.Rectangle) error {
@@ -43,8 +43,8 @@ func createRigidBodyTableViewDialog(store *WidgetStore, isAdd bool) func() {
 					store.currentSet().OriginalModel)
 			}
 		case false:
-			record = store.currentSet().RigidBodyRecords[store.RigidBodyTableView.CurrentIndex()]
-			recordIndex = store.RigidBodyTableView.CurrentIndex()
+			// record = store.currentSet().RigidBodyRecords[store.RigidBodyTableView.CurrentIndex()]
+			// recordIndex = store.RigidBodyTableView.CurrentIndex()
 		}
 		dialog := NewRigidBodyTableViewDialog(store)
 		dialog.Show(record, recordIndex)
@@ -250,8 +250,11 @@ func (g *RigidBodyTable) onMouseDown(x, y int, button walk.MouseButton) {
 	clickedIndex := g.getTrapezoidAt(x, y, bounds)
 
 	if clickedIndex >= 0 && clickedIndex < len(g.records) {
-		// ダイアログ表示
-		createRigidBodyTableViewDialog(g.store, false)()
+		// クリックされたレコードを取得
+		record := g.store.currentSet().RigidBodyRecords[clickedIndex]
+		// ダイアログ表示（編集モード）
+		dialog := NewRigidBodyTableViewDialog(g.store)
+		dialog.Show(record, clickedIndex)
 	}
 }
 

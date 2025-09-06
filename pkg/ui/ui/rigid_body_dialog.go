@@ -1,7 +1,6 @@
 package ui
 
 import (
-	"github.com/miu200521358/bone_baker/pkg/domain"
 	"github.com/miu200521358/bone_baker/pkg/domain/entity"
 	"github.com/miu200521358/mlib_go/pkg/config/mi18n"
 	"github.com/miu200521358/mlib_go/pkg/config/mlog"
@@ -60,7 +59,7 @@ func (p *RigidBodyTableViewDialog) Show(record *entity.RigidBodyRecord, recordIn
 		},
 		Children: []declarative.Widget{
 			declarative.Composite{
-				Layout: declarative.Grid{Columns: 8},
+				Layout: declarative.Grid{Columns: 6},
 				Children: p.createFormWidgets(&startFrameEdit, &endFrameEdit,
 					&maxStartFrameEdit, &maxEndFrameEdit, &sizeXEdit, &sizeYEdit, &sizeZEdit, &massEdit, &stiffnessEdit, &tensionEdit, &treeView, treeModel),
 			},
@@ -88,8 +87,8 @@ func (p *RigidBodyTableViewDialog) createFormWidgets(startFrameEdit, endFrameEdi
 			OnMouseDown: func(x, y int, button walk.MouseButton) {
 				mlog.IL("%s", mi18n.T("設定開始フレーム説明"))
 			},
-			MinSize: declarative.Size{Width: 100, Height: 20},
-			MaxSize: declarative.Size{Width: 100, Height: 20},
+			MinSize: declarative.Size{Width: 150, Height: 20},
+			MaxSize: declarative.Size{Width: 150, Height: 20},
 		},
 		declarative.NumberEdit{
 			Value:              declarative.Bind("StartFrame"),
@@ -109,8 +108,8 @@ func (p *RigidBodyTableViewDialog) createFormWidgets(startFrameEdit, endFrameEdi
 			OnMouseDown: func(x, y int, button walk.MouseButton) {
 				mlog.IL("%s", mi18n.T("設定最大開始フレーム説明"))
 			},
-			MinSize: declarative.Size{Width: 100, Height: 20},
-			MaxSize: declarative.Size{Width: 100, Height: 20},
+			MinSize: declarative.Size{Width: 150, Height: 20},
+			MaxSize: declarative.Size{Width: 150, Height: 20},
 		},
 		declarative.NumberEdit{
 			Value:              declarative.Bind("MaxStartFrame"),
@@ -124,14 +123,17 @@ func (p *RigidBodyTableViewDialog) createFormWidgets(startFrameEdit, endFrameEdi
 			MinSize:            declarative.Size{Width: 80, Height: 20},
 			MaxSize:            declarative.Size{Width: 80, Height: 20},
 		},
+		declarative.HSpacer{
+			ColumnSpan: 2,
+		},
 		declarative.Label{
 			Text:        mi18n.T("設定最大終了フレーム"),
 			ToolTipText: mi18n.T("設定最大終了フレーム説明"),
 			OnMouseDown: func(x, y int, button walk.MouseButton) {
 				mlog.IL("%s", mi18n.T("設定最大終了フレーム説明"))
 			},
-			MinSize: declarative.Size{Width: 100, Height: 20},
-			MaxSize: declarative.Size{Width: 100, Height: 20},
+			MinSize: declarative.Size{Width: 150, Height: 20},
+			MaxSize: declarative.Size{Width: 150, Height: 20},
 		},
 		declarative.NumberEdit{
 			Value:              declarative.Bind("MaxEndFrame"),
@@ -151,8 +153,8 @@ func (p *RigidBodyTableViewDialog) createFormWidgets(startFrameEdit, endFrameEdi
 			OnMouseDown: func(x, y int, button walk.MouseButton) {
 				mlog.IL("%s", mi18n.T("設定終了フレーム説明"))
 			},
-			MinSize: declarative.Size{Width: 100, Height: 20},
-			MaxSize: declarative.Size{Width: 100, Height: 20},
+			MinSize: declarative.Size{Width: 150, Height: 20},
+			MaxSize: declarative.Size{Width: 150, Height: 20},
 		},
 		declarative.NumberEdit{
 			Value:              declarative.Bind("EndFrame"),
@@ -166,13 +168,16 @@ func (p *RigidBodyTableViewDialog) createFormWidgets(startFrameEdit, endFrameEdi
 			MinSize:            declarative.Size{Width: 80, Height: 20},
 			MaxSize:            declarative.Size{Width: 80, Height: 20},
 		},
+		declarative.HSpacer{
+			ColumnSpan: 2,
+		},
 		declarative.TextLabel{
 			Text:        mi18n.T("大きさX倍率"),
 			ToolTipText: mi18n.T("大きさX倍率説明"),
 			OnMouseDown: func(x, y int, button walk.MouseButton) {
 				mlog.IL("%s", mi18n.T("大きさX倍率説明"))
 			},
-			MinSize: declarative.Size{Width: 100, Height: 20},
+			MinSize: declarative.Size{Width: 150, Height: 20},
 		},
 		declarative.NumberEdit{
 			AssignTo: sizeXEdit,
@@ -196,7 +201,7 @@ func (p *RigidBodyTableViewDialog) createFormWidgets(startFrameEdit, endFrameEdi
 			OnMouseDown: func(x, y int, button walk.MouseButton) {
 				mlog.IL("%s", mi18n.T("大きさY倍率説明"))
 			},
-			MinSize: declarative.Size{Width: 100, Height: 20},
+			MinSize: declarative.Size{Width: 150, Height: 20},
 		},
 		declarative.NumberEdit{
 			AssignTo: sizeYEdit,
@@ -220,7 +225,7 @@ func (p *RigidBodyTableViewDialog) createFormWidgets(startFrameEdit, endFrameEdi
 			OnMouseDown: func(x, y int, button walk.MouseButton) {
 				mlog.IL("%s", mi18n.T("大きさZ倍率説明"))
 			},
-			MinSize: declarative.Size{Width: 100, Height: 20},
+			MinSize: declarative.Size{Width: 150, Height: 20},
 		},
 		declarative.NumberEdit{
 			AssignTo: sizeZEdit,
@@ -238,16 +243,13 @@ func (p *RigidBodyTableViewDialog) createFormWidgets(startFrameEdit, endFrameEdi
 			MinSize:            declarative.Size{Width: 60, Height: 20},
 			MaxSize:            declarative.Size{Width: 60, Height: 20},
 		},
-		declarative.HSpacer{
-			ColumnSpan: 2,
-		},
 		declarative.TextLabel{
 			Text:        mi18n.T("質量倍率"),
 			ToolTipText: mi18n.T("質量倍率説明"),
 			OnMouseDown: func(x, y int, button walk.MouseButton) {
 				mlog.IL("%s", mi18n.T("質量倍率説明"))
 			},
-			MinSize: declarative.Size{Width: 100, Height: 20},
+			MinSize: declarative.Size{Width: 150, Height: 20},
 		},
 		declarative.NumberEdit{
 			AssignTo: massEdit,
@@ -271,7 +273,7 @@ func (p *RigidBodyTableViewDialog) createFormWidgets(startFrameEdit, endFrameEdi
 			OnMouseDown: func(x, y int, button walk.MouseButton) {
 				mlog.IL("%s", mi18n.T("硬さ倍率説明"))
 			},
-			MinSize: declarative.Size{Width: 100, Height: 20},
+			MinSize: declarative.Size{Width: 150, Height: 20},
 		},
 		declarative.NumberEdit{
 			AssignTo: stiffnessEdit,
@@ -295,7 +297,7 @@ func (p *RigidBodyTableViewDialog) createFormWidgets(startFrameEdit, endFrameEdi
 			OnMouseDown: func(x, y int, button walk.MouseButton) {
 				mlog.IL("%s", mi18n.T("張り倍率説明"))
 			},
-			MinSize: declarative.Size{Width: 100, Height: 20},
+			MinSize: declarative.Size{Width: 150, Height: 20},
 		},
 		declarative.NumberEdit{
 			AssignTo: tensionEdit,
@@ -313,14 +315,11 @@ func (p *RigidBodyTableViewDialog) createFormWidgets(startFrameEdit, endFrameEdi
 			MinSize:            declarative.Size{Width: 60, Height: 20},
 			MaxSize:            declarative.Size{Width: 60, Height: 20},
 		},
-		declarative.HSpacer{
-			ColumnSpan: 2,
-		},
 		declarative.TreeView{
 			AssignTo:   treeView,
 			Model:      treeModel,
 			MinSize:    declarative.Size{Width: 230, Height: 200},
-			ColumnSpan: 8,
+			ColumnSpan: 6,
 			OnCurrentItemChanged: func() {
 				p.updateEditValues(*treeView, *sizeXEdit, *sizeYEdit, *sizeZEdit, *massEdit, *stiffnessEdit, *tensionEdit)
 			},
@@ -351,7 +350,7 @@ func (p *RigidBodyTableViewDialog) updateItemProperty(treeView *walk.TreeView, u
 	}
 	updateFunc(treeView.CurrentItem().(*RigidBodyTreeItem))
 	// モデルの更新
-	treeView.Model().(*domain.PhysicsRigidBodyTreeModel).PublishItemChanged(treeView.CurrentItem())
+	treeView.Model().(*RigidBodyTreeModel).PublishItemChanged(treeView.CurrentItem())
 }
 
 func (p *RigidBodyTableViewDialog) createButtonWidgets(
@@ -393,6 +392,34 @@ func (p *RigidBodyTableViewDialog) createButtonWidgets(
 func (p *RigidBodyTableViewDialog) handleDialogOK(record *entity.RigidBodyRecord, recordIndex int) {
 	p.store.setWidgetEnabled(false)
 
+	if p.doDelete {
+		// 削除処理
+		if recordIndex >= 0 && recordIndex < len(p.store.currentSet().RigidBodyRecords) {
+			// 指定インデックスのレコードを削除
+			records := p.store.currentSet().RigidBodyRecords
+			p.store.currentSet().RigidBodyRecords = append(records[:recordIndex], records[recordIndex+1:]...)
+		}
+	} else {
+		// 追加・更新処理
+		if recordIndex == -1 {
+			// 新規追加
+			p.store.currentSet().RigidBodyRecords = append(p.store.currentSet().RigidBodyRecords, record)
+		} else {
+			// 更新
+			if recordIndex >= 0 && recordIndex < len(p.store.currentSet().RigidBodyRecords) {
+				p.store.currentSet().RigidBodyRecords[recordIndex] = record
+			}
+		}
+	}
+
+	// 台形テーブルの再描画を強制
+	if p.store.RigidBodyTableView != nil {
+		p.store.RigidBodyTableView.Invalidate()
+	}
+
 	p.store.setWidgetEnabled(true)
 	controller.Beep()
+
+	// 削除フラグをリセット
+	p.doDelete = false
 }
