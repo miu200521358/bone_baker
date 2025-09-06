@@ -31,7 +31,7 @@ type WidgetStore struct {
 	AddPhysicsButton       *widget.MPushButton       // 物理設定追加ボタン
 	PhysicsTableView       *walk.TableView           // 物理設定テーブル
 	AddRigidBodyButton     *widget.MPushButton       // 剛体物理追加ボタン
-	RigidBodyTableView     *walk.TableView           // 剛体物理テーブル
+	RigidBodyTableView     *RigidBodyTable           // 剛体物理テーブル
 	RigidBodyTreeModel     *RigidBodyTreeModel       // 剛体ツリーモデル
 	AddOutputButton        *widget.MPushButton       // 出力設定追加ボタン
 	OutputTableView        *walk.TableView           // 出力定義テーブル
