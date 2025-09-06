@@ -418,6 +418,7 @@ func (p *RigidBodyTableViewDialog) handleDialogOK(record *entity.RigidBodyRecord
 	}
 
 	p.store.setWidgetEnabled(true)
+
 	controller.Beep()
 
 	// 削除フラグをリセット

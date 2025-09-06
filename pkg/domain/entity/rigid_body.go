@@ -17,9 +17,11 @@ type RigidBodyRecord struct {
 
 func NewRigidBodyRecord(startFrame, endFrame float32, model *pmx.PmxModel) *RigidBodyRecord {
 	return &RigidBodyRecord{
-		StartFrame: startFrame,
-		EndFrame:   endFrame,
-		Tree:       newRigidBodyTree(model),
+		StartFrame:    startFrame,
+		MaxStartFrame: startFrame,
+		MaxEndFrame:   endFrame,
+		EndFrame:      endFrame,
+		Tree:          newRigidBodyTree(model),
 	}
 }
 

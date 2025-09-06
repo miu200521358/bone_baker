@@ -9,6 +9,23 @@ import (
 	"github.com/miu200521358/walk/pkg/walk"
 )
 
+// 固定レイアウト定数
+const (
+	headerHeight       = 20  // ヘッダー行の高さ
+	rowHeight          = 50  // 各台形行の高さ
+	trapezoidHeight    = 40  // 台形自体の高さ
+	trapezoidMarginTop = 10  // 台形上マージン
+	framesPer150px     = 100 // 150pxあたりのフレーム数（100F = 150px）
+	pixelsPerFrame     = 1.5 // 1フレームあたりのピクセル数
+)
+
+var trapezoidFillColor = walk.ColorSteelBlue       // 通常の台形色
+var trapezoidHoverColor = walk.ColorDarkSlateBlue  // ホバー中の台形色
+var trapezoidBorderColor = walk.ColorDarkSlateBlue // 台形の輪郭線
+var backgroundColor = walk.ColorWhite              // 背景色
+var borderColor = walk.ColorDarkGray               // 台形の枠線色
+var fontColor = walk.RGB(30, 30, 30)               // フォント色
+
 // RigidBodyTable グラフィカル剛体設定テーブル
 type RigidBodyTable struct {
 	*walk.CustomWidget
@@ -20,11 +37,18 @@ type RigidBodyTable struct {
 
 // createRigidBodyTable グラフィカル剛体テーブル作成
 func createRigidBodyTable(store *WidgetStore) declarative.Widget {
-	return declarative.CustomWidget{
-		AssignTo: &store.RigidBodyTableWidget,
-		MinSize:  declarative.Size{Width: 200, Height: 300},
-		Paint: func(canvas *walk.Canvas, updateBounds walk.Rectangle) error {
-			return drawGraphicalRigidBodyTable(canvas, updateBounds, store)
+	return declarative.ScrollView{
+		Layout:  declarative.HBox{},
+		MinSize: declarative.Size{Width: 200, Height: 300},
+		MaxSize: declarative.Size{Width: 200, Height: 300},
+		Children: []declarative.Widget{
+			declarative.CustomWidget{
+				AssignTo: &store.RigidBodyTableWidget,
+				MinSize:  declarative.Size{Width: 7000, Height: 250},
+				Paint: func(canvas *walk.Canvas, updateBounds walk.Rectangle) error {
+					return drawGraphicalRigidBodyTable(canvas, updateBounds, store)
+				},
+			},
 		},
 	}
 }
@@ -55,7 +79,7 @@ func createRigidBodyTableViewDialog(store *WidgetStore, isAdd bool) func() {
 // drawGraphicalRigidBodyTable グラフィカル剛体テーブル描画
 func drawGraphicalRigidBodyTable(canvas *walk.Canvas, bounds walk.Rectangle, store *WidgetStore) error {
 	// 背景をクリア
-	brush, err := walk.NewSolidColorBrush(walk.Color(0xFFFFFF))
+	brush, err := walk.NewSolidColorBrush(backgroundColor)
 	if err != nil {
 		return err
 	}
@@ -69,7 +93,7 @@ func drawGraphicalRigidBodyTable(canvas *walk.Canvas, bounds walk.Rectangle, sto
 		font, _ := walk.NewFont("MS UI Gothic", 10, 0)
 		if font != nil {
 			defer font.Dispose()
-			canvas.DrawText("剛体設定レコードがありません", font, walk.Color(0x666666),
+			canvas.DrawText("剛体設定レコードがありません", font, fontColor,
 				walk.Rectangle{X: 10, Y: 10, Width: bounds.Width - 20, Height: 30}, walk.TextLeft)
 		}
 		return nil
@@ -96,32 +120,34 @@ func drawGraphicalRigidBodyTable(canvas *walk.Canvas, bounds walk.Rectangle, sto
 
 // drawGrid グリッド描画（グローバル関数）
 func drawGrid(canvas *walk.Canvas, bounds walk.Rectangle, records []*entity.RigidBodyRecord, maxFrame float32) error {
-	gridPen, err := walk.NewCosmeticPen(walk.PenSolid, walk.Color(0xCCCCCC))
+	gridPen, err := walk.NewCosmeticPen(walk.PenSolid, borderColor)
 	if err != nil {
 		return err
 	}
 	defer gridPen.Dispose()
 
-	// 横線（各レコード境界）
-	rowHeight := float32(bounds.Height) / float32(len(records)+1) // +1 for header
-	for i := 0; i <= len(records); i++ {
-		y := int(float32(i) * rowHeight)
+	// 横線（固定サイズレイアウト）
+	// ヘッダー行の下辺
+	canvas.DrawLine(gridPen, walk.Point{X: 0, Y: headerHeight}, walk.Point{X: bounds.Width, Y: headerHeight})
+
+	// 各台形行の下辺
+	for i := 0; i < len(records); i++ {
+		y := headerHeight + (i+1)*rowHeight
 		canvas.DrawLine(gridPen, walk.Point{X: 0, Y: y}, walk.Point{X: bounds.Width, Y: y})
 	}
 
 	// 縦線（100F刻み）
-	frameWidth := float32(bounds.Width) / maxFrame
-	for frame := float32(0); frame <= maxFrame; frame += 100 {
-		x := int(frame * frameWidth)
+	for frame := float32(0); frame <= maxFrame; frame += framesPer150px {
+		x := int(frame * pixelsPerFrame)
 		canvas.DrawLine(gridPen, walk.Point{X: x, Y: 0}, walk.Point{X: x, Y: bounds.Height})
 
-		// フレーム番号表示
+		// フレーム番号表示（ヘッダー行の中央に配置）
 		if frame > 0 {
 			font, _ := walk.NewFont("MS UI Gothic", 8, 0)
 			if font != nil {
 				defer font.Dispose()
-				canvas.DrawText(fmt.Sprintf("%.0fF", frame), font, walk.Color(0x000000),
-					walk.Rectangle{X: x - 15, Y: 0, Width: 30, Height: 20}, walk.TextCenter)
+				canvas.DrawText(fmt.Sprintf("%.0fF", frame), font, fontColor,
+					walk.Rectangle{X: x - 15, Y: 5, Width: 30, Height: headerHeight - 10}, walk.TextCenter)
 			}
 		}
 	}
@@ -135,26 +161,46 @@ func drawTrapezoids(canvas *walk.Canvas, bounds walk.Rectangle, records []*entit
 		return nil
 	}
 
-	rowHeight := float32(bounds.Height) / float32(len(records)+1)
-	frameWidth := float32(bounds.Width) / maxFrame
-
 	for i, record := range records {
-		// 台形の色
-		pen, err := walk.NewCosmeticPen(walk.PenSolid, walk.Color(0x4A90E2))
+		// 台形の座標計算（固定サイズレイアウト）
+		rowStartY := headerHeight + i*rowHeight
+		y1 := rowStartY + trapezoidMarginTop                   // 上辺
+		y2 := rowStartY + trapezoidMarginTop + trapezoidHeight // 下辺
+		x1 := int(record.StartFrame * pixelsPerFrame)          // 下部始点
+		x2 := int(record.MaxStartFrame * pixelsPerFrame)       // 上部始点
+		x3 := int(record.MaxEndFrame * pixelsPerFrame)         // 上部終点
+		x4 := int(record.EndFrame * pixelsPerFrame)            // 下部終点
+
+		// 台形の塗りつぶし（水平線を密に描画して塗りつぶし効果を実現）
+		fillPen, err := walk.NewCosmeticPen(walk.PenSolid, trapezoidFillColor)
+		if err != nil {
+			continue
+		}
+		defer fillPen.Dispose()
+
+		// 台形の塗りつぶし処理
+		for y := y1; y <= y2; y++ {
+			// 現在のy座標での台形の左端と右端を計算
+			progress := float32(y-y1) / float32(y2-y1) // 0.0から1.0の進行度
+
+			// 左辺の計算（上部始点から下部始点への線形補間）
+			leftX := int(float32(x2) + progress*(float32(x1-x2)))
+			// 右辺の計算（上部終点から下部終点への線形補間）
+			rightX := int(float32(x3) + progress*(float32(x4-x3)))
+
+			// 水平線を描画
+			if rightX > leftX {
+				canvas.DrawLine(fillPen, walk.Point{X: leftX, Y: y}, walk.Point{X: rightX, Y: y})
+			}
+		}
+
+		// 台形の輪郭線を描画
+		pen, err := walk.NewCosmeticPen(walk.PenSolid, trapezoidBorderColor)
 		if err != nil {
 			continue
 		}
 		defer pen.Dispose()
 
-		// 台形の座標計算
-		y1 := int(float32(i+1) * rowHeight)          // 上辺
-		y2 := int(float32(i+2) * rowHeight)          // 下辺
-		x1 := int(record.StartFrame * frameWidth)    // 下部始点
-		x2 := int(record.MaxStartFrame * frameWidth) // 上部始点
-		x3 := int(record.MaxEndFrame * frameWidth)   // 上部終点
-		x4 := int(record.EndFrame * frameWidth)      // 下部終点
-
-		// 台形描画
 		points := []walk.Point{
 			{X: x1, Y: y2}, // 下部始点
 			{X: x2, Y: y1}, // 上部始点
@@ -168,13 +214,21 @@ func drawTrapezoids(canvas *walk.Canvas, bounds walk.Rectangle, records []*entit
 			canvas.DrawLine(pen, points[j], points[next])
 		}
 
+		// 台形の下罫線を強調表示
+		bottomLinePen, err := walk.NewCosmeticPen(walk.PenSolid, borderColor)
+		if err != nil {
+			continue
+		}
+		defer bottomLinePen.Dispose()
+		canvas.DrawLine(bottomLinePen, walk.Point{X: x1, Y: y2}, walk.Point{X: x4, Y: y2})
+
 		// レコード番号表示
 		font, _ := walk.NewFont("MS UI Gothic", 9, 0)
 		if font != nil {
 			defer font.Dispose()
-			text := fmt.Sprintf("No.%d", i+1)
-			textY := y1 + (y2-y1)/2 - 8
-			canvas.DrawText(text, font, walk.Color(0x000000),
+			text := fmt.Sprintf("%02d", i+1)
+			textY := y1 + (y2-y1)/2 - 10
+			canvas.DrawText(text, font, fontColor,
 				walk.Rectangle{X: 5, Y: textY, Width: 50, Height: 16}, walk.TextLeft)
 		}
 	}
@@ -197,7 +251,7 @@ func (g *RigidBodyTable) CurrentIndex() int {
 func (g *RigidBodyTable) onPaint(canvas *walk.Canvas, updateBounds walk.Rectangle) error {
 	// 背景をクリア
 	bounds := g.ClientBounds()
-	brush, err := walk.NewSolidColorBrush(walk.Color(0xFFFFFF))
+	brush, err := walk.NewSolidColorBrush(backgroundColor)
 	if err != nil {
 		return err
 	}
@@ -261,33 +315,35 @@ func (g *RigidBodyTable) onMouseDown(x, y int, button walk.MouseButton) {
 
 // drawGrid グリッド描画
 func (g *RigidBodyTable) drawGrid(canvas *walk.Canvas, bounds walk.Rectangle) error {
-	gridPen, err := walk.NewCosmeticPen(walk.PenSolid, walk.Color(0xCCCCCC))
+	gridPen, err := walk.NewCosmeticPen(walk.PenSolid, borderColor)
 	if err != nil {
 		return err
 	}
 	defer gridPen.Dispose()
 
-	// 横線（各レコード境界）
-	rowHeight := float32(bounds.Height) / float32(len(g.records)+1) // +1 for header
-	for i := 0; i <= len(g.records); i++ {
-		y := int(float32(i) * rowHeight)
+	// 横線（固定サイズレイアウト）
+	// ヘッダー行の下辺
+	canvas.DrawLine(gridPen, walk.Point{X: 0, Y: headerHeight}, walk.Point{X: bounds.Width, Y: headerHeight})
+
+	// 各台形行の下辺
+	for i := 0; i < len(g.records); i++ {
+		y := headerHeight + (i+1)*rowHeight
 		canvas.DrawLine(gridPen, walk.Point{X: 0, Y: y}, walk.Point{X: bounds.Width, Y: y})
 	}
 
 	// 縦線（100F刻み）
-	frameWidth := float32(bounds.Width) / g.maxFrame
-	for frame := float32(0); frame <= g.maxFrame; frame += 100 {
-		x := int(frame * frameWidth)
+	for frame := float32(0); frame <= g.maxFrame; frame += framesPer150px {
+		x := int(frame * pixelsPerFrame)
 		canvas.DrawLine(gridPen, walk.Point{X: x, Y: 0}, walk.Point{X: x, Y: bounds.Height})
 
-		// フレーム番号表示
+		// フレーム番号表示（ヘッダー行の中央に配置）
 		if frame > 0 {
 			font := g.Font()
 			if font == nil {
 				font, _ = walk.NewFont("MS UI Gothic", 8, 0)
 			}
-			canvas.DrawText(fmt.Sprintf("%.0fF", frame), font, walk.Color(0x000000),
-				walk.Rectangle{X: x - 15, Y: 0, Width: 30, Height: 20}, walk.TextCenter)
+			canvas.DrawText(fmt.Sprintf("%.0fF", frame), font, fontColor,
+				walk.Rectangle{X: x - 15, Y: 5, Width: 30, Height: headerHeight - 10}, walk.TextCenter)
 		}
 	}
 
@@ -300,37 +356,52 @@ func (g *RigidBodyTable) drawTrapezoids(canvas *walk.Canvas, bounds walk.Rectang
 		return nil
 	}
 
-	rowHeight := float32(bounds.Height) / float32(len(g.records)+1)
-	frameWidth := float32(bounds.Width) / g.maxFrame
-
 	for i, record := range g.records {
 		// 台形の色（ホバー中は強調）
-		fillColor := walk.Color(0x4A90E2) // 青系
+		fillColor := trapezoidFillColor
 		if i == g.hoveredIndex {
-			fillColor = walk.Color(0x357ABD) // より濃い青
+			fillColor = trapezoidHoverColor
 		}
 
-		brush, err := walk.NewSolidColorBrush(fillColor)
+		// 台形の座標計算（固定サイズレイアウト）
+		rowStartY := headerHeight + i*rowHeight
+		y1 := rowStartY + trapezoidMarginTop                   // 上辺
+		y2 := rowStartY + trapezoidMarginTop + trapezoidHeight // 下辺
+		x1 := int(record.StartFrame * pixelsPerFrame)          // 下部始点
+		x2 := int(record.MaxStartFrame * pixelsPerFrame)       // 上部始点
+		x3 := int(record.MaxEndFrame * pixelsPerFrame)         // 上部終点
+		x4 := int(record.EndFrame * pixelsPerFrame)            // 下部終点
+
+		// 台形の塗りつぶし（水平線を密に描画して塗りつぶし効果を実現）
+		fillPen, err := walk.NewCosmeticPen(walk.PenSolid, fillColor)
 		if err != nil {
 			continue
 		}
-		defer brush.Dispose()
+		defer fillPen.Dispose()
 
-		pen, err := walk.NewCosmeticPen(walk.PenSolid, walk.Color(0x2E5A87))
+		// 台形の塗りつぶし処理
+		for y := y1; y <= y2; y++ {
+			// 現在のy座標での台形の左端と右端を計算
+			progress := float32(y-y1) / float32(y2-y1) // 0.0から1.0の進行度
+
+			// 左辺の計算（上部始点から下部始点への線形補間）
+			leftX := int(float32(x2) + progress*(float32(x1-x2)))
+			// 右辺の計算（上部終点から下部終点への線形補間）
+			rightX := int(float32(x3) + progress*(float32(x4-x3)))
+
+			// 水平線を描画
+			if rightX > leftX {
+				canvas.DrawLine(fillPen, walk.Point{X: leftX, Y: y}, walk.Point{X: rightX, Y: y})
+			}
+		}
+
+		// 台形の輪郭線を描画
+		pen, err := walk.NewCosmeticPen(walk.PenSolid, trapezoidBorderColor)
 		if err != nil {
 			continue
 		}
 		defer pen.Dispose()
 
-		// 台形の座標計算
-		y1 := int(float32(i+1) * rowHeight)          // 上辺
-		y2 := int(float32(i+2) * rowHeight)          // 下辺
-		x1 := int(record.StartFrame * frameWidth)    // 下部始点
-		x2 := int(record.MaxStartFrame * frameWidth) // 上部始点
-		x3 := int(record.MaxEndFrame * frameWidth)   // 上部終点
-		x4 := int(record.EndFrame * frameWidth)      // 下部終点
-
-		// 台形描画
 		points := []walk.Point{
 			{X: x1, Y: y2}, // 下部始点
 			{X: x2, Y: y1}, // 上部始点
@@ -338,11 +409,19 @@ func (g *RigidBodyTable) drawTrapezoids(canvas *walk.Canvas, bounds walk.Rectang
 			{X: x4, Y: y2}, // 下部終点
 		}
 
-		// 台形を線で描画（Walkライブラリに多角形塗りつぶしがないため線で近似）
-		for i := 0; i < len(points); i++ {
-			next := (i + 1) % len(points)
-			canvas.DrawLine(pen, points[i], points[next])
+		// 台形を線で描画
+		for j := 0; j < len(points); j++ {
+			next := (j + 1) % len(points)
+			canvas.DrawLine(pen, points[j], points[next])
 		}
+
+		// 台形の下罫線を強調表示
+		bottomLinePen, err := walk.NewCosmeticPen(walk.PenSolid, borderColor)
+		if err != nil {
+			continue
+		}
+		defer bottomLinePen.Dispose()
+		canvas.DrawLine(bottomLinePen, walk.Point{X: x1, Y: y2}, walk.Point{X: x4, Y: y2})
 
 		// レコード番号表示
 		font := g.Font()
@@ -351,7 +430,7 @@ func (g *RigidBodyTable) drawTrapezoids(canvas *walk.Canvas, bounds walk.Rectang
 		}
 		text := fmt.Sprintf("No.%d", i+1)
 		textY := y1 + (y2-y1)/2 - 8
-		canvas.DrawText(text, font, walk.Color(0x000000),
+		canvas.DrawText(text, font, fontColor,
 			walk.Rectangle{X: 5, Y: textY, Width: 50, Height: 16}, walk.TextLeft)
 	}
 
@@ -364,12 +443,11 @@ func (g *RigidBodyTable) getTrapezoidAt(x, y int, bounds walk.Rectangle) int {
 		return -1
 	}
 
-	rowHeight := float32(bounds.Height) / float32(len(g.records)+1)
-	frameWidth := float32(bounds.Width) / g.maxFrame
-
 	for i, record := range g.records {
-		y1 := float32(i+1) * rowHeight
-		y2 := float32(i+2) * rowHeight
+		// 固定サイズレイアウトでの座標計算
+		rowStartY := headerHeight + i*rowHeight
+		y1 := float32(rowStartY + trapezoidMarginTop)                   // 上辺
+		y2 := float32(rowStartY + trapezoidMarginTop + trapezoidHeight) // 下辺
 
 		// Y座標チェック
 		if float32(y) < y1 || float32(y) > y2 {
@@ -377,10 +455,10 @@ func (g *RigidBodyTable) getTrapezoidAt(x, y int, bounds walk.Rectangle) int {
 		}
 
 		// X座標チェック（台形内部判定）
-		x1 := record.StartFrame * frameWidth    // 下部始点
-		x2 := record.MaxStartFrame * frameWidth // 上部始点
-		x3 := record.MaxEndFrame * frameWidth   // 上部終点
-		x4 := record.EndFrame * frameWidth      // 下部終点
+		x1 := record.StartFrame * pixelsPerFrame    // 下部始点
+		x2 := record.MaxStartFrame * pixelsPerFrame // 上部始点
+		x3 := record.MaxEndFrame * pixelsPerFrame   // 上部終点
+		x4 := record.EndFrame * pixelsPerFrame      // 下部終点
 
 		if g.isInsideTrapezoid(float32(x), float32(y), x1, x2, x3, x4, y1, y2) {
 			return i
