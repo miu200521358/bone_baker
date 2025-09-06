@@ -40,7 +40,7 @@ func createPhysicsTableViewDialog(store *WidgetStore, isAdd bool) func() {
 					store.CurrentSet().OriginalMotion.MaxFrame())
 			}
 		case false:
-			record = store.CurrentSet().PhysicsRecords[store.PhysicsTableView.CurrentIndex()]
+			record = store.PhysicsRecords[store.PhysicsTableView.CurrentIndex()]
 			recordIndex = store.PhysicsTableView.CurrentIndex()
 		}
 		dialog := NewPhysicsTableViewDialog(store)

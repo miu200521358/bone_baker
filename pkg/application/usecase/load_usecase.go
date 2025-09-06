@@ -28,13 +28,13 @@ func NewLoadUsecase(fileRepo *pRepository.FileRepository) *LoadUsecase {
 	}
 }
 
-func (uc *LoadUsecase) LoadFile(path string) ([]*entity.BakeSet, error) {
+func (uc *LoadUsecase) LoadFile(path string) ([]*entity.BakeSet, []*entity.PhysicsRecord, error) {
 	return uc.fileRepo.Load(path)
 }
 
-func (uc *LoadUsecase) LoadMotion(baseSet *entity.BakeSet, path string) error {
+func (uc *LoadUsecase) LoadMotion(bakeSet *entity.BakeSet, path string) error {
 	if path == "" {
-		baseSet.ClearMotion()
+		bakeSet.ClearMotion()
 		return nil
 	}
 
@@ -75,15 +75,16 @@ func (uc *LoadUsecase) LoadMotion(baseSet *entity.BakeSet, path string) error {
 		}
 	}
 
-	baseSet.OriginalMotion = originalMotion
-	baseSet.OutputMotion = outputMotion
+	bakeSet.OriginalMotion = originalMotion
+	bakeSet.OriginalMotionPath = path
+	bakeSet.OutputMotion = outputMotion
 
 	return nil
 }
 
-func (uc *LoadUsecase) LoadModel(baseSet *entity.BakeSet, path string) error {
+func (uc *LoadUsecase) LoadModel(bakeSet *entity.BakeSet, path string) error {
 	if path == "" {
-		baseSet.ClearModel()
+		bakeSet.ClearModel()
 		return nil
 	}
 
@@ -147,8 +148,9 @@ func (uc *LoadUsecase) LoadModel(baseSet *entity.BakeSet, path string) error {
 		}
 	}
 
-	baseSet.OriginalModel = originalModel
-	baseSet.BakedModel = bakeModel
+	bakeSet.OriginalModel = originalModel
+	bakeSet.OriginalModelPath = path
+	bakeSet.BakedModel = bakeModel
 
 	return nil
 }

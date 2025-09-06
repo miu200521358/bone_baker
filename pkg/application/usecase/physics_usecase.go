@@ -3,7 +3,6 @@ package usecase
 import (
 	"github.com/miu200521358/bone_baker/pkg/domain/entity"
 	"github.com/miu200521358/mlib_go/pkg/domain/mmath"
-	"github.com/miu200521358/mlib_go/pkg/domain/pmx"
 	"github.com/miu200521358/mlib_go/pkg/domain/vmd"
 )
 
@@ -17,7 +16,6 @@ func NewPhysicsUsecase() *PhysicsUsecase {
 func (u *PhysicsUsecase) ApplyPhysicsWorldMotion(
 	physicsWorldMotion *vmd.VmdMotion,
 	records []*entity.PhysicsRecord,
-	model *pmx.PmxModel,
 ) {
 	for _, record := range records {
 		for f := record.StartFrame; f <= record.EndFrame; f++ {

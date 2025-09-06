@@ -15,6 +15,6 @@ func NewSaveUsecase(fileRepo *pRepository.FileRepository) *SaveUsecase {
 	}
 }
 
-func (uc *SaveUsecase) SaveFile(bakeSets []*entity.BakeSet, path string) error {
-	return uc.fileRepo.Save(bakeSets, path)
+func (uc *SaveUsecase) SaveFile(bakeSets []*entity.BakeSet, physicsRecords []*entity.PhysicsRecord, path string) error {
+	return uc.fileRepo.Save(bakeSets, physicsRecords, path)
 }

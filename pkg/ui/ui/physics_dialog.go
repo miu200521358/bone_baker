@@ -226,11 +226,11 @@ func (p *PhysicsTableViewDialog) handleDialogOK(record *entity.PhysicsRecord, re
 	p.store.setWidgetEnabled(false)
 
 	if recordIndex == -1 {
-		p.store.CurrentSet().PhysicsRecords =
-			append(p.store.CurrentSet().PhysicsRecords, record)
-		p.store.PhysicsTableView.SetCurrentIndex(len(p.store.CurrentSet().PhysicsRecords) - 1)
+		p.store.PhysicsRecords =
+			append(p.store.PhysicsRecords, record)
+		p.store.PhysicsTableView.SetCurrentIndex(len(p.store.PhysicsRecords) - 1)
 	} else {
-		p.store.CurrentSet().PhysicsRecords[recordIndex] = record
+		p.store.PhysicsRecords[recordIndex] = record
 		p.store.PhysicsTableView.SetCurrentIndex(recordIndex)
 	}
 
@@ -238,8 +238,7 @@ func (p *PhysicsTableViewDialog) handleDialogOK(record *entity.PhysicsRecord, re
 
 	p.store.physicsUsecase.ApplyPhysicsWorldMotion(
 		physicsWorldMotion,
-		p.store.CurrentSet().PhysicsRecords,
-		p.store.CurrentSet().OriginalModel,
+		p.store.PhysicsRecords,
 	)
 
 	p.store.mWidgets.Window().StorePhysicsWorldMotion(0, physicsWorldMotion)
@@ -249,5 +248,5 @@ func (p *PhysicsTableViewDialog) handleDialogOK(record *entity.PhysicsRecord, re
 	controller.Beep()
 
 	// 更新
-	p.store.PhysicsTableView.SetModel(NewPhysicsTableModelWithRecords(p.store.CurrentSet().PhysicsRecords))
+	p.store.PhysicsTableView.SetModel(NewPhysicsTableModelWithRecords(p.store.PhysicsRecords))
 }

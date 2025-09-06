@@ -71,7 +71,7 @@ func (s *WidgetStore) loadModel(cw *controller.ControlWindow, path string) error
 }
 
 func (s *WidgetStore) saveBakeSets(filePath string) error {
-	return s.saveUsecase.SaveFile(s.BakeSets, filePath)
+	return s.saveUsecase.SaveFile(s.BakeSets, s.PhysicsRecords, filePath)
 }
 
 func (s *WidgetStore) loadBakeSets(filePath string) {
@@ -86,7 +86,7 @@ func (s *WidgetStore) loadBakeSets(filePath string) {
 
 	s.ResetStore()
 	var err error
-	s.BakeSets, err = s.loadUsecase.LoadFile(filePath)
+	s.BakeSets, s.PhysicsRecords, err = s.loadUsecase.LoadFile(filePath)
 	if err != nil {
 		return
 	}
@@ -101,17 +101,15 @@ func (s *WidgetStore) loadBakeSets(filePath string) {
 		s.ChangeCurrentAction(index)
 		s.OriginalModelPicker.SetForcePath(s.BakeSets[index].OriginalModelPath)
 		s.OriginalMotionPicker.SetForcePath(s.BakeSets[index].OriginalMotionPath)
-
-		physicsRecords := s.BakeSets[index].PhysicsRecords
-		newPhysicsTable := NewPhysicsTableModelWithRecords(physicsRecords)
-		s.PhysicsTableView.SetModel(newPhysicsTable)
-
-		s.physicsUsecase.ApplyPhysicsWorldMotion(
-			physicsWorldMotion,
-			newPhysicsTable.Records,
-			s.BakeSets[index].OriginalModel,
-		)
 	}
+
+	newPhysicsTableModel := NewPhysicsTableModelWithRecords(s.PhysicsRecords)
+	s.PhysicsTableView.SetModel(newPhysicsTableModel)
+
+	s.physicsUsecase.ApplyPhysicsWorldMotion(
+		physicsWorldMotion,
+		newPhysicsTableModel.Records,
+	)
 
 	s.mWidgets.Window().StorePhysicsWorldMotion(0, physicsWorldMotion)
 	s.mWidgets.Window().TriggerPhysicsReset()
