@@ -19,7 +19,7 @@ func NewBakePage(mWidgets *controller.MWidgets) declarative.TabPage {
 	store.createFilePickerWidgets()
 	store.createButtonWidgets()
 
-	mWidgets.Widgets = append(mWidgets.Widgets, store.WidgetList()...)
+	mWidgets.Widgets = append(mWidgets.Widgets, store.widgetList()...)
 	mWidgets.SetOnLoaded(func() {
 		store.BakeSets = append(store.BakeSets, entity.NewBakeSet(len(store.BakeSets)))
 		store.AddAction()

@@ -64,7 +64,7 @@ func (s *WidgetStore) AddAction() {
 
 	action := s.newAction(index)
 	s.NavToolBar.Actions().Add(action)
-	s.ChangeCurrentAction(index)
+	s.changeCurrentAction(index)
 }
 
 func (s *WidgetStore) newAction(index int) *walk.Action {
@@ -74,13 +74,13 @@ func (s *WidgetStore) newAction(index int) *walk.Action {
 	action.SetText(fmt.Sprintf(" No. %d ", index+1))
 
 	action.Triggered().Attach(func() {
-		s.ChangeCurrentAction(index)
+		s.changeCurrentAction(index)
 	})
 
 	return action
 }
 
-func (s *WidgetStore) ResetStore() {
+func (s *WidgetStore) resetStore() {
 	// 一旦全部削除
 	for range s.NavToolBar.Actions().Len() {
 		index := s.NavToolBar.Actions().Len() - 1
@@ -96,7 +96,7 @@ func (s *WidgetStore) ResetStore() {
 	s.AddAction()
 }
 
-func (s *WidgetStore) ChangeCurrentAction(index int) {
+func (s *WidgetStore) changeCurrentAction(index int) {
 	// 一旦すべてのチェックを外す
 	for i := range s.NavToolBar.Actions().Len() {
 		s.NavToolBar.Actions().At(i).SetChecked(false)
@@ -107,15 +107,15 @@ func (s *WidgetStore) ChangeCurrentAction(index int) {
 	s.NavToolBar.Actions().At(index).SetChecked(true)
 
 	// 物理焼き込み設定の情報を表示
-	s.OriginalModelPicker.ChangePath(s.CurrentSet().OriginalModelPath)
-	s.OriginalMotionPicker.ChangePath(s.CurrentSet().OriginalMotionPath)
-	s.OutputModelPicker.ChangePath(s.CurrentSet().OutputModelPath)
-	s.OutputMotionPicker.ChangePath(s.CurrentSet().OutputMotionPath)
+	s.OriginalModelPicker.ChangePath(s.currentSet().OriginalModelPath)
+	s.OriginalMotionPicker.ChangePath(s.currentSet().OriginalMotionPath)
+	s.OutputModelPicker.ChangePath(s.currentSet().OutputModelPath)
+	s.OutputMotionPicker.ChangePath(s.currentSet().OutputMotionPath)
 
 	// TODO 他のも復元
 }
 
-func (s *WidgetStore) MaxFrame() float32 {
+func (s *WidgetStore) maxFrame() float32 {
 	maxFrame := float32(0)
 	for _, physicsSet := range s.BakeSets {
 		if physicsSet.OriginalMotion != nil && maxFrame < physicsSet.OriginalMotion.MaxFrame() {
@@ -126,7 +126,7 @@ func (s *WidgetStore) MaxFrame() float32 {
 	return maxFrame + 1
 }
 
-func (s *WidgetStore) CurrentSet() *entity.BakeSet {
+func (s *WidgetStore) currentSet() *entity.BakeSet {
 	if s.CurrentIndex < 0 || s.CurrentIndex >= len(s.BakeSets) {
 		return nil
 	}
@@ -134,7 +134,7 @@ func (s *WidgetStore) CurrentSet() *entity.BakeSet {
 	return s.BakeSets[s.CurrentIndex]
 }
 
-func (s *WidgetStore) WidgetList() []controller.IMWidget {
+func (s *WidgetStore) widgetList() []controller.IMWidget {
 	return []controller.IMWidget{
 		s.AddSetButton,
 		s.ResetSetButton,

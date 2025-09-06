@@ -32,12 +32,12 @@ func createPhysicsTableViewDialog(store *WidgetStore, isAdd bool) func() {
 		recordIndex := -1
 		switch isAdd {
 		case true:
-			if store.CurrentSet().OriginalMotion == nil {
+			if store.currentSet().OriginalMotion == nil {
 				record = entity.NewPhysicsRecord(0, 0)
 			} else {
 				record = entity.NewPhysicsRecord(
-					store.CurrentSet().OriginalMotion.MinFrame(),
-					store.CurrentSet().OriginalMotion.MaxFrame())
+					store.currentSet().OriginalMotion.MinFrame(),
+					store.currentSet().OriginalMotion.MaxFrame())
 			}
 		case false:
 			record = store.PhysicsRecords[store.PhysicsTableView.CurrentIndex()]

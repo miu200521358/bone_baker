@@ -142,7 +142,7 @@ func (s *WidgetStore) createOutputModelFilePicker() *widget.FilePicker {
 		mi18n.T("変更後モデル説明"),
 		func(cw *controller.ControlWindow, rep repository.IRepository, path string) {
 			// 実際に保存するのは、物理有効な元モデル
-			model := s.CurrentSet().OriginalModel
+			model := s.currentSet().OriginalModel
 			if model == nil {
 				return
 			}
@@ -252,11 +252,11 @@ func (s *WidgetStore) createSaveSetButton() *widget.MPushButton {
 	btn.SetTooltip(mi18n.T("設定設定保存説明"))
 	btn.SetMaxSize(declarative.Size{Width: 100, Height: 20})
 	btn.SetOnClicked(func(cw *controller.ControlWindow) {
-		initialDirPath := filepath.Dir(s.CurrentSet().OriginalMotionPath)
+		initialDirPath := filepath.Dir(s.currentSet().OriginalMotionPath)
 		filePath := ""
-		if s.CurrentSet().OriginalModel != nil {
+		if s.currentSet().OriginalModel != nil {
 			// モーション側にモデルファイル名でJSONデフォルト名を入れる
-			_, name, _ := mfile.SplitPath(s.CurrentSet().OriginalModel.Path())
+			_, name, _ := mfile.SplitPath(s.currentSet().OriginalModel.Path())
 			filePath = fmt.Sprintf("BoneBaker_%s.json", name)
 		}
 

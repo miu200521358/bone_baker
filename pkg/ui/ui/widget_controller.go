@@ -8,12 +8,12 @@ import (
 func (s *WidgetStore) loadMotion(cw *controller.ControlWindow, path string) error {
 	s.setWidgetEnabled(false)
 
-	if err := s.loadUsecase.LoadMotion(s.CurrentSet(), path); err != nil {
+	if err := s.loadUsecase.LoadMotion(s.currentSet(), path); err != nil {
 		return err
 	}
 
 	// UI反映処理
-	currentSet := s.CurrentSet()
+	currentSet := s.currentSet()
 	if currentSet.OriginalMotion != nil {
 		cw.StoreMotion(0, s.CurrentIndex, currentSet.OriginalMotion)
 	}
@@ -33,9 +33,9 @@ func (s *WidgetStore) loadMotion(cw *controller.ControlWindow, path string) erro
 	// s.BakedHistoryIndexEdit.SetRange(1.0, 2.0)
 
 	// モーションプレイヤーのリセット
-	s.Player.Reset(s.MaxFrame())
+	s.Player.Reset(s.maxFrame())
 
-	s.OutputMotionPicker.SetPath(s.CurrentSet().OutputMotionPath)
+	s.OutputMotionPicker.SetPath(s.currentSet().OutputMotionPath)
 	s.setWidgetEnabled(true)
 
 	return nil
@@ -44,12 +44,12 @@ func (s *WidgetStore) loadMotion(cw *controller.ControlWindow, path string) erro
 func (s *WidgetStore) loadModel(cw *controller.ControlWindow, path string) error {
 	s.setWidgetEnabled(false)
 
-	if err := s.loadUsecase.LoadModel(s.CurrentSet(), path); err != nil {
+	if err := s.loadUsecase.LoadModel(s.currentSet(), path); err != nil {
 		return err
 	}
 
 	// UI反映処理
-	currentSet := s.CurrentSet()
+	currentSet := s.currentSet()
 	cw.StoreModel(0, s.CurrentIndex, currentSet.OriginalModel)
 	cw.StoreModel(1, s.CurrentIndex, currentSet.BakedModel)
 
@@ -64,7 +64,7 @@ func (s *WidgetStore) loadModel(cw *controller.ControlWindow, path string) error
 	// s.BakedHistoryIndexEdit.SetValue(1.0)
 	// s.BakedHistoryIndexEdit.SetRange(1.0, 2.0)
 
-	s.OutputModelPicker.ChangePath(s.CurrentSet().OutputModelPath)
+	s.OutputModelPicker.ChangePath(s.currentSet().OutputModelPath)
 	s.setWidgetEnabled(true)
 
 	return nil
@@ -84,7 +84,7 @@ func (s *WidgetStore) loadBakeSets(filePath string) {
 		}
 	}
 
-	s.ResetStore()
+	s.resetStore()
 	var err error
 	s.BakeSets, s.PhysicsRecords, err = s.loadUsecase.LoadFile(filePath)
 	if err != nil {
@@ -98,7 +98,7 @@ func (s *WidgetStore) loadBakeSets(filePath string) {
 	physicsWorldMotion := s.mWidgets.Window().LoadPhysicsWorldMotion(0)
 
 	for index := range s.BakeSets {
-		s.ChangeCurrentAction(index)
+		s.changeCurrentAction(index)
 		s.OriginalModelPicker.SetForcePath(s.BakeSets[index].OriginalModelPath)
 		s.OriginalMotionPicker.SetForcePath(s.BakeSets[index].OriginalMotionPath)
 	}
