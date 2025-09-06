@@ -15,15 +15,15 @@ type PhysicsTableViewDialog struct {
 	doDelete bool
 }
 
-// NewPhysicsTableViewDialog コンストラクタ
-func NewPhysicsTableViewDialog(store *WidgetStore) *PhysicsTableViewDialog {
+// newPhysicsTableViewDialog コンストラクタ
+func newPhysicsTableViewDialog(store *WidgetStore) *PhysicsTableViewDialog {
 	return &PhysicsTableViewDialog{
 		store: store,
 	}
 }
 
-// Show 物理設定ダイアログを表示
-func (p *PhysicsTableViewDialog) Show(record *entity.PhysicsRecord, recordIndex int) {
+// show 物理設定ダイアログを表示
+func (p *PhysicsTableViewDialog) show(record *entity.PhysicsRecord, recordIndex int) {
 	// アイテムがクリックされたら、入力ダイアログを表示する
 	var dlg *walk.Dialog
 	var okBtn *walk.PushButton

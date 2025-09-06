@@ -43,8 +43,8 @@ func createPhysicsTableViewDialog(store *WidgetStore, isAdd bool) func() {
 			record = store.PhysicsRecords[store.PhysicsTableView.CurrentIndex()]
 			recordIndex = store.PhysicsTableView.CurrentIndex()
 		}
-		dialog := NewPhysicsTableViewDialog(store)
-		dialog.Show(record, recordIndex)
+		dialog := newPhysicsTableViewDialog(store)
+		dialog.show(record, recordIndex)
 	}
 }
 

@@ -110,7 +110,7 @@ func NewBakePage(mWidgets *controller.MWidgets) declarative.TabPage {
 							store.AddRigidBodyButton.Widgets(),
 						},
 					},
-					createRigidBodyTableView(store),
+					createGraphicalRigidBodyTable(store),
 					declarative.VSeparator{},
 					store.OutputModelPicker.Widgets(),
 					store.SaveModelButton.Widgets(),
