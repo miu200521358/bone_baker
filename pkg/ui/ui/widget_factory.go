@@ -55,6 +55,7 @@ func (s *WidgetStore) setWidgetEnabled(enabled bool) {
 	s.OutputModelPicker.SetEnabled(enabled)
 
 	s.AddPhysicsButton.SetEnabled(enabled)
+	s.AddRigidBodyButton.SetEnabled(enabled)
 
 	// s.BakedHistoryIndexEdit.SetEnabled(enabled)
 	// s.BakeHistoryClearButton.SetEnabled(enabled)
@@ -123,6 +124,7 @@ func (s *WidgetStore) createButtonWidgets() {
 	s.SaveModelButton = s.createSaveModelButton()
 	s.SaveMotionButton = s.createSaveMotionButton()
 	s.AddPhysicsButton = s.createAddPhysicsButton()
+	s.AddRigidBodyButton = s.createAddRigidBodyButton()
 	s.AddOutputButton = s.createAddOutputButton()
 	s.BakeHistoryClearButton = s.createBakeHistoryClearButton()
 }
@@ -351,6 +353,17 @@ func (s *WidgetStore) createAddPhysicsButton() *widget.MPushButton {
 	btn.SetMaxSize(declarative.Size{Width: 100, Height: 20})
 	btn.SetOnClicked(func(cw *controller.ControlWindow) {
 		createPhysicsTableViewDialog(s, true)() // ダイアログを表示
+	})
+	return btn
+}
+
+func (s *WidgetStore) createAddRigidBodyButton() *widget.MPushButton {
+	btn := widget.NewMPushButton()
+	btn.SetLabel(mi18n.T("剛体設定追加"))
+	btn.SetTooltip(mi18n.T("剛体設定追加説明"))
+	btn.SetMaxSize(declarative.Size{Width: 100, Height: 20})
+	btn.SetOnClicked(func(cw *controller.ControlWindow) {
+		createRigidBodyTableViewDialog(s, true)() // ダイアログを表示
 	})
 	return btn
 }

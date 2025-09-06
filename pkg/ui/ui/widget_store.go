@@ -12,30 +12,30 @@ import (
 )
 
 type WidgetStore struct {
-	mWidgets                  *controller.MWidgets    // ウィジェット管理
-	NavToolBar                *walk.ToolBar           // 設定ツールバー
-	CurrentIndex              int                     // 現在のインデックス
-	AddSetButton              *widget.MPushButton     // 設定追加ボタン
-	ResetSetButton            *widget.MPushButton     // 設定リセットボタン
-	SaveSetButton             *widget.MPushButton     // 設定保存ボタン
-	LoadSetButton             *widget.MPushButton     // 設定読込ボタン
-	OriginalModelPicker       *widget.FilePicker      // 物理焼き込み先モデル
-	OriginalMotionPicker      *widget.FilePicker      // 物理焼き込み対象モーション
-	OutputMotionPicker        *widget.FilePicker      // 出力モーション
-	OutputModelPicker         *widget.FilePicker      // 出力モデル
-	BakedHistoryIndexEdit     *walk.NumberEdit        // 出力モーションインデックスプルダウン
-	BakeHistoryClearButton    *widget.MPushButton     // 焼き込み履歴クリアボタン
-	SaveModelButton           *widget.MPushButton     // モデル保存ボタン
-	SaveMotionButton          *widget.MPushButton     // モーション保存ボタン
-	Player                    *widget.MotionPlayer    // モーションプレイヤー
-	AddPhysicsButton          *widget.MPushButton     // 物理設定追加ボタン
-	PhysicsTableView          *walk.TableView         // 物理設定テーブル
-	AddRigidBodyPhysicsButton *widget.MPushButton     // 剛体物理追加ボタン
-	RigidBodyTableView        *walk.TableView         // 剛体物理テーブル
-	AddOutputButton           *widget.MPushButton     // 出力設定追加ボタン
-	OutputTableView           *walk.TableView         // 出力定義テーブル
-	BakeSets                  []*entity.BakeSet       `json:"bake_sets"`       // ボーン焼き込みセット
-	PhysicsRecords            []*entity.PhysicsRecord `json:"physics_records"` // 物理設定レコード
+	mWidgets               *controller.MWidgets    // ウィジェット管理
+	NavToolBar             *walk.ToolBar           // 設定ツールバー
+	CurrentIndex           int                     // 現在のインデックス
+	AddSetButton           *widget.MPushButton     // 設定追加ボタン
+	ResetSetButton         *widget.MPushButton     // 設定リセットボタン
+	SaveSetButton          *widget.MPushButton     // 設定保存ボタン
+	LoadSetButton          *widget.MPushButton     // 設定読込ボタン
+	OriginalModelPicker    *widget.FilePicker      // 物理焼き込み先モデル
+	OriginalMotionPicker   *widget.FilePicker      // 物理焼き込み対象モーション
+	OutputMotionPicker     *widget.FilePicker      // 出力モーション
+	OutputModelPicker      *widget.FilePicker      // 出力モデル
+	BakedHistoryIndexEdit  *walk.NumberEdit        // 出力モーションインデックスプルダウン
+	BakeHistoryClearButton *widget.MPushButton     // 焼き込み履歴クリアボタン
+	SaveModelButton        *widget.MPushButton     // モデル保存ボタン
+	SaveMotionButton       *widget.MPushButton     // モーション保存ボタン
+	Player                 *widget.MotionPlayer    // モーションプレイヤー
+	AddPhysicsButton       *widget.MPushButton     // 物理設定追加ボタン
+	PhysicsTableView       *walk.TableView         // 物理設定テーブル
+	AddRigidBodyButton     *widget.MPushButton     // 剛体物理追加ボタン
+	RigidBodyTableView     *walk.TableView         // 剛体物理テーブル
+	AddOutputButton        *widget.MPushButton     // 出力設定追加ボタン
+	OutputTableView        *walk.TableView         // 出力定義テーブル
+	BakeSets               []*entity.BakeSet       `json:"bake_sets"`       // ボーン焼き込みセット
+	PhysicsRecords         []*entity.PhysicsRecord `json:"physics_records"` // 物理設定レコード
 
 	loadUsecase    *usecase.LoadUsecase
 	saveUsecase    *usecase.SaveUsecase

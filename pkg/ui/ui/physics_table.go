@@ -7,13 +7,13 @@ import (
 	"github.com/miu200521358/walk/pkg/walk"
 )
 
-// CreateTableViews テーブルビューを作成
-func CreatePhysicsTableView(store *WidgetStore) declarative.TableView {
+// createPhysicsTableView テーブルビューを作成
+func createPhysicsTableView(store *WidgetStore) declarative.TableView {
 	return declarative.TableView{
 		AssignTo:         &store.PhysicsTableView,
-		Model:            NewPhysicsTableModel(),
+		Model:            newPhysicsTableModel(),
 		AlternatingRowBG: true,
-		MinSize:          declarative.Size{Width: 230, Height: 150},
+		MinSize:          declarative.Size{Width: 230, Height: 80},
 		Columns: []declarative.TableViewColumn{
 			{Title: "#", Width: 30},
 			{Title: mi18n.T("開始F"), Width: 60},
@@ -55,13 +55,13 @@ type PhysicsTableModel struct {
 	TreeView *walk.TreeView          // 物理ボーンツリー
 }
 
-func NewPhysicsTableModel() *PhysicsTableModel {
+func newPhysicsTableModel() *PhysicsTableModel {
 	m := new(PhysicsTableModel)
 	m.Records = make([]*entity.PhysicsRecord, 0)
 	return m
 }
 
-func NewPhysicsTableModelWithRecords(records []*entity.PhysicsRecord) *PhysicsTableModel {
+func newPhysicsTableModelWithRecords(records []*entity.PhysicsRecord) *PhysicsTableModel {
 	m := new(PhysicsTableModel)
 	m.Records = records
 	return m

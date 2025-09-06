@@ -1,6 +1,8 @@
 package entity
 
 import (
+	"strings"
+
 	"github.com/miu200521358/mlib_go/pkg/domain/mmath"
 	"github.com/miu200521358/mlib_go/pkg/domain/pmx"
 )
@@ -17,6 +19,14 @@ type RigidBodyRecord struct {
 	Items          []*RigidBodyItem `json:"items"`           // 剛体アイテム一覧
 }
 
+func (r *RigidBodyRecord) ItemNames() string {
+	var names []string
+	for _, item := range r.Items {
+		names = append(names, item.RigidBody.Name())
+	}
+	return strings.Join(names, ", ")
+}
+
 type RigidBodyItem struct {
 	Bone           *pmx.Bone      // 剛体に紐付くボーン情報
 	RigidBody      *pmx.RigidBody // 剛体情報
@@ -27,4 +37,11 @@ type RigidBodyItem struct {
 	Modified       bool           `json:"modified"`         // 変更されたかどうか
 	RigidBodyIndex int            `json:"rigid_body_index"` // 剛体インデックス
 	RigidBodyName  string         `json:"rigid_body_name"`  // 剛体名
+}
+
+func NewRigidBodyRecord(startFrame, endFrame float32) *RigidBodyRecord {
+	return &RigidBodyRecord{
+		StartFrame: startFrame,
+		EndFrame:   endFrame,
+	}
 }

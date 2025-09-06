@@ -103,7 +103,7 @@ func (s *WidgetStore) loadBakeSets(filePath string) {
 		s.OriginalMotionPicker.SetForcePath(s.BakeSets[index].OriginalMotionPath)
 	}
 
-	newPhysicsTableModel := NewPhysicsTableModelWithRecords(s.PhysicsRecords)
+	newPhysicsTableModel := newPhysicsTableModelWithRecords(s.PhysicsRecords)
 	s.PhysicsTableView.SetModel(newPhysicsTableModel)
 
 	s.physicsUsecase.ApplyPhysicsWorldMotion(
