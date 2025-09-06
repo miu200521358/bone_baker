@@ -75,10 +75,10 @@ func (p *PhysicsTableViewDialog) createFormWidgets(startFrameEdit, endFrameEdit,
 
 	return []declarative.Widget{
 		declarative.Label{
-			Text:        mi18n.T("設定開始フレーム"),
-			ToolTipText: mi18n.T("設定開始フレーム説明"),
+			Text:        mi18n.T("開始フレーム"),
+			ToolTipText: mi18n.T("開始フレーム説明"),
 			OnMouseDown: func(x, y int, button walk.MouseButton) {
-				mlog.IL("%s", mi18n.T("設定開始フレーム説明"))
+				mlog.IL("%s", mi18n.T("開始フレーム説明"))
 			},
 			MinSize: declarative.Size{Width: 100, Height: 20},
 			MaxSize: declarative.Size{Width: 100, Height: 20},
@@ -86,7 +86,7 @@ func (p *PhysicsTableViewDialog) createFormWidgets(startFrameEdit, endFrameEdit,
 		declarative.NumberEdit{
 			Value:              declarative.Bind("StartFrame"),
 			AssignTo:           startFrameEdit,
-			ToolTipText:        mi18n.T("設定開始フレーム説明"),
+			ToolTipText:        mi18n.T("開始フレーム説明"),
 			SpinButtonsVisible: true,
 			Decimals:           0,
 			Increment:          1,
@@ -96,10 +96,10 @@ func (p *PhysicsTableViewDialog) createFormWidgets(startFrameEdit, endFrameEdit,
 			MaxSize:            declarative.Size{Width: 100, Height: 20},
 		},
 		declarative.Label{
-			Text:        mi18n.T("設定終了フレーム"),
-			ToolTipText: mi18n.T("設定終了フレーム説明"),
+			Text:        mi18n.T("終了フレーム"),
+			ToolTipText: mi18n.T("終了フレーム説明"),
 			OnMouseDown: func(x, y int, button walk.MouseButton) {
-				mlog.IL("%s", mi18n.T("設定終了フレーム説明"))
+				mlog.IL("%s", mi18n.T("終了フレーム説明"))
 			},
 			MinSize: declarative.Size{Width: 100, Height: 20},
 			MaxSize: declarative.Size{Width: 100, Height: 20},
@@ -107,7 +107,7 @@ func (p *PhysicsTableViewDialog) createFormWidgets(startFrameEdit, endFrameEdit,
 		declarative.NumberEdit{
 			Value:              declarative.Bind("EndFrame"),
 			AssignTo:           endFrameEdit,
-			ToolTipText:        mi18n.T("設定終了フレーム説明"),
+			ToolTipText:        mi18n.T("終了フレーム説明"),
 			SpinButtonsVisible: true,
 			Decimals:           0,
 			Increment:          1,

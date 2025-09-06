@@ -3,6 +3,7 @@ package entity
 import (
 	"strings"
 
+	"github.com/miu200521358/mlib_go/pkg/config/mi18n"
 	"github.com/miu200521358/mlib_go/pkg/domain/mmath"
 	"github.com/miu200521358/mlib_go/pkg/domain/pmx"
 )
@@ -28,8 +29,13 @@ func NewRigidBodyRecord(startFrame, endFrame float32, model *pmx.PmxModel) *Rigi
 func (r *RigidBodyRecord) ItemNames() string {
 	var names []string
 	for _, item := range r.Tree.Items {
-		names = append(names, item.RigidBody.Name())
+		names = append(names, item.ItemNames(names)...)
 	}
+
+	if len(names) == 0 {
+		return mi18n.T("変更剛体なし")
+	}
+
 	return strings.Join(names, ", ")
 }
 
@@ -137,6 +143,18 @@ func newRigidBodyItem(bone *pmx.Bone, rigidBody *pmx.RigidBody, parent *RigidBod
 	}
 
 	return item
+}
+
+func (pi *RigidBodyItem) ItemNames(names []string) []string {
+	if pi.RigidBody != nil && pi.Modified {
+		names = append(names, pi.RigidBody.Name())
+	}
+
+	for _, child := range pi.Children {
+		names = child.ItemNames(names)
+	}
+
+	return names
 }
 
 func (pi *RigidBodyItem) AtByBoneIndex(boneIndex int) *RigidBodyItem {

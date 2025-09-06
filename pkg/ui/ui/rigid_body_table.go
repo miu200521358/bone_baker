@@ -5,18 +5,21 @@ import (
 	"math"
 
 	"github.com/miu200521358/bone_baker/pkg/domain/entity"
+	"github.com/miu200521358/mlib_go/pkg/config/mi18n"
 	"github.com/miu200521358/walk/pkg/declarative"
 	"github.com/miu200521358/walk/pkg/walk"
 )
 
 // 固定レイアウト定数
 const (
-	headerHeight       = 20  // ヘッダー行の高さ
-	rowHeight          = 50  // 各台形行の高さ
-	trapezoidHeight    = 40  // 台形自体の高さ
-	trapezoidMarginTop = 10  // 台形上マージン
-	framesPer150px     = 100 // 150pxあたりのフレーム数（100F = 150px）
-	pixelsPerFrame     = 1.5 // 1フレームあたりのピクセル数
+	headerHeight       = 20   // ヘッダー行の高さ
+	rowHeight          = 50   // 各台形行の高さ
+	trapezoidHeight    = 40   // 台形自体の高さ
+	trapezoidMarginTop = 10   // 台形上マージン
+	framesPer150px     = 100  // 150pxあたりのフレーム数（100F = 150px）
+	pixelsPerFrame     = 1.5  // 1フレームあたりのピクセル数
+	defaultMaxFrame    = 8000 // デフォルトの最大フレーム数
+	cornerThreshold    = 10.0 // 四隅判定の閾値（ピクセル）
 )
 
 var trapezoidFillColor = walk.ColorSteelBlue       // 通常の台形色
@@ -44,13 +47,175 @@ func createRigidBodyTable(store *WidgetStore) declarative.Widget {
 		Children: []declarative.Widget{
 			declarative.CustomWidget{
 				AssignTo: &store.RigidBodyTableWidget,
-				MinSize:  declarative.Size{Width: 7000, Height: 250},
+				MinSize:  declarative.Size{Width: defaultMaxFrame * pixelsPerFrame, Height: 250},
 				Paint: func(canvas *walk.Canvas, updateBounds walk.Rectangle) error {
 					return drawGraphicalRigidBodyTable(canvas, updateBounds, store)
+				},
+				OnMouseDown: func(x, y int, button walk.MouseButton) {
+					handleRigidBodyTableMouseDown(x, y, button, store)
+				},
+				OnMouseMove: func(x, y int, button walk.MouseButton) {
+					handleRigidBodyTableMouseMove(x, y, button, store)
 				},
 			},
 		},
 	}
+}
+
+// handleRigidBodyTableMouseDown マウスクリックイベントハンドラ
+func handleRigidBodyTableMouseDown(x, y int, button walk.MouseButton, store *WidgetStore) {
+	if button != walk.LeftButton {
+		return
+	}
+
+	// 現在のセットから剛体レコードを取得
+	currentSet := store.currentSet()
+	if currentSet == nil || len(currentSet.RigidBodyRecords) == 0 {
+		return
+	}
+
+	records := currentSet.RigidBodyRecords
+	maxFrame := store.maxFrame()
+	if maxFrame <= 0 {
+		maxFrame = defaultMaxFrame
+	}
+
+	// クリック位置の台形を判定
+	clickedIndex := getTrapezoidAtPosition(x, y, records, maxFrame)
+	if clickedIndex >= 0 && clickedIndex < len(records) {
+		// クリックされたレコードを取得
+		record := records[clickedIndex]
+		// ダイアログ表示（編集モード）
+		dialog := NewRigidBodyTableViewDialog(store)
+		dialog.Show(record, clickedIndex)
+	}
+}
+
+// handleRigidBodyTableMouseMove マウス移動イベントハンドラ
+func handleRigidBodyTableMouseMove(x, y int, button walk.MouseButton, store *WidgetStore) {
+	// 現在のセットから剛体レコードを取得
+	currentSet := store.currentSet()
+	if currentSet == nil || len(currentSet.RigidBodyRecords) == 0 {
+		// データがない場合はツールチップをクリア
+		if store.RigidBodyTableWidget != nil {
+			store.RigidBodyTableWidget.SetToolTipText("")
+		}
+		return
+	}
+
+	records := currentSet.RigidBodyRecords
+	maxFrame := store.maxFrame()
+	if maxFrame <= 0 {
+		maxFrame = defaultMaxFrame
+	}
+
+	// ホバー位置の台形を判定
+	trapezoidIndex := getTrapezoidAtPosition(x, y, records, maxFrame)
+	if trapezoidIndex < 0 {
+		// 台形外の場合はツールチップをクリア
+		if store.RigidBodyTableWidget != nil {
+			store.RigidBodyTableWidget.SetToolTipText("")
+		}
+		return
+	}
+
+	record := records[trapezoidIndex]
+
+	// 台形の座標を計算
+	rowStartY := headerHeight + trapezoidIndex*rowHeight
+	y1 := float32(rowStartY + trapezoidMarginTop)                   // 上辺
+	y2 := float32(rowStartY + trapezoidMarginTop + trapezoidHeight) // 下辺
+	x1 := record.StartFrame * pixelsPerFrame                        // 下部始点
+	x2 := record.MaxStartFrame * pixelsPerFrame                     // 上部始点
+	x3 := record.MaxEndFrame * pixelsPerFrame                       // 上部終点
+	x4 := record.EndFrame * pixelsPerFrame                          // 下部終点
+
+	// 四隅判定とツールチップ設定
+	tooltipText := getTrapezoidTooltipText(float32(x), float32(y), record, x1, x2, x3, x4, y1, y2)
+
+	if store.RigidBodyTableWidget != nil {
+		store.RigidBodyTableWidget.SetToolTipText(tooltipText)
+	}
+}
+
+// getTrapezoidAtPosition 指定座標にある台形のインデックス取得
+func getTrapezoidAtPosition(x, y int, records []*entity.RigidBodyRecord, maxFrame float32) int {
+	if len(records) == 0 {
+		return -1
+	}
+
+	for i, record := range records {
+		// 固定サイズレイアウトでの座標計算
+		rowStartY := headerHeight + i*rowHeight
+		y1 := float32(rowStartY + trapezoidMarginTop)                   // 上辺
+		y2 := float32(rowStartY + trapezoidMarginTop + trapezoidHeight) // 下辺
+
+		// Y座標チェック
+		if float32(y) < y1 || float32(y) > y2 {
+			continue
+		}
+
+		// X座標チェック（台形内部判定）
+		x1 := record.StartFrame * pixelsPerFrame    // 下部始点
+		x2 := record.MaxStartFrame * pixelsPerFrame // 上部始点
+		x3 := record.MaxEndFrame * pixelsPerFrame   // 上部終点
+		x4 := record.EndFrame * pixelsPerFrame      // 下部終点
+
+		if isInsideTrapezoidPosition(float32(x), float32(y), x1, x2, x3, x4, y1, y2) {
+			return i
+		}
+	}
+
+	return -1
+}
+
+// isInsideTrapezoidPosition 台形内部判定
+func isInsideTrapezoidPosition(x, y, x1, x2, x3, x4, y1, y2 float32) bool {
+	// 簡単な矩形範囲チェック（厳密な台形判定は複雑なため）
+	minX := float32(math.Min(math.Min(float64(x1), float64(x2)), math.Min(float64(x3), float64(x4))))
+	maxX := float32(math.Max(math.Max(float64(x1), float64(x2)), math.Max(float64(x3), float64(x4))))
+
+	return x >= minX && x <= maxX && y >= y1 && y <= y2
+}
+
+// getTrapezoidTooltipText 台形のツールチップテキストを取得
+func getTrapezoidTooltipText(x, y float32, record *entity.RigidBodyRecord, x1, x2, x3, x4, y1, y2 float32) string {
+	// 四隅判定
+	// x1, y2: 下部開始点 (StartFrame)
+	// x2, y1: 上部開始点 (MaxStartFrame)
+	// x3, y1: 上部終了点 (MaxEndFrame)
+	// x4, y2: 下部終了点 (EndFrame)
+
+	// 下部開始点 (StartFrame)
+	if isNearCorner(x, y, x1, y2, cornerThreshold) {
+		return fmt.Sprintf("%s: %.0fF", mi18n.T("開始フレーム"), record.StartFrame)
+	}
+
+	// 上部開始点 (MaxStartFrame)
+	if isNearCorner(x, y, x2, y1, cornerThreshold) {
+		return fmt.Sprintf("%s: %.0fF", mi18n.T("最大開始フレーム"), record.MaxStartFrame)
+	}
+
+	// 上部終了点 (MaxEndFrame)
+	if isNearCorner(x, y, x3, y1, cornerThreshold) {
+		return fmt.Sprintf("%s: %.0fF", mi18n.T("最大終了フレーム"), record.MaxEndFrame)
+	}
+
+	// 下部終了点 (EndFrame)
+	if isNearCorner(x, y, x4, y2, cornerThreshold) {
+		return fmt.Sprintf("%s: %.0fF", mi18n.T("終了フレーム"), record.EndFrame)
+	}
+
+	// 四隅以外の台形内部の場合はItemNames()を実行
+	return record.ItemNames()
+}
+
+// isNearCorner 指定座標が角の近くにあるかを判定
+func isNearCorner(x, y, cornerX, cornerY, threshold float32) bool {
+	dx := x - cornerX
+	dy := y - cornerY
+	distance := float32(math.Sqrt(float64(dx*dx + dy*dy)))
+	return distance <= threshold
 }
 
 func createRigidBodyTableViewDialog(store *WidgetStore, isAdd bool) func() {
@@ -93,7 +258,7 @@ func drawGraphicalRigidBodyTable(canvas *walk.Canvas, bounds walk.Rectangle, sto
 		font, _ := walk.NewFont("MS UI Gothic", 10, 0)
 		if font != nil {
 			defer font.Dispose()
-			canvas.DrawText("剛体設定レコードがありません", font, fontColor,
+			canvas.DrawText(mi18n.T("剛体設定レコードがありません"), font, fontColor,
 				walk.Rectangle{X: 10, Y: 10, Width: bounds.Width - 20, Height: 30}, walk.TextLeft)
 		}
 		return nil
@@ -102,7 +267,7 @@ func drawGraphicalRigidBodyTable(canvas *walk.Canvas, bounds walk.Rectangle, sto
 	records := currentSet.RigidBodyRecords
 	maxFrame := store.maxFrame()
 	if maxFrame <= 0 {
-		maxFrame = 1000 // デフォルト値
+		maxFrame = defaultMaxFrame
 	}
 
 	// グリッド描画
@@ -289,8 +454,6 @@ func (g *RigidBodyTable) onMouseMove(x, y int, button walk.MouseButton) {
 		// ツールチップ設定
 		if g.hoveredIndex >= 0 && g.hoveredIndex < len(g.records) {
 			g.SetToolTipText(g.records[g.hoveredIndex].ItemNames())
-		} else {
-			g.SetToolTipText("")
 		}
 	}
 }

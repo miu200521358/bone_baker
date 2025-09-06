@@ -80,12 +80,12 @@ func (p *PhysicsTableViewDialog) Show(record *domain.PhysicsBoneRecord, recordIn
 func (p *PhysicsTableViewDialog) createFormWidgets(gravityEdit, sizeXEdit, sizeYEdit, sizeZEdit, massEdit, stiffnessEdit, tensionEdit, maxSubStepsEdit, fixedTimeStepEdit **walk.NumberEdit, treeView **walk.TreeView, record *domain.PhysicsBoneRecord) []declarative.Widget {
 	widgets := []declarative.Widget{
 		declarative.Label{
-			Text:        mi18n.T("設定開始フレーム"),
-			ToolTipText: mi18n.T("設定開始フレーム説明"),
+			Text:        mi18n.T("開始フレーム"),
+			ToolTipText: mi18n.T("開始フレーム説明"),
 		},
 		declarative.NumberEdit{
 			Value:              declarative.Bind("StartFrame"),
-			ToolTipText:        mi18n.T("設定開始フレーム説明"),
+			ToolTipText:        mi18n.T("開始フレーム説明"),
 			SpinButtonsVisible: true,
 			Decimals:           0,
 			Increment:          1,
@@ -93,12 +93,12 @@ func (p *PhysicsTableViewDialog) createFormWidgets(gravityEdit, sizeXEdit, sizeY
 			MaxValue:           float64(p.bakeState.CurrentSet().MaxFrame() + 1),
 		},
 		declarative.Label{
-			Text:        mi18n.T("設定終了フレーム"),
-			ToolTipText: mi18n.T("設定終了フレーム説明"),
+			Text:        mi18n.T("終了フレーム"),
+			ToolTipText: mi18n.T("終了フレーム説明"),
 		},
 		declarative.NumberEdit{
 			Value:              declarative.Bind("EndFrame"),
-			ToolTipText:        mi18n.T("設定終了フレーム説明"),
+			ToolTipText:        mi18n.T("終了フレーム説明"),
 			SpinButtonsVisible: true,
 			Decimals:           0,
 			Increment:          1,
@@ -178,12 +178,12 @@ func (p *PhysicsTableViewDialog) createFormWidgets(gravityEdit, sizeXEdit, sizeY
 			ColumnSpan: 6,
 		},
 		declarative.Label{
-			Text:        mi18n.T("設定最大開始フレーム"),
-			ToolTipText: mi18n.T("設定最大開始フレーム説明"),
+			Text:        mi18n.T("最大開始フレーム"),
+			ToolTipText: mi18n.T("最大開始フレーム説明"),
 		},
 		declarative.NumberEdit{
 			Value:              declarative.Bind("MaxStartFrame"),
-			ToolTipText:        mi18n.T("設定最大開始フレーム説明"),
+			ToolTipText:        mi18n.T("最大開始フレーム説明"),
 			SpinButtonsVisible: true,
 			Decimals:           0,
 			Increment:          1,
@@ -191,12 +191,12 @@ func (p *PhysicsTableViewDialog) createFormWidgets(gravityEdit, sizeXEdit, sizeY
 			MaxValue:           float64(p.bakeState.CurrentSet().MaxFrame() + 1),
 		},
 		declarative.Label{
-			Text:        mi18n.T("設定最大終了フレーム"),
-			ToolTipText: mi18n.T("設定最大終了フレーム説明"),
+			Text:        mi18n.T("最大終了フレーム"),
+			ToolTipText: mi18n.T("最大終了フレーム説明"),
 		},
 		declarative.NumberEdit{
 			Value:              declarative.Bind("MaxEndFrame"),
-			ToolTipText:        mi18n.T("設定最大終了フレーム説明"),
+			ToolTipText:        mi18n.T("最大終了フレーム説明"),
 			SpinButtonsVisible: true,
 			Decimals:           0,
 			Increment:          1,
