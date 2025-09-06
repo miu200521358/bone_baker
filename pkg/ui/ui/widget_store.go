@@ -5,6 +5,7 @@ import (
 
 	"github.com/miu200521358/bone_baker/pkg/application/usecase"
 	"github.com/miu200521358/bone_baker/pkg/domain/entity"
+	pRepository "github.com/miu200521358/bone_baker/pkg/infrastructure/repository"
 	"github.com/miu200521358/mlib_go/pkg/interface/controller"
 	"github.com/miu200521358/mlib_go/pkg/interface/controller/widget"
 	"github.com/miu200521358/walk/pkg/walk"
@@ -35,15 +36,21 @@ type WidgetStore struct {
 	OutputTableView           *walk.TableView      // 出力定義テーブル
 	BakeSets                  []*entity.BakeSet    `json:"bake_sets"` // ボーン焼き込みセット
 
-	loadUsecase *usecase.LoadUsecase
+	loadUsecase    *usecase.LoadUsecase
+	saveUsecase    *usecase.SaveUsecase
+	physicsUsecase *usecase.PhysicsUsecase
 }
 
 func NewWidgetStore(mWidgets *controller.MWidgets) *WidgetStore {
+	fileRepo := pRepository.NewFileRepository()
+
 	return &WidgetStore{
-		mWidgets:     mWidgets,
-		BakeSets:     make([]*entity.BakeSet, 0),
-		CurrentIndex: -1,
-		loadUsecase:  usecase.NewLoadUsecase(),
+		mWidgets:       mWidgets,
+		BakeSets:       make([]*entity.BakeSet, 0),
+		CurrentIndex:   -1,
+		loadUsecase:    usecase.NewLoadUsecase(fileRepo),
+		saveUsecase:    usecase.NewSaveUsecase(fileRepo),
+		physicsUsecase: usecase.NewPhysicsUsecase(),
 	}
 }
 

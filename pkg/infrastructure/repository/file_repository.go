@@ -13,20 +13,20 @@ import (
 
 type FileRepository struct{}
 
-// NewFileBakeSetRepository コンストラクタ
-func NewFileBakeSetRepository() *FileRepository {
+// NewFileRepository コンストラクタ
+func NewFileRepository() *FileRepository {
 	return &FileRepository{}
 }
 
-// Save BakeSetをJSONファイルに保存
-func (r *FileRepository) Save(bakeSet *entity.BakeSet, filePath string) error {
+// Save BakeSetのリストをJSONファイルに保存
+func (r *FileRepository) Save(bakeSets []*entity.BakeSet, filePath string) error {
 	// ファイル拡張子の確認
 	if strings.ToLower(filepath.Ext(filePath)) != ".json" {
 		filePath += ".json"
 	}
 
 	// JSONにシリアライズ
-	output, err := json.Marshal(bakeSet)
+	output, err := json.Marshal(bakeSets)
 	if err != nil {
 		mlog.E(mi18n.T("物理焼き込みセット保存失敗エラー"), err, "")
 		return err
@@ -42,8 +42,8 @@ func (r *FileRepository) Save(bakeSet *entity.BakeSet, filePath string) error {
 	return nil
 }
 
-// Load JSONファイルからBakeSetを読み込み
-func (r *FileRepository) Load(filePath string) (*entity.BakeSet, error) {
+// Load JSONファイルからBakeSetのリストを読み込み
+func (r *FileRepository) Load(filePath string) ([]*entity.BakeSet, error) {
 	// ファイル読み込み
 	input, err := os.ReadFile(filePath)
 	if err != nil {
@@ -52,12 +52,12 @@ func (r *FileRepository) Load(filePath string) (*entity.BakeSet, error) {
 	}
 
 	// JSONから逆シリアライズ
-	var bakeSet *entity.BakeSet
-	if err := json.Unmarshal(input, bakeSet); err != nil {
+	var bakeSets []*entity.BakeSet
+	if err := json.Unmarshal(input, &bakeSets); err != nil {
 		mlog.E(mi18n.T("物理焼き込みセット読込失敗エラー"), err, "")
 		return nil, err
 	}
 
 	mlog.I(mi18n.T("物理焼き込みセット読込成功", map[string]any{"Path": filePath}))
-	return bakeSet, nil
+	return bakeSets, nil
 }

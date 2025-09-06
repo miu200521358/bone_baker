@@ -8,6 +8,7 @@ import (
 	"sync"
 
 	"github.com/miu200521358/bone_baker/pkg/domain/entity"
+	pRepository "github.com/miu200521358/bone_baker/pkg/infrastructure/repository"
 	"github.com/miu200521358/mlib_go/pkg/config/mi18n"
 	"github.com/miu200521358/mlib_go/pkg/config/mlog"
 	"github.com/miu200521358/mlib_go/pkg/domain/pmx"
@@ -18,10 +19,17 @@ import (
 )
 
 type LoadUsecase struct {
+	fileRepo *pRepository.FileRepository
 }
 
-func NewLoadUsecase() *LoadUsecase {
-	return &LoadUsecase{}
+func NewLoadUsecase(fileRepo *pRepository.FileRepository) *LoadUsecase {
+	return &LoadUsecase{
+		fileRepo: fileRepo,
+	}
+}
+
+func (uc *LoadUsecase) LoadFile(path string) ([]*entity.BakeSet, error) {
+	return uc.fileRepo.Load(path)
 }
 
 func (uc *LoadUsecase) LoadMotion(baseSet *entity.BakeSet, path string) error {

@@ -159,7 +159,7 @@ func (s *WidgetStore) createOriginalMotionFilePicker() *widget.FilePicker {
 		mi18n.T("モーション(Vmd)"),
 		mi18n.T("モーション説明"),
 		func(cw *controller.ControlWindow, rep repository.IRepository, path string) {
-			if err := s.LoadMotion(cw, path); err != nil {
+			if err := s.loadMotion(cw, path); err != nil {
 				if ok := merr.ShowErrorDialog(cw.AppConfig(), err); ok {
 					s.setWidgetEnabled(true)
 				}
@@ -174,7 +174,7 @@ func (s *WidgetStore) createOriginalModelFilePicker() *widget.FilePicker {
 		mi18n.T("モデル(Pmx)"),
 		mi18n.T("モデル説明"),
 		func(cw *controller.ControlWindow, rep repository.IRepository, path string) {
-			if err := s.LoadModel(cw, path); err != nil {
+			if err := s.loadModel(cw, path); err != nil {
 				if ok := merr.ShowErrorDialog(cw.AppConfig(), err); ok {
 					s.setWidgetEnabled(true)
 				}
@@ -235,7 +235,7 @@ func (s *WidgetStore) createLoadSetButton() *widget.MPushButton {
 		if ok, err := dlg.ShowOpen(nil); err != nil {
 			walk.MsgBox(nil, mi18n.T("ファイル選択ダイアログ選択エラー"), err.Error(), walk.MsgBoxIconError)
 		} else if ok {
-			// s.handleLoadSet(dlg.FilePath)
+			s.loadBakeSets(dlg.FilePath)
 		}
 	})
 	return btn

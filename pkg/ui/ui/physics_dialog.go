@@ -1,7 +1,6 @@
 package ui
 
 import (
-	"github.com/miu200521358/bone_baker/pkg/application/usecase"
 	"github.com/miu200521358/bone_baker/pkg/domain/entity"
 	"github.com/miu200521358/mlib_go/pkg/config/mi18n"
 	"github.com/miu200521358/mlib_go/pkg/config/mlog"
@@ -12,16 +11,14 @@ import (
 
 // PhysicsTableViewDialog 物理設定ダイアログのロジックを管理
 type PhysicsTableViewDialog struct {
-	store          *WidgetStore
-	physicsUsecase *usecase.PhysicsUsecase
-	doDelete       bool
+	store    *WidgetStore
+	doDelete bool
 }
 
 // NewPhysicsTableViewDialog コンストラクタ
 func NewPhysicsTableViewDialog(store *WidgetStore) *PhysicsTableViewDialog {
 	return &PhysicsTableViewDialog{
-		store:          store,
-		physicsUsecase: usecase.NewPhysicsUsecase(),
+		store: store,
 	}
 }
 
@@ -239,7 +236,7 @@ func (p *PhysicsTableViewDialog) handleDialogOK(record *entity.PhysicsRecord, re
 
 	physicsWorldMotion := p.store.mWidgets.Window().LoadPhysicsWorldMotion(0)
 
-	p.physicsUsecase.ApplyPhysicsWorldMotion(
+	p.store.physicsUsecase.ApplyPhysicsWorldMotion(
 		physicsWorldMotion,
 		p.store.CurrentSet().PhysicsRecords,
 		p.store.CurrentSet().OriginalModel,
