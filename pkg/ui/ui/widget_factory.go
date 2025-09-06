@@ -18,6 +18,10 @@ import (
 	"github.com/miu200521358/walk/pkg/walk"
 )
 
+const (
+	jsonPathKey = "json_path"
+)
+
 func (s *WidgetStore) createPlayerWidget() {
 	s.Player = widget.NewMotionPlayer()
 	s.Player.SetLabelTexts(mi18n.T("焼き込み停止"), mi18n.T("焼き込み再生"))
@@ -218,7 +222,7 @@ func (s *WidgetStore) createLoadSetButton() *widget.MPushButton {
 	btn.SetTooltip(mi18n.T("設定設定読込説明"))
 	btn.SetMaxSize(declarative.Size{Width: 100, Height: 20})
 	btn.SetOnClicked(func(cw *controller.ControlWindow) {
-		choices := mconfig.LoadUserConfig("physics_set_path")
+		choices := mconfig.LoadUserConfig(jsonPathKey)
 		var initialDirPath string
 		if len(choices) > 0 {
 			initialDirPath = filepath.Dir(choices[0])
@@ -236,6 +240,7 @@ func (s *WidgetStore) createLoadSetButton() *widget.MPushButton {
 			walk.MsgBox(nil, mi18n.T("ファイル選択ダイアログ選択エラー"), err.Error(), walk.MsgBoxIconError)
 		} else if ok {
 			s.loadBakeSets(dlg.FilePath)
+			mconfig.SaveUserConfig(jsonPathKey, dlg.FilePath, 1)
 		}
 	})
 	return btn
@@ -252,7 +257,7 @@ func (s *WidgetStore) createSaveSetButton() *widget.MPushButton {
 		if s.CurrentSet().OriginalModel != nil {
 			// モーション側にモデルファイル名でJSONデフォルト名を入れる
 			_, name, _ := mfile.SplitPath(s.CurrentSet().OriginalModel.Path())
-			filePath = fmt.Sprintf("%s.json", name)
+			filePath = fmt.Sprintf("BoneBaker_%s.json", name)
 		}
 
 		dlg := walk.FileDialog{
@@ -267,8 +272,8 @@ func (s *WidgetStore) createSaveSetButton() *widget.MPushButton {
 		if ok, err := dlg.ShowSave(nil); err != nil {
 			walk.MsgBox(nil, mi18n.T("ファイル選択ダイアログ選択エラー"), err.Error(), walk.MsgBoxIconError)
 		} else if ok {
-			// s.SaveSet(dlg.FilePath)
-			mconfig.SaveUserConfig("physics_set_path", dlg.FilePath, 1)
+			s.saveBakeSets(dlg.FilePath)
+			mconfig.SaveUserConfig(jsonPathKey, dlg.FilePath, 1)
 		}
 	})
 	return btn

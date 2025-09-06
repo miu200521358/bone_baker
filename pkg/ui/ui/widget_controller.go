@@ -1,7 +1,6 @@
 package ui
 
 import (
-	"github.com/miu200521358/mlib_go/pkg/config/mconfig"
 	"github.com/miu200521358/mlib_go/pkg/interface/controller"
 )
 
@@ -71,9 +70,12 @@ func (s *WidgetStore) loadModel(cw *controller.ControlWindow, path string) error
 	return nil
 }
 
+func (s *WidgetStore) saveBakeSets(filePath string) error {
+	return s.saveUsecase.SaveFile(s.BakeSets, filePath)
+}
+
 func (s *WidgetStore) loadBakeSets(filePath string) {
 	s.setWidgetEnabled(false)
-	mconfig.SaveUserConfig("physics_set_path", filePath, 1)
 
 	for n := range 2 {
 		for m := range s.NavToolBar.Actions().Len() {
