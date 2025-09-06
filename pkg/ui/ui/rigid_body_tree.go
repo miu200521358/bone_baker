@@ -49,14 +49,14 @@ func (pi *RigidBodyTreeItem) Text() string {
 	var sizeText string
 	switch pi.item.RigidBody.ShapeType {
 	case pmx.SHAPE_SPHERE:
-		sizeText = fmt.Sprintf(mi18n.T("半径: %.2f"), pi.item.RigidBody.Size.X)
+		sizeText = fmt.Sprintf(mi18n.T("半径: %.2f"), pi.item.SizeRatio.X)
 	case pmx.SHAPE_BOX:
-		sizeText = fmt.Sprintf(mi18n.T("幅: %.2f, 高さ: %.2f, 奥行: %.2f"), pi.item.RigidBody.Size.X, pi.item.RigidBody.Size.Y, pi.item.RigidBody.Size.Z)
+		sizeText = fmt.Sprintf(mi18n.T("幅: %.2f, 高さ: %.2f, 奥行: %.2f"), pi.item.SizeRatio.X, pi.item.SizeRatio.Y, pi.item.SizeRatio.Z)
 	case pmx.SHAPE_CAPSULE:
 		sizeText = fmt.Sprintf(mi18n.T("半径: %.2f, 高さ: %.2f"), pi.item.SizeRatio.X, pi.item.SizeRatio.Y)
 	}
 
-	return fmt.Sprintf(mi18n.T("%s (大きさ: [%s], 質量: %.2f, 硬さ: %.2f, 張り: %.2f)"),
+	return fmt.Sprintf(mi18n.T("%s (大きさ倍率: [%s], 質量: %.2f, 硬さ: %.2f, 張り: %.2f)"),
 		nameText, sizeText, pi.item.MassRatio, pi.item.StiffnessRatio, pi.item.TensionRatio)
 }
 
