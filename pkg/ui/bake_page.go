@@ -95,10 +95,10 @@ func NewBakePage(mWidgets *controller.MWidgets) declarative.TabPage {
 						MaxSize: declarative.Size{Width: 2560, Height: 40},
 						Children: []declarative.Widget{
 							declarative.TextLabel{
-								Text:        mi18n.T("物理設定テーブル"),
-								ToolTipText: mi18n.T("物理設定テーブル説明"),
+								Text:        mi18n.T("ワールド物理設定テーブル"),
+								ToolTipText: mi18n.T("ワールド物理設定テーブル説明"),
 								OnMouseDown: func(x, y int, button walk.MouseButton) {
-									mlog.ILT(mi18n.T("物理設定テーブル"), mi18n.T("物理設定テーブル説明"))
+									mlog.ILT(mi18n.T("ワールド物理設定テーブル"), mi18n.T("ワールド物理設定テーブル説明"))
 								},
 							},
 							declarative.HSpacer{},

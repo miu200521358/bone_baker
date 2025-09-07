@@ -9,7 +9,7 @@ import (
 	"github.com/miu200521358/walk/pkg/walk"
 )
 
-// RigidBodyTableViewDialog 剛体設定ダイアログのロジックを管理
+// RigidBodyTableViewDialog モデル物理設定ダイアログのロジックを管理
 type RigidBodyTableViewDialog struct {
 	store    *WidgetStore
 	doDelete bool
@@ -22,7 +22,7 @@ func NewRigidBodyTableViewDialog(store *WidgetStore) *RigidBodyTableViewDialog {
 	}
 }
 
-// Show 剛体設定ダイアログを表示
+// Show モデル物理設定ダイアログを表示
 func (p *RigidBodyTableViewDialog) Show(record *entity.RigidBodyRecord, recordIndex int) {
 	// アイテムがクリックされたら、入力ダイアログを表示する
 	var dlg *walk.Dialog
@@ -49,7 +49,7 @@ func (p *RigidBodyTableViewDialog) Show(record *entity.RigidBodyRecord, recordIn
 		AssignTo:      &dlg,
 		CancelButton:  &cancelBtn,
 		DefaultButton: &okBtn,
-		Title:         mi18n.T("剛体設定"),
+		Title:         mi18n.T("モデル物理設定"),
 		Layout:        declarative.VBox{},
 		MinSize:       declarative.Size{Width: 500, Height: 400},
 		MaxSize:       declarative.Size{Width: 500, Height: 400},
@@ -67,7 +67,8 @@ func (p *RigidBodyTableViewDialog) Show(record *entity.RigidBodyRecord, recordIn
 				Layout: declarative.HBox{
 					Alignment: declarative.AlignHFarVCenter,
 				},
-				Children: p.createButtonWidgets(&okBtn, &deleteBtn, &cancelBtn, &dlg, &db),
+				Children: p.createButtonWidgets(startFrameEdit, endFrameEdit,
+					maxStartFrameEdit, maxEndFrameEdit, &okBtn, &deleteBtn, &cancelBtn, &dlg, &db),
 			},
 		},
 	}
@@ -354,14 +355,22 @@ func (p *RigidBodyTableViewDialog) updateItemProperty(treeView *walk.TreeView, u
 }
 
 func (p *RigidBodyTableViewDialog) createButtonWidgets(
+	startFrameEdit, endFrameEdit, maxStartFrameEdit, maxEndFrameEdit *walk.NumberEdit,
 	okBtn, deleteBtn, cancelBtn **walk.PushButton, dlg **walk.Dialog, db **walk.DataBinder,
 ) []declarative.Widget {
 	return []declarative.Widget{
 		declarative.PushButton{
 			AssignTo:    okBtn,
 			Text:        mi18n.T("登録"),
-			ToolTipText: mi18n.T("剛体設定登録説明"),
+			ToolTipText: mi18n.T("モデル物理設定登録説明"),
 			OnClicked: func() {
+				if !(startFrameEdit.Value() < maxStartFrameEdit.Value() &&
+					maxStartFrameEdit.Value() < maxEndFrameEdit.Value() &&
+					maxEndFrameEdit.Value() < endFrameEdit.Value()) {
+					mlog.ET(mi18n.T("モデル物理範囲設定エラー"), nil, "")
+					return
+				}
+
 				if err := (*db).Submit(); err != nil {
 					mlog.ET(mi18n.T("焼き込み設定変更エラー"), err, "")
 					return
@@ -372,7 +381,7 @@ func (p *RigidBodyTableViewDialog) createButtonWidgets(
 		declarative.PushButton{
 			AssignTo:    deleteBtn,
 			Text:        mi18n.T("削除"),
-			ToolTipText: mi18n.T("剛体設定削除説明"),
+			ToolTipText: mi18n.T("モデル物理設定削除説明"),
 			OnClicked: func() {
 				p.doDelete = true
 				(*dlg).Accept()
@@ -381,7 +390,7 @@ func (p *RigidBodyTableViewDialog) createButtonWidgets(
 		declarative.PushButton{
 			AssignTo:    cancelBtn,
 			Text:        mi18n.T("キャンセル"),
-			ToolTipText: mi18n.T("剛体設定キャンセル説明"),
+			ToolTipText: mi18n.T("モデル物理設定キャンセル説明"),
 			OnClicked: func() {
 				(*dlg).Cancel()
 			},
@@ -418,7 +427,7 @@ func (p *RigidBodyTableViewDialog) handleDialogOK(record *entity.RigidBodyRecord
 	p.store.physicsUsecase.ApplyPhysicsModelMotion(
 		physicsWorldMotion,
 		physicsModelMotion,
-		p.store.RigidBodyRecords,
+		p.store.currentSet().RigidBodyRecords,
 		p.store.currentSet().OriginalModel,
 	)
 

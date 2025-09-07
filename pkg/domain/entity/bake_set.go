@@ -1,8 +1,11 @@
 package entity
 
 import (
+	"fmt"
+
 	"github.com/miu200521358/mlib_go/pkg/domain/pmx"
 	"github.com/miu200521358/mlib_go/pkg/domain/vmd"
+	"github.com/miu200521358/mlib_go/pkg/infrastructure/mfile"
 )
 
 // 1モデル分の焼き込み設定
@@ -19,7 +22,7 @@ type BakeSet struct {
 	BakedModel     *pmx.PmxModel  `json:"-"` // 物理焼き込み先モデル
 	OutputMotion   *vmd.VmdMotion `json:"-"` // 出力結果モーション
 
-	RigidBodyRecords []*RigidBodyRecord `json:"rigid_body_records"` // 剛体設定レコード
+	RigidBodyRecords []*RigidBodyRecord `json:"rigid_body_records"` // モデル物理設定レコード
 	OutputRecords    []*OutputRecord    `json:"output_records"`     // 出力設定レコード
 }
 
@@ -64,4 +67,10 @@ func (s *BakeSet) OriginalModelName() string {
 		return ""
 	}
 	return s.OriginalModel.Name()
+}
+
+// CreateOutputMotionPath 出力モーションパスを生成
+func (s *BakeSet) CreateOutputMotionPath() string {
+	_, fileName, _ := mfile.SplitPath(s.BakedModel.Path())
+	return mfile.CreateOutputPath(s.OriginalMotion.Path(), fmt.Sprintf("BB_%s", fileName))
 }

@@ -14,16 +14,26 @@ func NewMenuItems() []declarative.MenuItem {
 		},
 		declarative.Separator{},
 		declarative.Action{
-			Text:        mi18n.T("物理の調整"),
-			OnTriggered: func() { mlog.ILT("物理の調整", "%s", mi18n.T("物理の調整説明")) },
+			Text:        mi18n.T("ワールド物理の調整"),
+			OnTriggered: func() { mlog.ILT("ワールド物理の調整", "%s", mi18n.T("ワールド物理の調整説明")) },
 		},
 		declarative.Action{
-			Text:        mi18n.T("焼き込み結果の確認"),
-			OnTriggered: func() { mlog.ILT("焼き込み結果の確認", "%s", mi18n.T("焼き込み結果の確認説明")) },
+			Text:        mi18n.T("モデル物理の調整"),
+			OnTriggered: func() { mlog.ILT("モデル物理の調整", "%s", mi18n.T("モデル物理の調整説明")) },
 		},
 		declarative.Action{
-			Text:        mi18n.T("焼き込み結果の保存"),
-			OnTriggered: func() { mlog.ILT("焼き込み結果の保存", "%s", mi18n.T("焼き込み結果の保存説明")) },
+			Text:        mi18n.T("焼き込み再生"),
+			OnTriggered: func() { mlog.ILT("焼き込み再生", "%s", mi18n.T("焼き込み再生説明")) },
+		},
+		declarative.Action{
+			Text: mi18n.T("焼き込み履歴INDEXの選択"),
+			OnTriggered: func() {
+				mlog.ILT("焼き込み履歴INDEXの選択", "%s", mi18n.T("焼き込み履歴INDEXの選択説明"))
+			},
+		},
+		declarative.Action{
+			Text:        mi18n.T("焼き込み結果の出力"),
+			OnTriggered: func() { mlog.ILT("焼き込み結果の出力", "%s", mi18n.T("焼き込み結果の出力説明")) },
 		},
 	}
 }

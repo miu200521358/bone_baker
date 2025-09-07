@@ -54,8 +54,8 @@ func (s *WidgetStore) setWidgetEnabled(enabled bool) {
 	s.OutputMotionPicker.SetEnabled(enabled)
 	s.OutputModelPicker.SetEnabled(enabled)
 
-	s.AddPhysicsButton.SetEnabled(enabled)
-	s.AddRigidBodyButton.SetEnabled(enabled)
+	s.AddOutputButton.SetEnabled(enabled)
+	s.OutputTableView.SetEnabled(enabled)
 
 	// s.BakedHistoryIndexEdit.SetEnabled(enabled)
 	// s.BakeHistoryClearButton.SetEnabled(enabled)
@@ -63,17 +63,17 @@ func (s *WidgetStore) setWidgetEnabled(enabled bool) {
 	// s.SaveModelButton.SetEnabled(enabled)
 	// s.SaveMotionButton.SetEnabled(enabled)
 
-	// s.AddOutputButton.SetEnabled(enabled)
-	// s.OutputTableView.SetEnabled(enabled)
-
 	s.setWidgetPlayingEnabled(enabled)
 }
 
 func (s *WidgetStore) setWidgetPlayingEnabled(enabled bool) {
 	s.Player.SetEnabled(enabled)
 
+	s.AddPhysicsButton.SetEnabled(enabled)
+	s.AddRigidBodyButton.SetEnabled(enabled)
+
 	s.PhysicsTableView.SetEnabled(enabled)
-	// s.RigidBodyTableView.SetEnabled(enabled)
+	s.RigidBodyTableWidget.SetEnabled(enabled)
 }
 
 func (s *WidgetStore) createOnChangePlayingPre() func(playing bool) {
@@ -359,8 +359,8 @@ func (s *WidgetStore) createAddPhysicsButton() *widget.MPushButton {
 
 func (s *WidgetStore) createAddRigidBodyButton() *widget.MPushButton {
 	btn := widget.NewMPushButton()
-	btn.SetLabel(mi18n.T("剛体設定追加"))
-	btn.SetTooltip(mi18n.T("剛体設定追加説明"))
+	btn.SetLabel(mi18n.T("モデル物理設定追加"))
+	btn.SetTooltip(mi18n.T("モデル物理設定追加説明"))
 	btn.SetMaxSize(declarative.Size{Width: 100, Height: 20})
 	btn.SetOnClicked(func(cw *controller.ControlWindow) {
 		createRigidBodyTableViewDialog(s, true)() // ダイアログを表示
@@ -383,6 +383,52 @@ func (s *WidgetStore) createAddOutputButton() *widget.MPushButton {
 		// s.createOutputTableViewDialog()() // ダイアログを表示
 	})
 	return btn
+}
+
+// createBakedHistoryWidgets 焼き込み履歴ウィジェットを作成
+func (s *WidgetStore) createBakedHistoryWidgets() []declarative.Widget {
+	return []declarative.Widget{
+		declarative.TextLabel{
+			Text:        mi18n.T("焼き込み履歴INDEX"),
+			ToolTipText: mi18n.T("焼き込み履歴INDEX説明"),
+		},
+		declarative.NumberEdit{
+			SpinButtonsVisible: true,
+			AssignTo:           &s.BakedHistoryIndexEdit,
+			Decimals:           0,
+			Increment:          1,
+			MinValue:           1,
+			MaxValue:           2,
+			OnValueChanged:     s.createHistoryIndexChangeHandler(),
+		},
+		s.BakeHistoryClearButton.Widgets(),
+		declarative.HSpacer{
+			ColumnSpan: 1,
+		},
+	}
+}
+
+func (s *WidgetStore) createHistoryIndexChangeHandler() func() {
+	return func() {
+		// 出力モーションインデックスが変更されたときの処理
+		currentSet := s.currentSet()
+		deltaIndex := int(s.BakedHistoryIndexEdit.Value() - 1)
+		if deltaIndex < 0 ||
+			deltaIndex >= s.mWidgets.Window().GetDeltaMotionCount(0, currentSet.Index) {
+			deltaIndex = 0
+		}
+
+		// 物理ありのモーションを取得
+		outputMotion := s.mWidgets.Window().LoadDeltaMotion(0, currentSet.Index, deltaIndex)
+		// 物理確認用として設定
+		s.mWidgets.Window().StoreMotion(1, currentSet.Index, outputMotion)
+		s.mWidgets.Window().TriggerPhysicsReset()
+
+		// 出力モーションを更新
+		currentSet.OutputMotion = outputMotion
+		currentSet.OutputMotionPath = currentSet.CreateOutputMotionPath()
+		s.OutputMotionPicker.ChangePath(currentSet.OutputMotionPath)
+	}
 }
 
 func (s *WidgetStore) createBakeHistoryClearButton() *widget.MPushButton {

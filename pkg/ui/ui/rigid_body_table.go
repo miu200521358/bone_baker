@@ -29,7 +29,7 @@ var backgroundColor = walk.ColorWhite              // 背景色
 var borderColor = walk.ColorDarkGray               // 台形の枠線色
 var fontColor = walk.RGB(30, 30, 30)               // フォント色
 
-// RigidBodyTable グラフィカル剛体設定テーブル
+// RigidBodyTable グラフィカルモデル物理設定テーブル
 type RigidBodyTable struct {
 	*walk.CustomWidget
 	records      []*entity.RigidBodyRecord
@@ -38,7 +38,7 @@ type RigidBodyTable struct {
 	hoveredIndex int // ホバー中の台形インデックス (-1: なし)
 }
 
-// createRigidBodyTable グラフィカル剛体テーブル作成
+// createRigidBodyTable グラフィカルモデル物理テーブル作成
 func createRigidBodyTable(store *WidgetStore) declarative.Widget {
 	return declarative.ScrollView{
 		Layout:  declarative.HBox{},
@@ -68,7 +68,7 @@ func handleRigidBodyTableMouseDown(x, y int, button walk.MouseButton, store *Wid
 		return
 	}
 
-	// 現在のセットから剛体レコードを取得
+	// 現在のセットからモデル物理レコードを取得
 	currentSet := store.currentSet()
 	if currentSet == nil || len(currentSet.RigidBodyRecords) == 0 {
 		return
@@ -93,7 +93,7 @@ func handleRigidBodyTableMouseDown(x, y int, button walk.MouseButton, store *Wid
 
 // handleRigidBodyTableMouseMove マウス移動イベントハンドラ
 func handleRigidBodyTableMouseMove(x, y int, button walk.MouseButton, store *WidgetStore) {
-	// 現在のセットから剛体レコードを取得
+	// 現在のセットからモデル物理レコードを取得
 	currentSet := store.currentSet()
 	if currentSet == nil || len(currentSet.RigidBodyRecords) == 0 {
 		// データがない場合はツールチップをクリア
@@ -241,7 +241,7 @@ func createRigidBodyTableViewDialog(store *WidgetStore, isAdd bool) func() {
 	}
 }
 
-// drawGraphicalRigidBodyTable グラフィカル剛体テーブル描画
+// drawGraphicalRigidBodyTable グラフィカルモデル物理テーブル描画
 func drawGraphicalRigidBodyTable(canvas *walk.Canvas, bounds walk.Rectangle, store *WidgetStore) error {
 	// 背景をクリア
 	brush, err := walk.NewSolidColorBrush(backgroundColor)
@@ -251,14 +251,14 @@ func drawGraphicalRigidBodyTable(canvas *walk.Canvas, bounds walk.Rectangle, sto
 	defer brush.Dispose()
 	canvas.FillRectanglePixels(brush, bounds)
 
-	// 現在のセットから剛体レコードを取得
+	// 現在のセットからモデル物理レコードを取得
 	currentSet := store.currentSet()
 	if currentSet == nil || len(currentSet.RigidBodyRecords) == 0 {
 		// データがない場合は説明文を表示
 		font, _ := walk.NewFont("MS UI Gothic", 10, 0)
 		if font != nil {
 			defer font.Dispose()
-			canvas.DrawText(mi18n.T("剛体設定レコードがありません"), font, fontColor,
+			canvas.DrawText(mi18n.T("モデル物理設定レコードがありません"), font, fontColor,
 				walk.Rectangle{X: 10, Y: 10, Width: bounds.Width - 20, Height: 30}, walk.TextLeft)
 		}
 		return nil

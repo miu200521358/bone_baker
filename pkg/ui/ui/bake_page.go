@@ -25,7 +25,7 @@ func NewBakePage(mWidgets *controller.MWidgets) declarative.TabPage {
 		store.AddAction()
 		store.AddPhysicsButton.SetEnabled(false)
 		store.AddRigidBodyButton.SetEnabled(false)
-		// store.AddOutputButton.SetEnabled(false)
+		store.AddOutputButton.SetEnabled(false)
 		store.SaveModelButton.SetEnabled(false)
 		store.SaveMotionButton.SetEnabled(false)
 	})
@@ -83,10 +83,10 @@ func NewBakePage(mWidgets *controller.MWidgets) declarative.TabPage {
 						MaxSize: declarative.Size{Width: 2560, Height: 40},
 						Children: []declarative.Widget{
 							declarative.TextLabel{
-								Text:        mi18n.T("物理設定テーブル"),
-								ToolTipText: mi18n.T("物理設定テーブル説明"),
+								Text:        mi18n.T("ワールド物理設定テーブル"),
+								ToolTipText: mi18n.T("ワールド物理設定テーブル説明"),
 								OnMouseDown: func(x, y int, button walk.MouseButton) {
-									mlog.ILT(mi18n.T("物理設定テーブル"), mi18n.T("物理設定テーブル説明"))
+									mlog.ILT(mi18n.T("ワールド物理設定テーブル"), mi18n.T("ワールド物理設定テーブル説明"))
 								},
 							},
 							declarative.HSpacer{},
@@ -100,10 +100,10 @@ func NewBakePage(mWidgets *controller.MWidgets) declarative.TabPage {
 						MaxSize: declarative.Size{Width: 2560, Height: 40},
 						Children: []declarative.Widget{
 							declarative.TextLabel{
-								Text:        mi18n.T("剛体設定テーブル"),
-								ToolTipText: mi18n.T("剛体設定テーブル説明"),
+								Text:        mi18n.T("モデル物理設定テーブル"),
+								ToolTipText: mi18n.T("モデル物理設定テーブル説明"),
 								OnMouseDown: func(x, y int, button walk.MouseButton) {
-									mlog.ILT(mi18n.T("剛体設定テーブル"), mi18n.T("剛体設定テーブル説明"))
+									mlog.ILT(mi18n.T("モデル物理設定テーブル"), mi18n.T("モデル物理設定テーブル説明"))
 								},
 							},
 							declarative.HSpacer{},
@@ -112,31 +112,32 @@ func NewBakePage(mWidgets *controller.MWidgets) declarative.TabPage {
 					},
 					createRigidBodyTable(store),
 					declarative.VSeparator{},
+					declarative.Composite{
+						Layout:   declarative.Grid{Columns: 4},
+						Children: store.createBakedHistoryWidgets(),
+					},
+					declarative.Composite{
+						Layout:  declarative.HBox{},
+						MinSize: declarative.Size{Width: 200, Height: 40},
+						MaxSize: declarative.Size{Width: 2560, Height: 40},
+						Children: []declarative.Widget{
+							declarative.TextLabel{
+								Text:        mi18n.T("出力設定テーブル"),
+								ToolTipText: mi18n.T("出力設定テーブル説明"),
+								OnMouseDown: func(x, y int, button walk.MouseButton) {
+									mlog.ILT(mi18n.T("出力設定テーブル"), mi18n.T("出力設定テーブル説明"))
+								},
+							},
+							declarative.HSpacer{},
+							store.AddOutputButton.Widgets(),
+						},
+					},
+					createOutputTableView(store),
+					declarative.VSeparator{},
 					store.OutputModelPicker.Widgets(),
 					store.SaveModelButton.Widgets(),
 					declarative.VSeparator{},
 					store.OutputMotionPicker.Widgets(),
-					// declarative.Composite{
-					// 	Layout:   declarative.Grid{Columns: 4},
-					// 	Children: store.CreateBakedHistoryWidgets(),
-					// },
-					// declarative.Composite{
-					// 	Layout:  declarative.HBox{},
-					// 	MinSize: declarative.Size{Width: 200, Height: 40},
-					// 	MaxSize: declarative.Size{Width: 2560, Height: 40},
-					// 	Children: []declarative.Widget{
-					// 		declarative.TextLabel{
-					// 			Text:        mi18n.T("焼き込み保存設定テーブル"),
-					// 			ToolTipText: mi18n.T("焼き込み保存設定テーブル説明"),
-					// 			OnMouseDown: func(x, y int, button walk.MouseButton) {
-					// 				mlog.ILT(mi18n.T("焼き込み保存設定テーブル"), mi18n.T("焼き込み保存設定テーブル説明"))
-					// 			},
-					// 		},
-					// 		declarative.HSpacer{},
-					// 		store.AddOutputButton.Widgets(),
-					// 	},
-					// },
-					// store.CreateOutputTableView(),
 					store.SaveMotionButton.Widgets(),
 				},
 			},
