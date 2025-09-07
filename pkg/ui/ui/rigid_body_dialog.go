@@ -51,8 +51,8 @@ func (p *RigidBodyTableViewDialog) Show(record *entity.RigidBodyRecord, recordIn
 		DefaultButton: &okBtn,
 		Title:         mi18n.T("剛体設定"),
 		Layout:        declarative.VBox{},
-		MinSize:       declarative.Size{Width: 250, Height: 250},
-		MaxSize:       declarative.Size{Width: 250, Height: 250},
+		MinSize:       declarative.Size{Width: 500, Height: 400},
+		MaxSize:       declarative.Size{Width: 500, Height: 400},
 		DataBinder: declarative.DataBinder{
 			AssignTo:   &db,
 			DataSource: record,
@@ -318,7 +318,7 @@ func (p *RigidBodyTableViewDialog) createFormWidgets(startFrameEdit, endFrameEdi
 		declarative.TreeView{
 			AssignTo:   treeView,
 			Model:      treeModel,
-			MinSize:    declarative.Size{Width: 230, Height: 200},
+			MinSize:    declarative.Size{Width: 450, Height: 200},
 			ColumnSpan: 6,
 			OnCurrentItemChanged: func() {
 				p.updateEditValues(*treeView, *sizeXEdit, *sizeYEdit, *sizeZEdit, *massEdit, *stiffnessEdit, *tensionEdit)
@@ -411,6 +411,20 @@ func (p *RigidBodyTableViewDialog) handleDialogOK(record *entity.RigidBodyRecord
 			}
 		}
 	}
+
+	physicsWorldMotion := p.store.mWidgets.Window().LoadPhysicsWorldMotion(0)
+	physicsModelMotion := p.store.mWidgets.Window().LoadPhysicsModelMotion(0, p.store.CurrentIndex)
+
+	p.store.physicsUsecase.ApplyPhysicsModelMotion(
+		physicsWorldMotion,
+		physicsModelMotion,
+		p.store.RigidBodyRecords,
+		p.store.currentSet().OriginalModel,
+	)
+
+	p.store.mWidgets.Window().StorePhysicsWorldMotion(0, physicsWorldMotion)
+	p.store.mWidgets.Window().StorePhysicsModelMotion(0, p.store.CurrentIndex, physicsModelMotion)
+	p.store.mWidgets.Window().TriggerPhysicsReset()
 
 	// 台形テーブルの再描画を強制
 	if p.store.RigidBodyTableWidget != nil {

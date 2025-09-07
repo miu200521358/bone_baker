@@ -20,6 +20,7 @@ type BakeSet struct {
 	OutputMotion   *vmd.VmdMotion `json:"-"` // 出力結果モーション
 
 	RigidBodyRecords []*RigidBodyRecord `json:"rigid_body_records"` // 剛体設定レコード
+	OutputRecords    []*OutputRecord    `json:"output_records"`     // 出力設定レコード
 }
 
 func NewBakeSet(index int) *BakeSet {
@@ -33,6 +34,7 @@ func (s *BakeSet) Clear() {
 	s.ClearMotion()
 
 	s.RigidBodyRecords = make([]*RigidBodyRecord, 0)
+	s.OutputRecords = make([]*OutputRecord, 0)
 }
 
 func (s *BakeSet) ClearModel() {

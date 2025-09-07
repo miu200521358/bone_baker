@@ -110,6 +110,20 @@ func (r RigidBodyTree) AtByBoneIndex(boneIndex int) *RigidBodyItem {
 	return nil
 }
 
+func (pi *RigidBodyTree) AtByRigidBodyIndex(rigidBodyIndex int) *RigidBodyItem {
+	if rigidBodyIndex < 0 {
+		return nil
+	}
+
+	for _, item := range pi.Items {
+		if found := item.AtByRigidBodyIndex(rigidBodyIndex); found != nil {
+			return found
+		}
+	}
+
+	return nil
+}
+
 type RigidBodyItem struct {
 	Bone           *pmx.Bone        // 剛体に紐付くボーン情報
 	RigidBody      *pmx.RigidBody   // 剛体情報
@@ -168,6 +182,30 @@ func (pi *RigidBodyItem) AtByBoneIndex(boneIndex int) *RigidBodyItem {
 
 	for _, child := range pi.Children {
 		if found := child.AtByBoneIndex(boneIndex); found != nil {
+			return found
+		}
+	}
+
+	return nil
+}
+
+func (pi *RigidBodyItem) AtByRigidBodyIndex(rigidBodyIndex int) *RigidBodyItem {
+	if pi.RigidBody == nil {
+		for _, child := range pi.Children {
+			if found := child.AtByRigidBodyIndex(rigidBodyIndex); found != nil {
+				return found
+			}
+		}
+
+		return nil
+	}
+
+	if pi.RigidBody.Index() == rigidBodyIndex {
+		return pi
+	}
+
+	for _, child := range pi.Children {
+		if found := child.AtByRigidBodyIndex(rigidBodyIndex); found != nil {
 			return found
 		}
 	}

@@ -92,8 +92,8 @@ func (u *PhysicsUsecase) ApplyPhysicsMotion(
 
 			// ジョイント
 			model.Joints.ForEach(func(jointIndex int, joint *pmx.Joint) bool {
-				rigidBodyItemA := record.TreeModel.AtByRigidBodyIndex(joint.RigidbodyIndexA)
-				rigidBodyItemB := record.TreeModel.AtByRigidBodyIndex(joint.RigidbodyIndexB)
+				rigidBodyItemA := record.TreeModel.AtByRigidBodyIndex(joint.RigidBodyIndexA)
+				rigidBodyItemB := record.TreeModel.AtByRigidBodyIndex(joint.RigidBodyIndexB)
 
 				if rigidBodyItemA == nil && rigidBodyItemB == nil {
 					// ジョイントの両端が未設定の場合はスキップ
@@ -158,5 +158,4 @@ func (u *PhysicsUsecase) ApplyPhysicsMotion(
 		// 最後のフレームの後に物理更新停止する
 		physicsWorldMotion.AppendPhysicsResetFrame(vmd.NewPhysicsResetFrameByValue(record.EndFrame+1, vmd.PHYSICS_RESET_TYPE_NONE))
 	}
-
 }
