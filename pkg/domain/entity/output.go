@@ -28,7 +28,7 @@ func (r *OutputRecord) ItemNames() string {
 		return mi18n.T("出力対象ボーンなし")
 	}
 
-	return strings.Join(r.ItemBoneNames(), ", ")
+	return strings.Join(r.ItemBoneNames()[:6], ", ") + "..."
 }
 
 func (r *OutputRecord) ItemBoneNames() []string {

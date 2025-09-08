@@ -69,8 +69,19 @@ func (s *BakeSet) OriginalModelName() string {
 	return s.OriginalModel.Name()
 }
 
-// CreateOutputMotionPath 出力モーションパスを生成
 func (s *BakeSet) CreateOutputMotionPath() string {
+	if s.OriginalMotion == nil || s.BakedModel == nil {
+		return ""
+	}
+
 	_, fileName, _ := mfile.SplitPath(s.BakedModel.Path())
 	return mfile.CreateOutputPath(s.OriginalMotion.Path(), fmt.Sprintf("BB_%s", fileName))
+}
+
+func (s *BakeSet) CreateOutputModelPath() string {
+	if s.OriginalModel == nil {
+		return ""
+	}
+
+	return mfile.CreateOutputPath(s.OriginalModel.Path(), "BB")
 }

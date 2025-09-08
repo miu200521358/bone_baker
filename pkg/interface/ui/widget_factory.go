@@ -297,6 +297,7 @@ func (s *WidgetStore) createSaveModelButton() *widget.MPushButton {
 					mlog.ET(mi18n.T("モデル保存失敗"), err, "")
 					if ok := merr.ShowErrorDialog(cw.AppConfig(), err); ok {
 						s.setWidgetEnabled(true)
+						return
 					}
 				}
 			}
@@ -334,10 +335,12 @@ func (s *WidgetStore) createSaveMotionButton() *widget.MPushButton {
 
 				for _, motion := range motions {
 					rep := repository.NewVmdRepository(true)
+					mlog.IL(fmt.Sprintf(mi18n.T("モーション保存開始: [%.0f-%.0f]"), motion.MinFrame(), motion.MaxFrame()))
 					if err := rep.Save("", motion, false); err != nil {
-						mlog.ET(mi18n.T("モーション保存失敗"), err, "")
+						mlog.ET(fmt.Sprintf(mi18n.T("モーション保存失敗"), motion.Path()), err, "")
 						if ok := merr.ShowErrorDialog(cw.AppConfig(), err); ok {
 							s.setWidgetEnabled(true)
+							return
 						}
 					}
 				}

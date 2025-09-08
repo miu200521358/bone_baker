@@ -1,6 +1,8 @@
 package ui
 
 import (
+	"time"
+
 	"github.com/miu200521358/bone_baker/pkg/domain/entity"
 	"github.com/miu200521358/mlib_go/pkg/config/mi18n"
 	"github.com/miu200521358/mlib_go/pkg/config/mlog"
@@ -67,7 +69,18 @@ func (p *OutputTableViewDialog) show(record *entity.OutputRecord, recordIndex in
 		},
 	}
 
-	if cmd, err := dialog.Run(builder.Parent().Form()); err == nil && cmd == walk.DlgCmdOK {
+	if cmd, err := dialog.RunWithFunc(builder.Parent().Form(), func(dialog *walk.Dialog) {
+		// ダイアログが完全に表示された後に実行
+		go func() {
+			// 少し待ってからチェック状態を適用
+			for range 5 {
+				time.Sleep(10 * time.Millisecond)
+				treeView.Synchronize(func() {
+					treeView.ApplyRootCheckStates()
+				})
+			}
+		}()
+	}); err == nil && cmd == walk.DlgCmdOK {
 		p.handleDialogOK(record, recordIndex)
 	}
 }

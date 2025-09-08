@@ -148,11 +148,11 @@ func (s *WidgetStore) widgetList() []controller.IMWidget {
 		s.OutputModelPicker,
 		s.OutputMotionPicker,
 		s.Player,
-		// s.BakeHistoryClearButton,
+		s.BakeHistoryClearButton,
 		s.SaveModelButton,
 		s.SaveMotionButton,
 		s.AddPhysicsButton,
-		// s.AddRigidBodyPhysicsButton,
-		// s.AddOutputButton,
+		s.AddRigidBodyButton,
+		s.AddOutputButton,
 	}
 }

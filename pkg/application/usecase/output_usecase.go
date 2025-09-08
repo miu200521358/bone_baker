@@ -50,7 +50,7 @@ func (uc *OutputUsecase) ProcessOutputMotions(
 				}
 				bakedBf := vmd.NewBoneFrame(f)
 				bakedBf.Position = bf.FilledPosition().Copy()
-				bakedBf.Rotation = bf.FilledUnitRotation().Copy() // (モーフ・付与親含む)トータル回転も保存
+				bakedBf.Rotation = bf.FilledUnitRotation().Copy() // (モーフ・付与親含む)トータル回転を保存
 
 				if bone, err := originalModel.Bones.GetByName(boneName); err == nil {
 					if bone.HasPhysics() {
@@ -67,7 +67,7 @@ func (uc *OutputUsecase) ProcessOutputMotions(
 						}
 						bf.DisablePhysics = false
 						bakedMotion.AppendBoneFrame(boneName, bf)
-						keyCounts[int(f)]++
+						keyCounts[int(f+1)]++
 					}
 				}
 			}
@@ -96,6 +96,7 @@ func (uc *OutputUsecase) splitMotions(
 	dirPath, fileName, ext := mfile.SplitPath(outputMotionPath)
 
 	motion := vmd.NewVmdMotion("")
+	motion.SetName(fmt.Sprintf("%s_baked", originalModel.Name()))
 	motion.SetPath(fmt.Sprintf("%s%s_%04d%s", dirPath, fileName, 0, ext))
 	motion.MorphFrames, _ = originalMotion.MorphFrames.Copy()
 

@@ -14,12 +14,8 @@ func (s *WidgetStore) loadMotion(cw *controller.ControlWindow, path string) erro
 
 	// UI反映処理
 	currentSet := s.currentSet()
-	if currentSet.OriginalMotion != nil {
-		cw.StoreMotion(0, s.CurrentIndex, currentSet.OriginalMotion)
-	}
-	if currentSet.OutputMotion != nil {
-		cw.StoreMotion(1, s.CurrentIndex, currentSet.OutputMotion)
-	}
+	cw.StoreMotion(0, s.CurrentIndex, currentSet.OriginalMotion)
+	cw.StoreMotion(1, s.CurrentIndex, currentSet.OutputMotion)
 
 	// 履歴クリア処理
 	for n := range s.BakeSets {
@@ -29,8 +25,11 @@ func (s *WidgetStore) loadMotion(cw *controller.ControlWindow, path string) erro
 		cw.SetSaveDeltaIndex(1, 0)
 	}
 
-	// s.BakedHistoryIndexEdit.SetValue(1.0)
-	// s.BakedHistoryIndexEdit.SetRange(1.0, 2.0)
+	s.BakedHistoryIndexEdit.SetValue(1.0)
+	s.BakedHistoryIndexEdit.SetRange(1.0, 2.0)
+
+	currentSet.OutputMotionPath = currentSet.CreateOutputMotionPath()
+	s.OutputMotionPicker.ChangePath(currentSet.OutputMotionPath)
 
 	// モーションプレイヤーのリセット
 	s.Player.Reset(s.maxFrame())
@@ -61,10 +60,15 @@ func (s *WidgetStore) loadModel(cw *controller.ControlWindow, path string) error
 		cw.SetSaveDeltaIndex(1, 0)
 	}
 
-	// s.BakedHistoryIndexEdit.SetValue(1.0)
-	// s.BakedHistoryIndexEdit.SetRange(1.0, 2.0)
+	s.BakedHistoryIndexEdit.SetValue(1.0)
+	s.BakedHistoryIndexEdit.SetRange(1.0, 2.0)
 
-	s.OutputModelPicker.ChangePath(s.currentSet().OutputModelPath)
+	currentSet.OutputModelPath = currentSet.CreateOutputModelPath()
+	s.OutputModelPicker.ChangePath(currentSet.OutputModelPath)
+
+	currentSet.OutputMotionPath = currentSet.CreateOutputMotionPath()
+	s.OutputMotionPicker.ChangePath(currentSet.OutputMotionPath)
+
 	s.setWidgetEnabled(true)
 
 	return nil

@@ -36,7 +36,7 @@ func (r *RigidBodyRecord) ItemNames() string {
 		return mi18n.T("変更剛体なし")
 	}
 
-	return strings.Join(names, ", ")
+	return strings.Join(names[:6], ", ") + "..."
 }
 
 type RigidBodyTree struct {

@@ -88,6 +88,14 @@ func (pi *OutputTreeItem) AtByBoneIndex(boneIndex int) *OutputTreeItem {
 	return nil
 }
 
+func (pi *OutputTreeItem) SetChecked(checked bool) {
+	pi.item.Checked = checked
+}
+
+func (pi *OutputTreeItem) Checked() bool {
+	return pi.item.Checked
+}
+
 type OutputTreeModel struct {
 	*walk.TreeModelBase
 	Record *entity.PhysicsRecord // 出力レコード
@@ -210,6 +218,21 @@ func (pm *OutputTreeModel) Reset() {
 		node.Reset()
 		pm.PublishItemChanged(node)
 	}
+}
+
+func (pm *OutputTreeModel) PublishItemChecked(item walk.TreeCheckableItem) {
+	if item == nil {
+		for _, node := range pm.Nodes {
+			pm.TreeModelBase.PublishItemChecked(node)
+		}
+		return
+	}
+
+	if _, ok := item.(*OutputTreeItem); !ok {
+		return
+	}
+
+	pm.TreeModelBase.PublishItemChecked(item)
 }
 
 func (pm *OutputTreeModel) SetOutputIkChecked(treeView *walk.TreeView, item walk.TreeItem, checked bool) {

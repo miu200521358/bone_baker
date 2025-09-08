@@ -18,7 +18,7 @@ func createOutputTableView(store *WidgetStore) declarative.TableView {
 			{Title: "#", Width: 30},
 			{Title: mi18n.T("開始F"), Width: 60},
 			{Title: mi18n.T("終了F"), Width: 60},
-			{Title: mi18n.T("出力対象ボーン"), Width: 200},
+			{Title: mi18n.T("出力対象ボーン"), Width: 300},
 		},
 		OnItemClicked: createOutputTableViewDialog(store, false),
 	}
