@@ -50,7 +50,7 @@ func (p *PhysicsTableViewDialog) Show(record *domain.PhysicsBoneRecord, recordIn
 		AssignTo:      &dlg,
 		CancelButton:  &cancelBtn,
 		DefaultButton: &okBtn,
-		Title:         mi18n.T("物理設定"),
+		Title:         mi18n.T("ワールド物理設定"),
 		Layout:        declarative.VBox{},
 		MinSize:       declarative.Size{Width: 600, Height: 300},
 		DataBinder: declarative.DataBinder{

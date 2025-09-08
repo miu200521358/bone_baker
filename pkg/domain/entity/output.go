@@ -22,16 +22,22 @@ func NewOutputRecord(startFrame, endFrame float32, model *pmx.PmxModel) *OutputR
 }
 
 func (r *OutputRecord) ItemNames() string {
+	boneNames := r.ItemBoneNames()
+
+	if len(boneNames) == 0 {
+		return mi18n.T("出力対象ボーンなし")
+	}
+
+	return strings.Join(r.ItemBoneNames(), ", ")
+}
+
+func (r *OutputRecord) ItemBoneNames() []string {
 	var names []string
 	for _, item := range r.Tree.Items {
-		names = append(names, item.ItemNames(names)...)
+		names = append(names, item.ItemBoneNames(names)...)
 	}
 
-	if len(names) == 0 {
-		return mi18n.T("変更ボーンなし")
-	}
-
-	return strings.Join(names, ", ")
+	return names
 }
 
 type OutputTree struct {
@@ -109,13 +115,13 @@ func newOutputItem(bone *pmx.Bone, parent *OutputItem) *OutputItem {
 	return item
 }
 
-func (oi *OutputItem) ItemNames(names []string) []string {
+func (oi *OutputItem) ItemBoneNames(names []string) []string {
 	if oi.Bone != nil && oi.Checked {
 		names = append(names, oi.Bone.Name())
 	}
 
 	for _, child := range oi.Children {
-		names = child.ItemNames(names)
+		names = child.ItemBoneNames(names)
 	}
 
 	return names

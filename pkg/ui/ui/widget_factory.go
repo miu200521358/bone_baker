@@ -97,12 +97,12 @@ func (s *WidgetStore) createOnChangePlayingPre() func(playing bool) {
 			// 再生フレーム
 			mlog.IL(mi18n.T("焼き込み再生開始: 焼き込み履歴INDEX[%d]"), deltaIndex+1)
 		} else {
-			// deltaIndex := s.Window().GetDeltaMotionCount(0, s.CurrentIndex)
-			// s.BakedHistoryIndexEdit.SetRange(1.0, float64(deltaIndex))
-			// s.BakedHistoryIndexEdit.SetValue(float64(deltaIndex))
+			deltaIndex := s.Window().GetDeltaMotionCount(0, s.CurrentIndex)
+			s.BakedHistoryIndexEdit.SetRange(1.0, float64(deltaIndex))
+			s.BakedHistoryIndexEdit.SetValue(float64(deltaIndex))
 
-			// // 焼き込み完了時に出力モーションを取得
-			// s.createHistoryIndexChangeHandler()()
+			// 焼き込み完了時に出力モーションを取得
+			s.createHistoryIndexChangeHandler()()
 		}
 	}
 }
@@ -319,24 +319,28 @@ func (s *WidgetStore) createSaveMotionButton() *widget.MPushButton {
 
 		for _, bakeSet := range s.BakeSets {
 			if bakeSet.OutputMotionPath != "" && bakeSet.OutputMotion != nil {
-				// // チェックボーンのみ残す
-				// motions, err := bakeSet.GetOutputMotionOnlyChecked(
-				// 	s.OutputTableView.Model().(*domain.OutputTableModel).Records,
-				// )
-				// if err != nil {
-				// 	mlog.ET(mi18n.T("モーション保存失敗"), err, "")
-				// 	return
-				// }
+				motions, err := s.outputUsecase.ProcessOutputMotions(
+					bakeSet.OriginalModel,
+					bakeSet.OriginalMotion,
+					bakeSet.OutputMotion,
+					bakeSet.OutputMotionPath,
+					bakeSet.OutputRecords,
+				)
 
-				// for _, motion := range motions {
-				// 	rep := repository.NewVmdRepository(true)
-				// 	if err := rep.Save("", motion, false); err != nil {
-				// 		mlog.ET(mi18n.T("モーション保存失敗"), err, "")
-				// 		if ok := merr.ShowErrorDialog(cw.AppConfig(), err); ok {
-				// 			s.setWidgetEnabled(true)
-				// 		}
-				// 	}
-				// }
+				if err != nil {
+					mlog.ET(mi18n.T("モーション保存失敗"), err, "")
+					return
+				}
+
+				for _, motion := range motions {
+					rep := repository.NewVmdRepository(true)
+					if err := rep.Save("", motion, false); err != nil {
+						mlog.ET(mi18n.T("モーション保存失敗"), err, "")
+						if ok := merr.ShowErrorDialog(cw.AppConfig(), err); ok {
+							s.setWidgetEnabled(true)
+						}
+					}
+				}
 			}
 		}
 
@@ -348,9 +352,9 @@ func (s *WidgetStore) createSaveMotionButton() *widget.MPushButton {
 
 func (s *WidgetStore) createAddPhysicsButton() *widget.MPushButton {
 	btn := widget.NewMPushButton()
-	btn.SetLabel(mi18n.T("物理設定追加"))
-	btn.SetTooltip(mi18n.T("物理設定追加説明"))
-	btn.SetMaxSize(declarative.Size{Width: 100, Height: 20})
+	btn.SetLabel(mi18n.T("ワールド物理設定追加"))
+	btn.SetTooltip(mi18n.T("ワールド物理設定追加説明"))
+	btn.SetMaxSize(declarative.Size{Width: 150, Height: 20})
 	btn.SetOnClicked(func(cw *controller.ControlWindow) {
 		createPhysicsTableViewDialog(s, true)() // ダイアログを表示
 	})
@@ -361,7 +365,7 @@ func (s *WidgetStore) createAddRigidBodyButton() *widget.MPushButton {
 	btn := widget.NewMPushButton()
 	btn.SetLabel(mi18n.T("モデル物理設定追加"))
 	btn.SetTooltip(mi18n.T("モデル物理設定追加説明"))
-	btn.SetMaxSize(declarative.Size{Width: 100, Height: 20})
+	btn.SetMaxSize(declarative.Size{Width: 150, Height: 20})
 	btn.SetOnClicked(func(cw *controller.ControlWindow) {
 		createRigidBodyTableViewDialog(s, true)() // ダイアログを表示
 	})
@@ -372,7 +376,7 @@ func (s *WidgetStore) createAddOutputButton() *widget.MPushButton {
 	btn := widget.NewMPushButton()
 	btn.SetLabel(mi18n.T("出力設定追加"))
 	btn.SetTooltip(mi18n.T("出力設定追加説明"))
-	btn.SetMaxSize(declarative.Size{Width: 100, Height: 20})
+	btn.SetMaxSize(declarative.Size{Width: 150, Height: 20})
 	btn.SetOnClicked(func(cw *controller.ControlWindow) {
 		createOutputTableViewDialog(s, true)() // ダイアログを表示
 	})

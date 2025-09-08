@@ -350,9 +350,9 @@ func (wf *WidgetFactory) createSaveMotionButton() *widget.MPushButton {
 
 func (wf *WidgetFactory) createAddPhysicsButton() *widget.MPushButton {
 	btn := widget.NewMPushButton()
-	btn.SetLabel(mi18n.T("物理設定追加"))
-	btn.SetTooltip(mi18n.T("物理設定追加説明"))
-	btn.SetMaxSize(declarative.Size{Width: 100, Height: 20})
+	btn.SetLabel(mi18n.T("ワールド物理設定追加"))
+	btn.SetTooltip(mi18n.T("ワールド物理設定追加説明"))
+	btn.SetMaxSize(declarative.Size{Width: 150, Height: 20})
 	btn.SetOnClicked(func(cw *controller.ControlWindow) {
 		wf.createPhysicsTableViewDialog(true)() // ダイアログを表示
 	})

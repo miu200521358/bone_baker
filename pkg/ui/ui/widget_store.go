@@ -41,6 +41,7 @@ type WidgetStore struct {
 	loadUsecase    *usecase.LoadUsecase
 	saveUsecase    *usecase.SaveUsecase
 	physicsUsecase *usecase.PhysicsUsecase
+	outputUsecase  *usecase.OutputUsecase
 }
 
 func NewWidgetStore(mWidgets *controller.MWidgets) *WidgetStore {
@@ -53,6 +54,7 @@ func NewWidgetStore(mWidgets *controller.MWidgets) *WidgetStore {
 		loadUsecase:    usecase.NewLoadUsecase(fileRepo),
 		saveUsecase:    usecase.NewSaveUsecase(fileRepo),
 		physicsUsecase: usecase.NewPhysicsUsecase(),
+		outputUsecase:  usecase.NewOutputUsecase(),
 	}
 }
 
