@@ -12,7 +12,7 @@ import (
 	"github.com/miu200521358/walk/pkg/declarative"
 	"github.com/miu200521358/walk/pkg/walk"
 
-	"github.com/miu200521358/bone_baker/pkg/ui/ui"
+	"github.com/miu200521358/bone_baker/pkg/interface/ui"
 	"github.com/miu200521358/mlib_go/pkg/config/mconfig"
 	"github.com/miu200521358/mlib_go/pkg/config/merr"
 	"github.com/miu200521358/mlib_go/pkg/config/mi18n"
