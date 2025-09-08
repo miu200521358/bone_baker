@@ -55,14 +55,14 @@ func (p *OutputTableViewDialog) show(record *entity.OutputRecord, recordIndex in
 		},
 		Children: []declarative.Widget{
 			declarative.Composite{
-				Layout:   declarative.Grid{Columns: 2},
+				Layout:   declarative.Grid{Columns: 4},
 				Children: p.createFormWidgets(&startFrameEdit, &endFrameEdit, &ikCheckBox, &physicsCheckBox, &standardCheckBox, &fingerCheckBox, &treeView, treeModel),
 			},
 			declarative.Composite{
 				Layout: declarative.HBox{
 					Alignment: declarative.AlignHFarVCenter,
 				},
-				Children: p.createButtonWidgets(&okBtn, &deleteBtn, &cancelBtn, &dlg, &db),
+				Children: p.createButtonWidgets(&startFrameEdit, &endFrameEdit, &okBtn, &deleteBtn, &cancelBtn, &dlg, &db),
 			},
 		},
 	}
@@ -118,11 +118,11 @@ func (p *OutputTableViewDialog) createFormWidgets(startFrameEdit, endFrameEdit *
 			MinSize:            declarative.Size{Width: 100, Height: 20},
 			MaxSize:            declarative.Size{Width: 100, Height: 20},
 		},
-		declarative.HSpacer{
-			ColumnSpan: 1,
-		},
 		declarative.Label{
-			Text: mi18n.T("焼き込み対象ボーン"),
+			Text: mi18n.T("出力対象ボーン"),
+		},
+		declarative.HSpacer{
+			ColumnSpan: 3,
 		},
 		declarative.CheckBox{
 			AssignTo:    physicsCheckBox,
@@ -161,12 +161,13 @@ func (p *OutputTableViewDialog) createFormWidgets(startFrameEdit, endFrameEdit *
 			Model:      treeModel,
 			MinSize:    declarative.Size{Width: 450, Height: 200},
 			Checkable:  true,
-			ColumnSpan: 6,
+			ColumnSpan: 4,
 		},
 	}
 }
 
 func (p *OutputTableViewDialog) createButtonWidgets(
+	startFrameEdit, endFrameEdit **walk.NumberEdit,
 	okBtn, deleteBtn, cancelBtn **walk.PushButton, dlg **walk.Dialog, db **walk.DataBinder,
 ) []declarative.Widget {
 	return []declarative.Widget{
@@ -175,8 +176,13 @@ func (p *OutputTableViewDialog) createButtonWidgets(
 			Text:        mi18n.T("登録"),
 			ToolTipText: mi18n.T("出力設定登録説明"),
 			OnClicked: func() {
+				if !((*startFrameEdit).Value() < (*endFrameEdit).Value()) {
+					mlog.E(mi18n.T("出力範囲設定エラー"), nil, "")
+					return
+				}
+
 				if err := (*db).Submit(); err != nil {
-					mlog.ET(mi18n.T("焼き込み設定変更エラー"), err, "")
+					mlog.E(mi18n.T("焼き込み設定変更エラー"), err, "")
 					return
 				}
 				(*dlg).Accept()

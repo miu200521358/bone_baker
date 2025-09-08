@@ -57,11 +57,11 @@ func (s *WidgetStore) setWidgetEnabled(enabled bool) {
 	s.AddOutputButton.SetEnabled(enabled)
 	s.OutputTableView.SetEnabled(enabled)
 
-	// s.BakedHistoryIndexEdit.SetEnabled(enabled)
-	// s.BakeHistoryClearButton.SetEnabled(enabled)
+	s.BakedHistoryIndexEdit.SetEnabled(enabled)
+	s.BakeHistoryClearButton.SetEnabled(enabled)
 
-	// s.SaveModelButton.SetEnabled(enabled)
-	// s.SaveMotionButton.SetEnabled(enabled)
+	s.SaveModelButton.SetEnabled(enabled)
+	s.SaveMotionButton.SetEnabled(enabled)
 
 	s.setWidgetPlayingEnabled(enabled)
 }
@@ -374,13 +374,7 @@ func (s *WidgetStore) createAddOutputButton() *widget.MPushButton {
 	btn.SetTooltip(mi18n.T("出力設定追加説明"))
 	btn.SetMaxSize(declarative.Size{Width: 100, Height: 20})
 	btn.SetOnClicked(func(cw *controller.ControlWindow) {
-		// s.CurrentSet().OutputTableModel.AddRecord(
-		// 	s.CurrentSet().OriginalModel,
-		// 	0,
-		// 	s.CurrentSet().MaxFrame())
-		// s.OutputTableView.SetModel(s.CurrentSet().OutputTableModel)
-		// s.OutputTableView.SetCurrentIndex(len(s.CurrentSet().OutputTableModel.Records) - 1)
-		// s.createOutputTableViewDialog()() // ダイアログを表示
+		createOutputTableViewDialog(s, true)() // ダイアログを表示
 	})
 	return btn
 }

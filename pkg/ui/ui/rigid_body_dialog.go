@@ -67,8 +67,8 @@ func (p *RigidBodyTableViewDialog) Show(record *entity.RigidBodyRecord, recordIn
 				Layout: declarative.HBox{
 					Alignment: declarative.AlignHFarVCenter,
 				},
-				Children: p.createButtonWidgets(startFrameEdit, endFrameEdit,
-					maxStartFrameEdit, maxEndFrameEdit, &okBtn, &deleteBtn, &cancelBtn, &dlg, &db),
+				Children: p.createButtonWidgets(&startFrameEdit, &endFrameEdit,
+					&maxStartFrameEdit, &maxEndFrameEdit, &okBtn, &deleteBtn, &cancelBtn, &dlg, &db),
 			},
 		},
 	}
@@ -355,7 +355,7 @@ func (p *RigidBodyTableViewDialog) updateItemProperty(treeView *walk.TreeView, u
 }
 
 func (p *RigidBodyTableViewDialog) createButtonWidgets(
-	startFrameEdit, endFrameEdit, maxStartFrameEdit, maxEndFrameEdit *walk.NumberEdit,
+	startFrameEdit, endFrameEdit, maxStartFrameEdit, maxEndFrameEdit **walk.NumberEdit,
 	okBtn, deleteBtn, cancelBtn **walk.PushButton, dlg **walk.Dialog, db **walk.DataBinder,
 ) []declarative.Widget {
 	return []declarative.Widget{
@@ -364,15 +364,15 @@ func (p *RigidBodyTableViewDialog) createButtonWidgets(
 			Text:        mi18n.T("登録"),
 			ToolTipText: mi18n.T("モデル物理設定登録説明"),
 			OnClicked: func() {
-				if !(startFrameEdit.Value() < maxStartFrameEdit.Value() &&
-					maxStartFrameEdit.Value() < maxEndFrameEdit.Value() &&
-					maxEndFrameEdit.Value() < endFrameEdit.Value()) {
-					mlog.ET(mi18n.T("モデル物理範囲設定エラー"), nil, "")
+				if !((*startFrameEdit).Value() < (*maxStartFrameEdit).Value() &&
+					(*maxStartFrameEdit).Value() < (*maxEndFrameEdit).Value() &&
+					(*maxEndFrameEdit).Value() < (*endFrameEdit).Value()) {
+					mlog.E(mi18n.T("モデル物理範囲設定エラー"), nil, "")
 					return
 				}
 
 				if err := (*db).Submit(); err != nil {
-					mlog.ET(mi18n.T("焼き込み設定変更エラー"), err, "")
+					mlog.E(mi18n.T("焼き込み設定変更エラー"), err, "")
 					return
 				}
 				(*dlg).Accept()

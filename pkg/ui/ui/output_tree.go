@@ -220,11 +220,6 @@ func (pm *OutputTreeModel) SetOutputIkChecked(treeView *walk.TreeView, item walk
 		return
 	}
 
-	if !checked {
-		pm.Reset()
-		return
-	}
-
 	// 子どもの数を取得
 	for i := range item.ChildCount() {
 		child := item.ChildAt(i)
@@ -250,11 +245,6 @@ func (pm *OutputTreeModel) SetOutputStandardChecked(treeView *walk.TreeView, ite
 		for _, node := range pm.Nodes {
 			pm.SetOutputStandardChecked(treeView, node, checked)
 		}
-		return
-	}
-
-	if !checked {
-		pm.Reset()
 		return
 	}
 
@@ -286,11 +276,6 @@ func (pm *OutputTreeModel) SetOutputFingerChecked(treeView *walk.TreeView, item 
 		return
 	}
 
-	if !checked {
-		pm.Reset()
-		return
-	}
-
 	// 子どもの数を取得
 	for i := range item.ChildCount() {
 		child := item.ChildAt(i)
@@ -316,11 +301,6 @@ func (pm *OutputTreeModel) SetOutputPhysicsChecked(treeView *walk.TreeView, item
 		for _, node := range pm.Nodes {
 			pm.SetOutputPhysicsChecked(treeView, node, checked)
 		}
-		return
-	}
-
-	if !checked {
-		pm.Reset()
 		return
 	}
 

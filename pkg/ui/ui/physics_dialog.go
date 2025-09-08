@@ -60,7 +60,7 @@ func (p *PhysicsTableViewDialog) show(record *entity.PhysicsRecord, recordIndex 
 				Layout: declarative.HBox{
 					Alignment: declarative.AlignHFarVCenter,
 				},
-				Children: p.createButtonWidgets(&okBtn, &deleteBtn, &cancelBtn, &dlg, &db),
+				Children: p.createButtonWidgets(&startFrameEdit, &endFrameEdit, &okBtn, &deleteBtn, &cancelBtn, &dlg, &db),
 			},
 		},
 	}
@@ -181,6 +181,7 @@ func (p *PhysicsTableViewDialog) createFormWidgets(startFrameEdit, endFrameEdit,
 }
 
 func (p *PhysicsTableViewDialog) createButtonWidgets(
+	startFrameEdit, endFrameEdit **walk.NumberEdit,
 	okBtn, deleteBtn, cancelBtn **walk.PushButton, dlg **walk.Dialog, db **walk.DataBinder,
 ) []declarative.Widget {
 	return []declarative.Widget{
@@ -189,8 +190,13 @@ func (p *PhysicsTableViewDialog) createButtonWidgets(
 			Text:        mi18n.T("登録"),
 			ToolTipText: mi18n.T("物理設定登録説明"),
 			OnClicked: func() {
+				if !((*startFrameEdit).Value() < (*endFrameEdit).Value()) {
+					mlog.E(mi18n.T("ワールド物理範囲設定エラー"), nil, "")
+					return
+				}
+
 				if err := (*db).Submit(); err != nil {
-					mlog.ET(mi18n.T("焼き込み設定変更エラー"), err, "")
+					mlog.E(mi18n.T("焼き込み設定変更エラー"), err, "")
 					return
 				}
 				(*dlg).Accept()
