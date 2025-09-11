@@ -349,27 +349,51 @@ func (s *WidgetStore) saveMotions() error {
 	start := time.Now()
 
 	bakeSet := s.currentSet()
-	if bakeSet.OutputMotionPath != "" && bakeSet.OutputMotion != nil {
-		motions, err := s.outputUsecase.ProcessOutputMotions(
-			bakeSet.OriginalModel,
-			bakeSet.OriginalMotion,
-			bakeSet.OutputMotion,
-			bakeSet.OutputMotionPath,
-			bakeSet.OutputRecords,
-		)
 
-		if err != nil {
-			mlog.ET(mi18n.T("モーション保存失敗"), err, "")
+	if bakeSet.OriginalModel == nil {
+		mlog.W(mi18n.T("物理焼き込みセットの元モデルが設定されていません"))
+		return nil
+	}
+
+	if bakeSet.OriginalMotion == nil {
+		mlog.W(mi18n.T("物理焼き込みセットの元モーションが設定されていません"))
+		return nil
+	}
+
+	if bakeSet.OutputMotionPath == "" {
+		mlog.W(mi18n.T("物理焼き込みセットの出力モーションパスが設定されていません"))
+		return nil
+	}
+
+	if bakeSet.OutputMotion == nil {
+		mlog.W(mi18n.T("物理焼き込みセットの出力モーションが設定されていません"))
+		return nil
+	}
+
+	if len(bakeSet.OutputRecords) == 0 {
+		mlog.W(mi18n.T("物理焼き込みセットの出力レコードが設定されていません"))
+		return nil
+	}
+
+	motions, err := s.outputUsecase.ProcessOutputMotions(
+		bakeSet.OriginalModel,
+		bakeSet.OriginalMotion,
+		bakeSet.OutputMotion,
+		bakeSet.OutputMotionPath,
+		bakeSet.OutputRecords,
+	)
+
+	if err != nil {
+		mlog.ET(mi18n.T("モーション保存失敗"), err, "")
+		return err
+	}
+
+	for _, motion := range motions {
+		rep := repository.NewVmdRepository(true)
+		mlog.IL(fmt.Sprintf(mi18n.T("モーション保存開始: [%.0f-%.0f]"), motion.MinFrame(), motion.MaxFrame()))
+		if err := rep.Save("", motion, false); err != nil {
+			mlog.ET(fmt.Sprintf(mi18n.T("モーション保存失敗"), motion.Path()), err, "")
 			return err
-		}
-
-		for _, motion := range motions {
-			rep := repository.NewVmdRepository(true)
-			mlog.IL(fmt.Sprintf(mi18n.T("モーション保存開始: [%.0f-%.0f]"), motion.MinFrame(), motion.MaxFrame()))
-			if err := rep.Save("", motion, false); err != nil {
-				mlog.ET(fmt.Sprintf(mi18n.T("モーション保存失敗"), motion.Path()), err, "")
-				return err
-			}
 		}
 	}
 

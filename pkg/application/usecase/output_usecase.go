@@ -1,7 +1,6 @@
 package usecase
 
 import (
-	"errors"
 	"fmt"
 	"slices"
 
@@ -34,11 +33,7 @@ func (uc *OutputUsecase) ProcessOutputMotions(
 		return motions, err
 	}
 
-	if originalModel == nil || outputMotion == nil || len(records) == 0 {
-		return motions, errors.New(mi18n.T("物理焼き込みセットの元モデルまたは出力モーションが設定されていません"))
-	}
-
-	logInterval := 1000
+	logInterval := 10000
 
 	for rIndex, record := range records {
 		dirPath, fileName, ext := mfile.SplitPath(outputMotionPath)
@@ -129,9 +124,9 @@ func (uc *OutputUsecase) ProcessOutputMotions(
 				}
 			}
 
-			if frameCount%logInterval > logFrameCount%logInterval && frameCount > 0 {
-				mlog.I(fmt.Sprintf(mi18n.T("--- キーフレーム焼き込み処理中 [%s][%04d][%d] ..."), fileName, int(f), frameCount))
-				logFrameCount = frameCount
+			if recordFrameCount/logInterval > logFrameCount/logInterval && recordFrameCount > 0 {
+				mlog.I(fmt.Sprintf(mi18n.T("--- キーフレーム焼き込み処理中 [%s][%04d][%d] ..."), fileName, int(f), recordFrameCount))
+				logFrameCount = recordFrameCount
 			}
 		}
 
