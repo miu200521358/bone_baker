@@ -3,6 +3,8 @@ package ui
 import (
 	"fmt"
 	"path/filepath"
+	"sync"
+	"time"
 
 	"github.com/miu200521358/bone_baker/pkg/domain/entity"
 	"github.com/miu200521358/mlib_go/pkg/config/mconfig"
@@ -318,7 +320,16 @@ func (s *WidgetStore) createSaveMotionButton() *widget.MPushButton {
 	btn.SetOnClicked(func(cw *controller.ControlWindow) {
 		s.setWidgetEnabled(false)
 
-		for _, bakeSet := range s.BakeSets {
+		// 処理時間の計測開始
+		start := time.Now()
+		errChan := make(chan error, 1)
+
+		var wg sync.WaitGroup
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+
+			bakeSet := s.currentSet()
 			if bakeSet.OutputMotionPath != "" && bakeSet.OutputMotion != nil {
 				motions, err := s.outputUsecase.ProcessOutputMotions(
 					bakeSet.OriginalModel,
@@ -329,7 +340,7 @@ func (s *WidgetStore) createSaveMotionButton() *widget.MPushButton {
 				)
 
 				if err != nil {
-					mlog.ET(mi18n.T("モーション保存失敗"), err, "")
+					errChan <- err
 					return
 				}
 
@@ -345,7 +356,18 @@ func (s *WidgetStore) createSaveMotionButton() *widget.MPushButton {
 					}
 				}
 			}
+		}()
+
+		wg.Wait()
+		close(errChan)
+
+		if err, ok := <-errChan; ok {
+			mlog.ET(mi18n.T("モーション保存失敗"), err, "")
 		}
+
+		// 処理時間の計測終了
+		elapsed := time.Since(start)
+		mlog.IL(fmt.Sprintf(mi18n.T("モーション保存完了: 処理時間 %s"), controller.FormatDuration(elapsed)))
 
 		s.setWidgetEnabled(true)
 		controller.Beep()

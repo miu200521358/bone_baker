@@ -39,7 +39,7 @@ func (uc *OutputUsecase) ProcessOutputMotions(
 		return motions, errors.New(mi18n.T("物理焼き込みセットの元モデルまたは出力モーションが設定されていません"))
 	}
 
-	logInterval := 100000
+	logInterval := 10000
 
 	for rIndex, record := range records {
 		dirPath, fileName, ext := mfile.SplitPath(outputMotionPath)
@@ -57,6 +57,8 @@ func (uc *OutputUsecase) ProcessOutputMotions(
 		recordFrameCount := 0
 		frameCount := 0
 		logFrameCount := 0
+
+		mlog.I(fmt.Sprintf(mi18n.T("焼き込み開始 [No.%02d][%04d-%04d]"), rIndex+1, int(record.StartFrame), int(record.EndFrame)))
 
 		for f := record.StartFrame; f <= record.EndFrame; f++ {
 			if recordFrameCount+frameCount*2 > vmd.MAX_BONE_FRAMES {
@@ -90,7 +92,7 @@ func (uc *OutputUsecase) ProcessOutputMotions(
 				if slices.Contains(record.ItemBoneNames(), boneName) {
 					// 焼き込み出力対象の場合、出力モーションから取得
 					bakedBf := outputMotion.BoneFrames.Get(boneName).Get(f)
-					bf.Position = bakedBf.FilledUnitPosition().Copy() // (モーフ・付与親含む)トータル位置を保存
+					bf.Position = bakedBf.FilledPosition().Copy()     // 位置を保存
 					bf.Rotation = bakedBf.FilledUnitRotation().Copy() // (モーフ・付与親含む)トータル回転を保存
 					if bakedBf.Curves != nil {
 						bf.Curves = bakedBf.Curves.Copy()
