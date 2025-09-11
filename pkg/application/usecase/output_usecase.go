@@ -108,6 +108,7 @@ func (uc *OutputUsecase) ProcessOutputMotions(
 				}
 
 				motion.AppendBoneFrame(boneName, bf)
+				copiedMotion.AppendBoneFrame(boneName, bf)
 				frameCount++
 
 				if copiedMotion.BoneFrames.Contains(boneName) {
