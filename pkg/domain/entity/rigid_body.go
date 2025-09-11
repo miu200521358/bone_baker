@@ -36,6 +36,10 @@ func (r *RigidBodyRecord) ItemNames() string {
 		return mi18n.T("変更剛体なし")
 	}
 
+	if len(names) <= 6 {
+		return strings.Join(names, ", ")
+	}
+
 	return strings.Join(names[:6], ", ") + "..."
 }
 

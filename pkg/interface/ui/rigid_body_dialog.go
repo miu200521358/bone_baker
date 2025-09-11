@@ -364,9 +364,9 @@ func (p *RigidBodyTableViewDialog) createButtonWidgets(
 			Text:        mi18n.T("登録"),
 			ToolTipText: mi18n.T("モデル物理設定登録説明"),
 			OnClicked: func() {
-				if !((*startFrameEdit).Value() < (*maxStartFrameEdit).Value() &&
+				if !((*startFrameEdit).Value() <= (*maxStartFrameEdit).Value() &&
 					(*maxStartFrameEdit).Value() < (*maxEndFrameEdit).Value() &&
-					(*maxEndFrameEdit).Value() < (*endFrameEdit).Value()) {
+					(*maxEndFrameEdit).Value() <= (*endFrameEdit).Value()) {
 					mlog.E(mi18n.T("モデル物理範囲設定エラー"), nil, "")
 					return
 				}

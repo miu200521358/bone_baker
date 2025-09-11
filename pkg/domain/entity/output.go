@@ -1,6 +1,7 @@
 package entity
 
 import (
+	"slices"
 	"strings"
 
 	"github.com/miu200521358/mlib_go/pkg/config/mi18n"
@@ -28,14 +29,21 @@ func (r *OutputRecord) ItemNames() string {
 		return mi18n.T("出力対象ボーンなし")
 	}
 
+	if len(boneNames) <= 6 {
+		return strings.Join(boneNames, ", ")
+	}
+
 	return strings.Join(r.ItemBoneNames()[:6], ", ") + "..."
 }
 
 func (r *OutputRecord) ItemBoneNames() []string {
 	var names []string
 	for _, item := range r.Tree.Items {
-		names = append(names, item.ItemBoneNames(names)...)
+		names = append(names, item.ItemBoneNames()...)
 	}
+
+	// 重複削除
+	names = slices.Compact(names)
 
 	return names
 }
@@ -115,13 +123,15 @@ func newOutputItem(bone *pmx.Bone, parent *OutputItem) *OutputItem {
 	return item
 }
 
-func (oi *OutputItem) ItemBoneNames(names []string) []string {
-	if oi.Bone != nil && oi.Checked {
+func (oi *OutputItem) ItemBoneNames() []string {
+	names := make([]string, 0)
+	if oi.Bone != nil && oi.Bone.DisplaySlotIndex >= 0 && oi.Checked {
+		// 表示枠に登録されているボーンのみ対象とする
 		names = append(names, oi.Bone.Name())
 	}
 
 	for _, child := range oi.Children {
-		names = child.ItemBoneNames(names)
+		names = append(names, child.ItemBoneNames()...)
 	}
 
 	return names
