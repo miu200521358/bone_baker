@@ -38,7 +38,7 @@ func (uc *OutputUsecase) ProcessOutputMotions(
 		return motions, errors.New(mi18n.T("物理焼き込みセットの元モデルまたは出力モーションが設定されていません"))
 	}
 
-	logInterval := 10000
+	logInterval := 1000
 
 	for rIndex, record := range records {
 		dirPath, fileName, ext := mfile.SplitPath(outputMotionPath)
@@ -62,7 +62,7 @@ func (uc *OutputUsecase) ProcessOutputMotions(
 		for f := record.StartFrame; f <= record.EndFrame; f++ {
 			if recordFrameCount+frameCount*2 > vmd.MAX_BONE_FRAMES {
 				// 次のフレームが上限を超える場合は切り替える
-				mlog.I(fmt.Sprintf(mi18n.T("分割開始 [%s][%04d][%d][%d]"), fileName, int(f), recordFrameCount, frameCount*2))
+				mlog.I(fmt.Sprintf(mi18n.T("分割開始 [%04d] - [%d][%d]"), int(f), recordFrameCount, frameCount*2))
 
 				motions = append(motions, motion)
 				motion = vmd.NewVmdMotion("")
@@ -129,7 +129,7 @@ func (uc *OutputUsecase) ProcessOutputMotions(
 				}
 			}
 
-			if frameCount%logInterval > logFrameCount%logInterval {
+			if frameCount%logInterval > logFrameCount%logInterval && frameCount > 0 {
 				mlog.I(fmt.Sprintf(mi18n.T("--- キーフレーム焼き込み処理中 [%s][%04d][%d] ..."), fileName, int(f), frameCount))
 				logFrameCount = frameCount
 			}
