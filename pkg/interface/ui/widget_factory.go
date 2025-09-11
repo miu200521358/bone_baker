@@ -3,7 +3,6 @@ package ui
 import (
 	"fmt"
 	"path/filepath"
-	"sync"
 	"time"
 
 	"github.com/miu200521358/bone_baker/pkg/domain/entity"
@@ -320,59 +319,65 @@ func (s *WidgetStore) createSaveMotionButton() *widget.MPushButton {
 	btn.SetOnClicked(func(cw *controller.ControlWindow) {
 		s.setWidgetEnabled(false)
 
-		// 処理時間の計測開始
-		start := time.Now()
-		errChan := make(chan error, 1)
+		// エラーを受け取るためのチャネルを作成
+		errCh := make(chan error, 1)
 
-		var wg sync.WaitGroup
-		wg.Add(1)
+		// goroutineで処理を実行し、エラーをチャネル経由で返す
 		go func() {
-			defer wg.Done()
-
-			bakeSet := s.currentSet()
-			if bakeSet.OutputMotionPath != "" && bakeSet.OutputMotion != nil {
-				motions, err := s.outputUsecase.ProcessOutputMotions(
-					bakeSet.OriginalModel,
-					bakeSet.OriginalMotion,
-					bakeSet.OutputMotion,
-					bakeSet.OutputMotionPath,
-					bakeSet.OutputRecords,
-				)
-
-				if err != nil {
-					errChan <- err
-					return
-				}
-
-				for _, motion := range motions {
-					rep := repository.NewVmdRepository(true)
-					mlog.IL(fmt.Sprintf(mi18n.T("モーション保存開始: [%.0f-%.0f]"), motion.MinFrame(), motion.MaxFrame()))
-					if err := rep.Save("", motion, false); err != nil {
-						mlog.ET(fmt.Sprintf(mi18n.T("モーション保存失敗"), motion.Path()), err, "")
-						if ok := merr.ShowErrorDialog(cw.AppConfig(), err); ok {
-							s.setWidgetEnabled(true)
-							return
-						}
-					}
-				}
-			}
+			err := s.saveMotions()
+			errCh <- err // エラーがnilでも送信
 		}()
 
-		wg.Wait()
-		close(errChan)
-
-		if err, ok := <-errChan; ok {
-			mlog.ET(mi18n.T("モーション保存失敗"), err, "")
-		}
-
-		// 処理時間の計測終了
-		elapsed := time.Since(start)
-		mlog.IL(fmt.Sprintf(mi18n.T("モーション保存完了: 処理時間 %s"), controller.FormatDuration(elapsed)))
-
-		s.setWidgetEnabled(true)
-		controller.Beep()
+		// UIスレッドでエラーを受け取る
+		go func() {
+			if err := <-errCh; err != nil {
+				// UIスレッドでエラーを表示する
+				cw.Synchronize(func() {
+					if ok := merr.ShowErrorDialog(cw.AppConfig(), err); ok {
+						s.setWidgetEnabled(true)
+						controller.Beep()
+					}
+				})
+			}
+		}()
 	})
 	return btn
+}
+
+func (s *WidgetStore) saveMotions() error {
+	// 処理時間の計測開始
+	start := time.Now()
+
+	bakeSet := s.currentSet()
+	if bakeSet.OutputMotionPath != "" && bakeSet.OutputMotion != nil {
+		motions, err := s.outputUsecase.ProcessOutputMotions(
+			bakeSet.OriginalModel,
+			bakeSet.OriginalMotion,
+			bakeSet.OutputMotion,
+			bakeSet.OutputMotionPath,
+			bakeSet.OutputRecords,
+		)
+
+		if err != nil {
+			mlog.ET(mi18n.T("モーション保存失敗"), err, "")
+			return err
+		}
+
+		for _, motion := range motions {
+			rep := repository.NewVmdRepository(true)
+			mlog.IL(fmt.Sprintf(mi18n.T("モーション保存開始: [%.0f-%.0f]"), motion.MinFrame(), motion.MaxFrame()))
+			if err := rep.Save("", motion, false); err != nil {
+				mlog.ET(fmt.Sprintf(mi18n.T("モーション保存失敗"), motion.Path()), err, "")
+				return err
+			}
+		}
+	}
+
+	// 処理時間の計測終了
+	elapsed := time.Since(start)
+	mlog.IL(fmt.Sprintf(mi18n.T("モーション保存完了: 処理時間 %s"), controller.FormatDuration(elapsed)))
+
+	return nil
 }
 
 func (s *WidgetStore) createAddPhysicsButton() *widget.MPushButton {
