@@ -120,9 +120,9 @@ func (s *WidgetStore) changeCurrentAction(index int) {
 
 func (s *WidgetStore) maxFrame() float32 {
 	maxFrame := float32(0)
-	for _, physicsSet := range s.BakeSets {
-		if physicsSet.OriginalMotion != nil && maxFrame < physicsSet.OriginalMotion.MaxFrame() {
-			maxFrame = physicsSet.OriginalMotion.MaxFrame()
+	for _, bs := range s.BakeSets {
+		if bs.OriginalMotion != nil && maxFrame < bs.OriginalMotion.MaxFrame() {
+			maxFrame = bs.OriginalMotion.MaxFrame()
 		}
 	}
 
@@ -131,9 +131,9 @@ func (s *WidgetStore) maxFrame() float32 {
 
 func (s *WidgetStore) minFrame() float32 {
 	minFrame := float32(0)
-	for _, physicsSet := range s.BakeSets {
-		if physicsSet.OriginalMotion != nil && minFrame > physicsSet.OriginalMotion.MinFrame() {
-			minFrame = physicsSet.OriginalMotion.MinFrame()
+	for _, bs := range s.BakeSets {
+		if bs.OriginalMotion != nil && minFrame > bs.OriginalMotion.MinFrame() {
+			minFrame = bs.OriginalMotion.MinFrame()
 		}
 	}
 
