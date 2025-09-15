@@ -454,8 +454,9 @@ func (s *WidgetStore) createBakedHistoryWidgets() []declarative.Widget {
 			Increment:              1,
 			MinValue:               1,
 			MaxValue:               2,
+			DefaultValue:           1,
 			OnValueChanged:         s.createHistoryIndexChangeHandler(),
-			DefaultBackgroundColor: walk.ColorWhite,
+			ChangedBackgroundColor: walk.ColorWhite,
 		},
 		s.BakeHistoryClearButton.Widgets(),
 		declarative.HSpacer{
