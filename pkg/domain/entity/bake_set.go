@@ -28,7 +28,8 @@ type BakeSet struct {
 
 func NewBakeSet(index int) *BakeSet {
 	return &BakeSet{
-		Index: index,
+		Index:          index,
+		OriginalMotion: vmd.NewVmdMotion(""),
 	}
 }
 
