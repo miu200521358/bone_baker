@@ -150,7 +150,7 @@ func (p *RigidBodyTableViewDialog) createFormWidgets(startFrameEdit, endFrameEdi
 			Increment:          1,
 			MinValue:           float64(p.store.currentSet().OriginalMotion.MinFrame()),
 			MaxValue:           float64(p.store.currentSet().OriginalMotion.MaxFrame() + 1),
-			DefaultValue:       float64(p.store.currentSet().OriginalMotion.MaxFrame() + 1),
+			DefaultValue:       float64(p.store.currentSet().OriginalMotion.MaxFrame()),
 			MinSize:            declarative.Size{Width: 80, Height: 20},
 			MaxSize:            declarative.Size{Width: 80, Height: 20},
 		},
