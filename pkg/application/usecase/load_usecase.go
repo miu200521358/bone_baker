@@ -220,7 +220,7 @@ func (uc *LoadUsecase) insertPhysicsBonePrefix(model *pmx.PmxModel) {
 			formattedBoneName := fmt.Sprintf("BB%0*d_%s", digits, boneIndex, bone.Name())
 
 			// BoneNameEncodingServiceを使用
-			bone.SetName(uc.encodeName(formattedBoneName, 15))
+			bone.SetName(uc.encodeName(formattedBoneName, 14))
 		}
 		return true
 	})
@@ -286,6 +286,11 @@ func (uc *LoadUsecase) encodeName(name string, limit int) string {
 	trimBytes = bytes.ReplaceAll(trimBytes, []byte("\x00"), []byte(" ")) // 空白をスペースに変換
 
 	decodedText := string(trimBytes)
+
+	// 末尾が文字化けしている場合は削除
+	if len(decodedText) > 0 && (decodedText[len(decodedText)-1] < 0x20 || decodedText[len(decodedText)-1] > 0x7E) {
+		decodedText = decodedText[:len(decodedText)-1]
+	}
 
 	return decodedText
 }
