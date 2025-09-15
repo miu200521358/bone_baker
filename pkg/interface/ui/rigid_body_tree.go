@@ -38,10 +38,10 @@ func (pi *RigidBodyTreeItem) Text() string {
 	}
 
 	var nameText string
-	if pi.item.Bone != nil {
-		nameText = pi.item.Bone.Name()
-	} else if pi.item.RigidBody != nil {
+	if pi.item.RigidBody != nil {
 		nameText = pi.item.RigidBody.Name()
+	} else if pi.item.Bone != nil {
+		nameText = pi.item.Bone.Name()
 	} else {
 		nameText = "Unknown"
 	}
