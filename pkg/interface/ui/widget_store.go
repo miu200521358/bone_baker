@@ -30,6 +30,8 @@ type WidgetStore struct {
 	Player                 *widget.MotionPlayer    // モーションプレイヤー
 	AddPhysicsButton       *widget.MPushButton     // 物理設定追加ボタン
 	PhysicsTableView       *walk.TableView         // ワールド物理設定テーブル
+	AddWindButton          *widget.MPushButton     // 風設定追加ボタン
+	WindTableView          *walk.TableView         // 風設定テーブル
 	AddRigidBodyButton     *widget.MPushButton     // モデル物理物理追加ボタン
 	RigidBodyTableWidget   *walk.CustomWidget      // モデル物理物理テーブル
 	RigidBodyTreeModel     *RigidBodyTreeModel     // モデル物理ツリーモデル
@@ -37,6 +39,7 @@ type WidgetStore struct {
 	OutputTableView        *walk.TableView         // 出力定義テーブル
 	BakeSets               []*entity.BakeSet       `json:"bake_sets"`       // ボーン焼き込みセット
 	PhysicsRecords         []*entity.PhysicsRecord `json:"physics_records"` // 物理設定レコード
+	WindRecords            []*entity.WindRecord    `json:"wind_records"`    // 風設定レコード
 
 	loadUsecase    *usecase.LoadUsecase
 	saveUsecase    *usecase.SaveUsecase
@@ -165,5 +168,6 @@ func (s *WidgetStore) widgetList() []controller.IMWidget {
 		s.AddPhysicsButton,
 		s.AddRigidBodyButton,
 		s.AddOutputButton,
+		s.AddWindButton,
 	}
 }

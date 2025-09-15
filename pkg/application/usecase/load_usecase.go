@@ -197,7 +197,7 @@ func (uc *LoadUsecase) appendTailRigidBody(model *pmx.PmxModel) {
 				}
 				minVertexPosition := mmath.MinVec3(vectorPositions)
 				medianVertexPosition := mmath.MedianVec3(vectorPositions)
-				rigidBody.Size = medianVertexPosition.Subed(minVertexPosition).MuledScalar(0.5)
+				rigidBody.Size = medianVertexPosition.Subed(minVertexPosition).MuledScalar(0.3)
 			} else {
 				// ウェイトが乗っていないボーンの場合、デフォルト値を設定
 				rigidBody.Size = &mmath.MVec3{X: 0.2, Y: 0.2, Z: 0.2}

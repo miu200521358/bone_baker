@@ -177,3 +177,36 @@ func (u *PhysicsUsecase) ApplyPhysicsModelMotion(
 		physicsWorldMotion.AppendPhysicsResetFrame(vmd.NewPhysicsResetFrameByValue(record.EndFrame+1, vmd.PHYSICS_RESET_TYPE_NONE))
 	}
 }
+
+// ApplyWindMotion 風設定をVMDモーションに適用する
+func (u *PhysicsUsecase) ApplyWindMotion(
+	windMotion *vmd.VmdMotion,
+	records []*entity.WindRecord,
+) {
+	for _, record := range records {
+		for f := record.StartFrame; f <= record.EndFrame; f++ {
+			windMotion.AppendWindEnabledFrame(vmd.NewWindEnabledFrameByValue(f, record.WindConfig.Enabled))
+			windMotion.AppendWindDirectionFrame(vmd.NewWindDirectionFrameByValue(f, record.WindConfig.Direction))
+			windMotion.AppendWindDragCoeffFrame(vmd.NewWindDragCoeffFrameByValue(f, record.WindConfig.DragCoeff))
+			windMotion.AppendWindLiftCoeffFrame(vmd.NewWindLiftCoeffFrameByValue(f, record.WindConfig.LiftCoeff))
+			windMotion.AppendWindRandomnessFrame(vmd.NewWindRandomnessFrameByValue(f, record.WindConfig.Randomness))
+			windMotion.AppendWindSpeedFrame(vmd.NewWindSpeedFrameByValue(f, record.WindConfig.Speed))
+			windMotion.AppendWindTurbulenceFreqHzFrame(vmd.NewWindTurbulenceFreqHzFrameByValue(f, record.WindConfig.TurbulenceFreqHz))
+
+			if f == record.StartFrame {
+				// 前フレームから継続して物理演算を行う
+				windMotion.AppendPhysicsResetFrame(vmd.NewPhysicsResetFrameByValue(f, vmd.PHYSICS_RESET_TYPE_CONTINUE_FRAME))
+			} else {
+				// 開始と終了以外はリセットしない
+				windMotion.AppendPhysicsResetFrame(vmd.NewPhysicsResetFrameByValue(f, vmd.PHYSICS_RESET_TYPE_NONE))
+			}
+		}
+
+		// 最初フレームの前には物理リセットしない（次キーフレを呼んでしまうので）
+		if record.StartFrame > 0 {
+			windMotion.AppendPhysicsResetFrame(vmd.NewPhysicsResetFrameByValue(record.StartFrame-1, vmd.PHYSICS_RESET_TYPE_NONE))
+		}
+		// 最後のフレームの後に物理更新停止する
+		windMotion.AppendPhysicsResetFrame(vmd.NewPhysicsResetFrameByValue(record.EndFrame+1, vmd.PHYSICS_RESET_TYPE_NONE))
+	}
+}

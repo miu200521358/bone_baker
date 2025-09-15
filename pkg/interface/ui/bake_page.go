@@ -24,6 +24,7 @@ func NewBakePage(mWidgets *controller.MWidgets) declarative.TabPage {
 		store.BakeSets = append(store.BakeSets, entity.NewBakeSet(len(store.BakeSets)))
 		store.AddAction()
 		store.AddPhysicsButton.SetEnabled(false)
+		store.AddWindButton.SetEnabled(false)
 		store.AddRigidBodyButton.SetEnabled(false)
 		store.AddOutputButton.SetEnabled(false)
 		store.SaveModelButton.SetEnabled(false)
@@ -111,6 +112,23 @@ func NewBakePage(mWidgets *controller.MWidgets) declarative.TabPage {
 						},
 					},
 					createRigidBodyTable(store),
+					declarative.Composite{
+						Layout:  declarative.HBox{},
+						MinSize: declarative.Size{Width: 200, Height: 40},
+						MaxSize: declarative.Size{Width: 2560, Height: 40},
+						Children: []declarative.Widget{
+							declarative.TextLabel{
+								Text:        mi18n.T("風設定テーブル"),
+								ToolTipText: mi18n.T("風設定テーブル説明"),
+								OnMouseDown: func(x, y int, button walk.MouseButton) {
+									mlog.ILT(mi18n.T("風設定テーブル"), mi18n.T("風設定テーブル説明"))
+								},
+							},
+							declarative.HSpacer{},
+							store.AddWindButton.Widgets(),
+						},
+					},
+					createWindTableView(store),
 					declarative.VSeparator{},
 					declarative.Composite{
 						Layout:   declarative.Grid{Columns: 4},
