@@ -38,7 +38,7 @@ func (uc *OutputUsecase) ProcessOutputMotions(
 	for rIndex, record := range records {
 		dirPath, fileName, ext := mfile.SplitPath(outputMotionPath)
 
-		targetBoneNames := uc.getTargetBoneNames(originalModel, originalMotion, outputMotion, record)
+		targetBoneNames := record.ItemBoneNames()
 		if len(targetBoneNames) == 0 {
 			mlog.W(fmt.Sprintf(mi18n.T("出力対象ボーンが見つからなかったため、出力設定をスキップします [No.%02d]"), rIndex+1))
 			continue
@@ -71,9 +71,39 @@ func (uc *OutputUsecase) ProcessOutputMotions(
 			frameCount = 0
 
 			for _, boneName := range outputMotion.BoneFrames.Names() {
-				if !slices.Contains(targetBoneNames, boneName) || (!slices.Contains(record.ItemBoneNames(), boneName) && !copiedMotion.BoneFrames.Get(boneName).Contains(f)) {
+				if !slices.Contains(targetBoneNames, boneName) {
 					// 出力対象ボーン以外はスキップ
-					// 出力対象外で、元モーションの登録キーフレーム以外はスキップ
+					if originalMotion.BoneFrames.Get(boneName).Contains(f) {
+						bone, err := originalModel.Bones.GetByName(boneName)
+						if err != nil {
+							continue
+						}
+
+						if bone.IsEffectorRotation() || bone.IsEffectorTranslation() {
+							effectBone, err := originalModel.Bones.Get(bone.EffectIndex)
+							if err != nil {
+								continue
+							}
+
+							if slices.Contains(targetBoneNames, effectBone.Name()) {
+								// 付与親ボーンは出力レコードに付与元ボーンが登録されている場合はスキップ
+								continue
+							}
+						}
+
+						// 元モーションの登録ボーンの場合、キーフレ登録
+						originalBf := originalMotion.BoneFrames.Get(boneName).Get(f)
+						bf := vmd.NewBoneFrame(f)
+						bf.Position = originalBf.FilledPosition().Copy() // 位置を保存
+						bf.Rotation = originalBf.FilledRotation().Copy() // 回転を保存
+						if originalBf.Curves != nil {
+							bf.Curves = originalBf.Curves.Copy()
+						}
+
+						motion.InsertBoneFrame(boneName, bf)
+						frameCount++
+					}
+
 					continue
 				}
 
@@ -83,7 +113,7 @@ func (uc *OutputUsecase) ProcessOutputMotions(
 				}
 
 				bf := vmd.NewBoneFrame(f)
-				if slices.Contains(record.ItemBoneNames(), boneName) {
+				if slices.Contains(targetBoneNames, boneName) {
 					// 焼き込み出力対象の場合、出力モーションから取得
 					bakedBf := outputMotion.BoneFrames.Get(boneName).Get(f)
 					bf.Position = bakedBf.FilledPosition().Copy()     // 位置を保存
@@ -135,48 +165,4 @@ func (uc *OutputUsecase) ProcessOutputMotions(
 	}
 
 	return motions, nil
-}
-
-func (uc *OutputUsecase) getTargetBoneNames(
-	originalModel *pmx.PmxModel,
-	originalMotion *vmd.VmdMotion,
-	outputMotion *vmd.VmdMotion,
-	record *entity.OutputRecord,
-) []string {
-	boneNames := make([]string, 0)
-
-	for f := record.StartFrame; f <= record.EndFrame; f++ {
-		for _, boneName := range outputMotion.BoneFrames.Names() {
-			bone, err := originalModel.Bones.GetByName(boneName)
-			if err != nil {
-				continue
-			}
-
-			if !(originalMotion.BoneFrames.Contains(boneName) || slices.Contains(record.ItemBoneNames(), boneName)) {
-				// 元モーションの登録ボーンおよび出力対象ボーンのいずれにも含まれない場合はスキップ
-				continue
-			}
-
-			if !(bone.IsEffectorRotation() || bone.IsEffectorTranslation()) {
-				// 付与親になっていないボーンはそのまま登録
-				if !slices.Contains(boneNames, boneName) {
-					boneNames = append(boneNames, boneName)
-				}
-				continue
-			}
-
-			// 付与親になっているボーンは、付与親元のボーンが登録対象でない場合のみ登録
-			effectBone, err := originalModel.Bones.Get(bone.EffectIndex)
-			if err != nil {
-				continue
-			}
-			if !(originalMotion.BoneFrames.Contains(effectBone.Name()) || slices.Contains(record.ItemBoneNames(), effectBone.Name())) {
-				if !slices.Contains(boneNames, boneName) {
-					boneNames = append(boneNames, boneName)
-				}
-			}
-		}
-	}
-
-	return boneNames
 }
