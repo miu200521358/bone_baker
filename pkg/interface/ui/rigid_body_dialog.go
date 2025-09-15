@@ -4,6 +4,7 @@ import (
 	"github.com/miu200521358/bone_baker/pkg/domain/entity"
 	"github.com/miu200521358/mlib_go/pkg/config/mi18n"
 	"github.com/miu200521358/mlib_go/pkg/config/mlog"
+	"github.com/miu200521358/mlib_go/pkg/domain/vmd"
 	"github.com/miu200521358/walk/pkg/declarative"
 	"github.com/miu200521358/walk/pkg/walk"
 )
@@ -100,8 +101,9 @@ func (p *RigidBodyTableViewDialog) createFormWidgets(startFrameEdit, endFrameEdi
 			SpinButtonsVisible: true,
 			Decimals:           0,
 			Increment:          1,
-			MinValue:           0,
-			MaxValue:           float64(p.store.currentSet().OriginalMotion.MinFrame()),
+			MinValue:           float64(p.store.currentSet().OriginalMotion.MinFrame()),
+			MaxValue:           float64(p.store.currentSet().OriginalMotion.MaxFrame()),
+			DefaultValue:       float64(p.store.currentSet().OriginalMotion.MinFrame()),
 			MinSize:            declarative.Size{Width: 80, Height: 20},
 			MaxSize:            declarative.Size{Width: 80, Height: 20},
 		},
@@ -121,8 +123,9 @@ func (p *RigidBodyTableViewDialog) createFormWidgets(startFrameEdit, endFrameEdi
 			SpinButtonsVisible: true,
 			Decimals:           0,
 			Increment:          1,
-			MinValue:           0,
-			MaxValue:           float64(p.store.currentSet().OriginalMotion.MinFrame()),
+			MinValue:           float64(p.store.currentSet().OriginalMotion.MinFrame()),
+			MaxValue:           float64(p.store.currentSet().OriginalMotion.MaxFrame()),
+			DefaultValue:       float64(p.store.currentSet().OriginalMotion.MinFrame()),
 			MinSize:            declarative.Size{Width: 80, Height: 20},
 			MaxSize:            declarative.Size{Width: 80, Height: 20},
 		},
@@ -145,8 +148,9 @@ func (p *RigidBodyTableViewDialog) createFormWidgets(startFrameEdit, endFrameEdi
 			SpinButtonsVisible: true,
 			Decimals:           0,
 			Increment:          1,
-			MinValue:           0,
+			MinValue:           float64(p.store.currentSet().OriginalMotion.MinFrame()),
 			MaxValue:           float64(p.store.currentSet().OriginalMotion.MaxFrame() + 1),
+			DefaultValue:       float64(p.store.currentSet().OriginalMotion.MaxFrame() + 1),
 			MinSize:            declarative.Size{Width: 80, Height: 20},
 			MaxSize:            declarative.Size{Width: 80, Height: 20},
 		},
@@ -166,8 +170,9 @@ func (p *RigidBodyTableViewDialog) createFormWidgets(startFrameEdit, endFrameEdi
 			SpinButtonsVisible: true,
 			Decimals:           0,
 			Increment:          1,
-			MinValue:           0,
+			MinValue:           float64(p.store.currentSet().OriginalMotion.MinFrame()),
 			MaxValue:           float64(p.store.currentSet().OriginalMotion.MaxFrame() + 1),
+			DefaultValue:       float64(p.store.currentSet().OriginalMotion.MaxFrame()),
 			MinSize:            declarative.Size{Width: 80, Height: 20},
 			MaxSize:            declarative.Size{Width: 80, Height: 20},
 		},
@@ -192,6 +197,7 @@ func (p *RigidBodyTableViewDialog) createFormWidgets(startFrameEdit, endFrameEdi
 			Value:              0,     // 初期値
 			MinValue:           0.00,  // 最小値
 			MaxValue:           100.0, // 最大値
+			DefaultValue:       0,     // 初期値
 			Decimals:           2,     // 小数点以下の桁数
 			Increment:          0.01,  // 増分
 			SpinButtonsVisible: true,  // スピンボタンを表示
@@ -216,6 +222,7 @@ func (p *RigidBodyTableViewDialog) createFormWidgets(startFrameEdit, endFrameEdi
 			Value:              0,     // 初期値
 			MinValue:           0.00,  // 最小値
 			MaxValue:           100.0, // 最大値
+			DefaultValue:       0,     // 初期値
 			Decimals:           2,     // 小数点以下の桁数
 			Increment:          0.01,  // 増分
 			SpinButtonsVisible: true,  // スピンボタンを表示
@@ -240,6 +247,7 @@ func (p *RigidBodyTableViewDialog) createFormWidgets(startFrameEdit, endFrameEdi
 			Value:              0,     // 初期値
 			MinValue:           0.00,  // 最小値
 			MaxValue:           100.0, // 最大値
+			DefaultValue:       0,     // 初期値
 			Decimals:           2,     // 小数点以下の桁数
 			Increment:          0.01,  // 増分
 			SpinButtonsVisible: true,  // スピンボタンを表示
@@ -264,6 +272,7 @@ func (p *RigidBodyTableViewDialog) createFormWidgets(startFrameEdit, endFrameEdi
 			Value:              1,     // 初期値
 			MinValue:           0.01,  // 最小値
 			MaxValue:           100.0, // 最大値
+			DefaultValue:       1,     // 初期値
 			Decimals:           2,     // 小数点以下の桁数
 			Increment:          0.01,  // 増分
 			SpinButtonsVisible: true,  // スピンボタンを表示
@@ -288,6 +297,7 @@ func (p *RigidBodyTableViewDialog) createFormWidgets(startFrameEdit, endFrameEdi
 			Value:              1,     // 初期値
 			MinValue:           0.01,  // 最小値
 			MaxValue:           100.0, // 最大値
+			DefaultValue:       1,     // 初期値
 			Decimals:           2,     // 小数点以下の桁数
 			Increment:          0.01,  // 増分
 			SpinButtonsVisible: true,  // スピンボタンを表示
@@ -312,6 +322,7 @@ func (p *RigidBodyTableViewDialog) createFormWidgets(startFrameEdit, endFrameEdi
 			Value:              1,     // 初期値
 			MinValue:           0.01,  // 最小値
 			MaxValue:           100.0, // 最大値
+			DefaultValue:       1,     // 初期値
 			Decimals:           2,     // 小数点以下の桁数
 			Increment:          0.01,  // 増分
 			SpinButtonsVisible: true,  // スピンボタンを表示
@@ -336,6 +347,7 @@ func (p *RigidBodyTableViewDialog) createFormWidgets(startFrameEdit, endFrameEdi
 			Value:              1,     // 初期値
 			MinValue:           0.01,  // 最小値
 			MaxValue:           100.0, // 最大値
+			DefaultValue:       1,     // 初期値
 			Decimals:           2,     // 小数点以下の桁数
 			Increment:          0.01,  // 増分
 			SpinButtonsVisible: true,  // スピンボタンを表示
@@ -360,6 +372,7 @@ func (p *RigidBodyTableViewDialog) createFormWidgets(startFrameEdit, endFrameEdi
 			Value:              1,     // 初期値
 			MinValue:           0.01,  // 最小値
 			MaxValue:           100.0, // 最大値
+			DefaultValue:       1,     // 初期値
 			Decimals:           2,     // 小数点以下の桁数
 			Increment:          0.01,  // 増分
 			SpinButtonsVisible: true,  // スピンボタンを表示
@@ -384,6 +397,7 @@ func (p *RigidBodyTableViewDialog) createFormWidgets(startFrameEdit, endFrameEdi
 			Value:              1,     // 初期値
 			MinValue:           0.01,  // 最小値
 			MaxValue:           100.0, // 最大値
+			DefaultValue:       1,     // 初期値
 			Decimals:           2,     // 小数点以下の桁数
 			Increment:          0.01,  // 増分
 			SpinButtonsVisible: true,  // スピンボタンを表示
@@ -501,7 +515,7 @@ func (p *RigidBodyTableViewDialog) handleDialogOK(record *entity.RigidBodyRecord
 	}
 
 	physicsWorldMotion := p.store.mWidgets.Window().LoadPhysicsWorldMotion(0)
-	physicsModelMotion := p.store.mWidgets.Window().LoadPhysicsModelMotion(0, p.store.CurrentIndex)
+	physicsModelMotion := vmd.NewVmdMotion("")
 
 	p.store.physicsUsecase.ApplyPhysicsModelMotion(
 		physicsWorldMotion,

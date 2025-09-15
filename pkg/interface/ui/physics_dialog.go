@@ -4,6 +4,7 @@ import (
 	"github.com/miu200521358/bone_baker/pkg/domain/entity"
 	"github.com/miu200521358/mlib_go/pkg/config/mi18n"
 	"github.com/miu200521358/mlib_go/pkg/config/mlog"
+	"github.com/miu200521358/mlib_go/pkg/domain/vmd"
 	"github.com/miu200521358/walk/pkg/declarative"
 	"github.com/miu200521358/walk/pkg/walk"
 )
@@ -89,8 +90,9 @@ func (p *PhysicsTableViewDialog) createFormWidgets(startFrameEdit, endFrameEdit,
 			SpinButtonsVisible: true,
 			Decimals:           0,
 			Increment:          1,
-			MinValue:           0,
-			MaxValue:           float64(p.store.currentSet().OriginalMotion.MinFrame()),
+			MinValue:           float64(p.store.minFrame()),
+			MaxValue:           float64(p.store.maxFrame()),
+			DefaultValue:       float64(p.store.minFrame()),
 			MinSize:            declarative.Size{Width: 100, Height: 20},
 			MaxSize:            declarative.Size{Width: 100, Height: 20},
 		},
@@ -110,8 +112,9 @@ func (p *PhysicsTableViewDialog) createFormWidgets(startFrameEdit, endFrameEdit,
 			SpinButtonsVisible: true,
 			Decimals:           0,
 			Increment:          1,
-			MinValue:           0,
-			MaxValue:           float64(p.store.currentSet().OriginalMotion.MaxFrame() + 1),
+			MinValue:           float64(p.store.minFrame()),
+			MaxValue:           float64(p.store.maxFrame() + 1),
+			DefaultValue:       float64(p.store.maxFrame()),
 			MinSize:            declarative.Size{Width: 100, Height: 20},
 			MaxSize:            declarative.Size{Width: 100, Height: 20},
 		},
@@ -129,9 +132,10 @@ func (p *PhysicsTableViewDialog) createFormWidgets(startFrameEdit, endFrameEdit,
 			AssignTo:           gravityEdit,
 			MinValue:           -100.0, // 最小値
 			MaxValue:           100.0,  // 最大値
-			Decimals:           1,      // 小数点以下の桁数
-			Increment:          0.1,    // 増分
-			SpinButtonsVisible: true,   // スピンボタンを表示
+			DefaultValue:       -9.8,
+			Decimals:           1,    // 小数点以下の桁数
+			Increment:          0.1,  // 増分
+			SpinButtonsVisible: true, // スピンボタンを表示
 			MinSize:            declarative.Size{Width: 100, Height: 20},
 			MaxSize:            declarative.Size{Width: 100, Height: 20},
 		},
@@ -149,9 +153,10 @@ func (p *PhysicsTableViewDialog) createFormWidgets(startFrameEdit, endFrameEdit,
 			AssignTo:           maxSubStepsEdit,
 			MinValue:           1.0,   // 最小値
 			MaxValue:           100.0, // 最大値
-			Decimals:           0,     // 小数点以下の桁数
-			Increment:          1.0,   // 増分
-			SpinButtonsVisible: true,  // スピンボタンを表示
+			DefaultValue:       2,
+			Decimals:           0,    // 小数点以下の桁数
+			Increment:          1.0,  // 増分
+			SpinButtonsVisible: true, // スピンボタンを表示
 			MinSize:            declarative.Size{Width: 100, Height: 20},
 			MaxSize:            declarative.Size{Width: 100, Height: 20},
 		},
@@ -169,9 +174,10 @@ func (p *PhysicsTableViewDialog) createFormWidgets(startFrameEdit, endFrameEdit,
 			AssignTo:           fixedTimeStepEdit,
 			MinValue:           10.0,    // 最小値
 			MaxValue:           48000.0, // 最大値
-			Decimals:           0,       // 小数点以下の桁数
-			Increment:          10.0,    // 増分
-			SpinButtonsVisible: true,    // スピンボタンを表示
+			DefaultValue:       60,
+			Decimals:           0,    // 小数点以下の桁数
+			Increment:          10.0, // 増分
+			SpinButtonsVisible: true, // スピンボタンを表示
 			StretchFactor:      20,
 			MinSize:            declarative.Size{Width: 100, Height: 20},
 			MaxSize:            declarative.Size{Width: 100, Height: 20},
@@ -239,7 +245,7 @@ func (p *PhysicsTableViewDialog) handleDialogOK(record *entity.PhysicsRecord, re
 		p.store.PhysicsTableView.SetCurrentIndex(recordIndex)
 	}
 
-	physicsWorldMotion := p.store.mWidgets.Window().LoadPhysicsWorldMotion(0)
+	physicsWorldMotion := vmd.NewVmdMotion("")
 
 	p.store.physicsUsecase.ApplyPhysicsWorldMotion(
 		physicsWorldMotion,
