@@ -126,7 +126,18 @@ func (s *WidgetStore) maxFrame() float32 {
 		}
 	}
 
-	return maxFrame + 1
+	return maxFrame
+}
+
+func (s *WidgetStore) minFrame() float32 {
+	minFrame := float32(0)
+	for _, physicsSet := range s.BakeSets {
+		if physicsSet.OriginalMotion != nil && minFrame > physicsSet.OriginalMotion.MinFrame() {
+			minFrame = physicsSet.OriginalMotion.MinFrame()
+		}
+	}
+
+	return minFrame
 }
 
 func (s *WidgetStore) currentSet() *entity.BakeSet {
