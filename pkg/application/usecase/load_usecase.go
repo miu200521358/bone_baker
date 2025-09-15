@@ -185,7 +185,8 @@ func (uc *LoadUsecase) appendTailRigidBody(model *pmx.PmxModel) {
 			rigidBody.Position = bone.Position.Copy()
 			rigidBody.Bone = bone
 			rigidBody.IsSystem = true
-			rigidBody.CollisionGroupMask = pmx.NewCollisionGroupAll()
+			rigidBody.CollisionGroup = byte(15) // 床剛体と同レベルで接触判定させる
+			rigidBody.CollisionGroupMask = pmx.NewCollisionGroupFromSlice([]uint16{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1})
 			rigidBody.CollisionGroupMaskValue = rigidBody.CollisionGroupMask.Value()
 
 			if _, ok := vertexMap[bone.Index()]; ok {
