@@ -6,7 +6,6 @@ import (
 	"github.com/miu200521358/bone_baker/pkg/domain/entity"
 	"github.com/miu200521358/mlib_go/pkg/config/mi18n"
 	"github.com/miu200521358/mlib_go/pkg/config/mlog"
-	"github.com/miu200521358/mlib_go/pkg/interface/controller"
 	"github.com/miu200521358/walk/pkg/declarative"
 	"github.com/miu200521358/walk/pkg/walk"
 )
@@ -246,8 +245,6 @@ func (p *OutputTableViewDialog) handleDialogOK(record *entity.OutputRecord, reco
 	}
 
 	p.store.setWidgetEnabled(true)
-
-	controller.Beep()
 
 	// 削除フラグをリセット
 	p.doDelete = false

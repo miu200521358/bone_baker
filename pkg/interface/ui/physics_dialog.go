@@ -4,7 +4,6 @@ import (
 	"github.com/miu200521358/bone_baker/pkg/domain/entity"
 	"github.com/miu200521358/mlib_go/pkg/config/mi18n"
 	"github.com/miu200521358/mlib_go/pkg/config/mlog"
-	"github.com/miu200521358/mlib_go/pkg/interface/controller"
 	"github.com/miu200521358/walk/pkg/declarative"
 	"github.com/miu200521358/walk/pkg/walk"
 )
@@ -251,7 +250,6 @@ func (p *PhysicsTableViewDialog) handleDialogOK(record *entity.PhysicsRecord, re
 	p.store.mWidgets.Window().TriggerPhysicsReset()
 
 	p.store.setWidgetEnabled(true)
-	controller.Beep()
 
 	// 更新
 	p.store.PhysicsTableView.SetModel(newPhysicsTableModelWithRecords(p.store.PhysicsRecords))
