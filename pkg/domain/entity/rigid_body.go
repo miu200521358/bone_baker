@@ -132,6 +132,7 @@ type RigidBodyItem struct {
 	Bone           *pmx.Bone        // 剛体に紐付くボーン情報
 	RigidBody      *pmx.RigidBody   // 剛体情報
 	SizeRatio      *mmath.MVec3     `json:"size_ratio"`       // 大きさ比率
+	Position       *mmath.MVec3     `json:"position"`         // 位置
 	MassRatio      float64          `json:"mass_ratio"`       // 質量比率
 	StiffnessRatio float64          `json:"stiffness_ratio"`  // 硬さ比率
 	TensionRatio   float64          `json:"tension_ratio"`    // 張り比率
@@ -147,6 +148,7 @@ func newRigidBodyItem(bone *pmx.Bone, rigidBody *pmx.RigidBody, parent *RigidBod
 		Bone:           bone,
 		RigidBody:      rigidBody,
 		SizeRatio:      &mmath.MVec3{X: 1.0, Y: 1.0, Z: 1.0},
+		Position:       mmath.NewMVec3(),
 		MassRatio:      1,
 		StiffnessRatio: 1,
 		TensionRatio:   1,

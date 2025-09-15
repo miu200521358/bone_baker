@@ -37,6 +37,9 @@ func (p *RigidBodyTableViewDialog) Show(record *entity.RigidBodyRecord, recordIn
 	var sizeXEdit *walk.NumberEdit         // 大きさX入力
 	var sizeYEdit *walk.NumberEdit         // 大きさY入力
 	var sizeZEdit *walk.NumberEdit         // 大きさZ入力
+	var positionXEdit *walk.NumberEdit     // 位置X入力
+	var positionYEdit *walk.NumberEdit     // 位置Y入力
+	var positionZEdit *walk.NumberEdit     // 位置Z入力
 	var massEdit *walk.NumberEdit          // 質量入力
 	var stiffnessEdit *walk.NumberEdit     // 硬さ入力
 	var tensionEdit *walk.NumberEdit       // 張り入力
@@ -60,7 +63,7 @@ func (p *RigidBodyTableViewDialog) Show(record *entity.RigidBodyRecord, recordIn
 			declarative.Composite{
 				Layout: declarative.Grid{Columns: 6},
 				Children: p.createFormWidgets(&startFrameEdit, &endFrameEdit,
-					&maxStartFrameEdit, &maxEndFrameEdit, &sizeXEdit, &sizeYEdit, &sizeZEdit, &massEdit, &stiffnessEdit, &tensionEdit, &treeView, treeModel),
+					&maxStartFrameEdit, &maxEndFrameEdit, &sizeXEdit, &sizeYEdit, &sizeZEdit, &positionXEdit, &positionYEdit, &positionZEdit, &massEdit, &stiffnessEdit, &tensionEdit, &treeView, treeModel),
 			},
 			declarative.Composite{
 				Layout: declarative.HBox{
@@ -78,7 +81,7 @@ func (p *RigidBodyTableViewDialog) Show(record *entity.RigidBodyRecord, recordIn
 }
 
 func (p *RigidBodyTableViewDialog) createFormWidgets(startFrameEdit, endFrameEdit,
-	maxStartFrameEdit, maxEndFrameEdit, sizeXEdit, sizeYEdit, sizeZEdit, massEdit, stiffnessEdit, tensionEdit **walk.NumberEdit, treeView **walk.TreeView, treeModel *RigidBodyTreeModel) []declarative.Widget {
+	maxStartFrameEdit, maxEndFrameEdit, sizeXEdit, sizeYEdit, sizeZEdit, positionXEdit, positionYEdit, positionZEdit, massEdit, stiffnessEdit, tensionEdit **walk.NumberEdit, treeView **walk.TreeView, treeModel *RigidBodyTreeModel) []declarative.Widget {
 
 	return []declarative.Widget{
 		declarative.Label{
@@ -170,6 +173,78 @@ func (p *RigidBodyTableViewDialog) createFormWidgets(startFrameEdit, endFrameEdi
 		},
 		declarative.HSpacer{
 			ColumnSpan: 2,
+		},
+		declarative.TextLabel{
+			Text:        mi18n.T("位置X"),
+			ToolTipText: mi18n.T("位置X説明"),
+			OnMouseDown: func(x, y int, button walk.MouseButton) {
+				mlog.IL("%s", mi18n.T("位置X説明"))
+			},
+			MinSize: declarative.Size{Width: 150, Height: 20},
+		},
+		declarative.NumberEdit{
+			AssignTo: positionXEdit,
+			OnValueChanged: func() {
+				p.updateItemProperty(*treeView, func(item *RigidBodyTreeItem) {
+					item.CalcPositionX((*positionXEdit).Value())
+				})
+			},
+			Value:              0,     // 初期値
+			MinValue:           0.00,  // 最小値
+			MaxValue:           100.0, // 最大値
+			Decimals:           2,     // 小数点以下の桁数
+			Increment:          0.01,  // 増分
+			SpinButtonsVisible: true,  // スピンボタンを表示
+			MinSize:            declarative.Size{Width: 60, Height: 20},
+			MaxSize:            declarative.Size{Width: 60, Height: 20},
+		},
+		declarative.TextLabel{
+			Text:        mi18n.T("位置Y"),
+			ToolTipText: mi18n.T("位置Y説明"),
+			OnMouseDown: func(x, y int, button walk.MouseButton) {
+				mlog.IL("%s", mi18n.T("位置Y説明"))
+			},
+			MinSize: declarative.Size{Width: 150, Height: 20},
+		},
+		declarative.NumberEdit{
+			AssignTo: positionYEdit,
+			OnValueChanged: func() {
+				p.updateItemProperty(*treeView, func(item *RigidBodyTreeItem) {
+					item.CalcPositionY((*positionYEdit).Value())
+				})
+			},
+			Value:              0,     // 初期値
+			MinValue:           0.00,  // 最小値
+			MaxValue:           100.0, // 最大値
+			Decimals:           2,     // 小数点以下の桁数
+			Increment:          0.01,  // 増分
+			SpinButtonsVisible: true,  // スピンボタンを表示
+			MinSize:            declarative.Size{Width: 60, Height: 20},
+			MaxSize:            declarative.Size{Width: 60, Height: 20},
+		},
+		declarative.TextLabel{
+			Text:        mi18n.T("位置Z"),
+			ToolTipText: mi18n.T("位置Z説明"),
+			OnMouseDown: func(x, y int, button walk.MouseButton) {
+				mlog.IL("%s", mi18n.T("位置Z説明"))
+			},
+			MinSize: declarative.Size{Width: 150, Height: 20},
+		},
+		declarative.NumberEdit{
+			AssignTo: positionZEdit,
+			OnValueChanged: func() {
+				p.updateItemProperty(*treeView, func(item *RigidBodyTreeItem) {
+					item.CalcPositionZ((*positionZEdit).Value())
+				})
+			},
+			Value:              0,     // 初期値
+			MinValue:           0.00,  // 最小値
+			MaxValue:           100.0, // 最大値
+			Decimals:           2,     // 小数点以下の桁数
+			Increment:          0.01,  // 増分
+			SpinButtonsVisible: true,  // スピンボタンを表示
+			MinSize:            declarative.Size{Width: 60, Height: 20},
+			MaxSize:            declarative.Size{Width: 60, Height: 20},
 		},
 		declarative.TextLabel{
 			Text:        mi18n.T("大きさX倍率"),
@@ -321,20 +396,25 @@ func (p *RigidBodyTableViewDialog) createFormWidgets(startFrameEdit, endFrameEdi
 			MinSize:    declarative.Size{Width: 450, Height: 200},
 			ColumnSpan: 6,
 			OnCurrentItemChanged: func() {
-				p.updateEditValues(*treeView, *sizeXEdit, *sizeYEdit, *sizeZEdit, *massEdit, *stiffnessEdit, *tensionEdit)
+				p.updateEditValues(*treeView, *sizeXEdit, *sizeYEdit, *sizeZEdit, *positionXEdit, *positionYEdit,
+					*positionZEdit, *massEdit, *stiffnessEdit, *tensionEdit)
 			},
 		},
 	}
 }
 
 // updateEditValues 編集値を更新
-func (p *RigidBodyTableViewDialog) updateEditValues(treeView *walk.TreeView, sizeXEdit, sizeYEdit, sizeZEdit, massEdit, stiffnessEdit, tensionEdit *walk.NumberEdit) {
+func (p *RigidBodyTableViewDialog) updateEditValues(treeView *walk.TreeView, sizeXEdit, sizeYEdit, sizeZEdit,
+	positionXEdit, positionYEdit, positionZEdit, massEdit, stiffnessEdit, tensionEdit *walk.NumberEdit) {
 	if treeView.CurrentItem() == nil {
 		return
 	}
 
 	// 選択されたアイテムの情報を更新
 	currentItem := treeView.CurrentItem().(*RigidBodyTreeItem)
+	positionXEdit.ChangeValue(currentItem.item.Position.X)
+	positionYEdit.ChangeValue(currentItem.item.Position.Y)
+	positionZEdit.ChangeValue(currentItem.item.Position.Z)
 	sizeXEdit.ChangeValue(currentItem.item.SizeRatio.X)
 	sizeYEdit.ChangeValue(currentItem.item.SizeRatio.Y)
 	sizeZEdit.ChangeValue(currentItem.item.SizeRatio.Z)

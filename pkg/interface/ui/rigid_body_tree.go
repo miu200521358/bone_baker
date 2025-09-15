@@ -125,6 +125,33 @@ func (pi *RigidBodyTreeItem) CalcSizeZ(z float64) {
 	}
 }
 
+func (pi *RigidBodyTreeItem) CalcPositionX(x float64) {
+	pi.item.Position.X = x
+	pi.item.Modified = true
+
+	// for _, child := range pi.children {
+	// 	child.(*RigidBodyTreeItem).CalcPositionX(x)
+	// }
+}
+
+func (pi *RigidBodyTreeItem) CalcPositionY(y float64) {
+	pi.item.Position.Y = y
+	pi.item.Modified = true
+
+	// for _, child := range pi.children {
+	// 	child.(*RigidBodyTreeItem).CalcPositionY(y)
+	// }
+}
+
+func (pi *RigidBodyTreeItem) CalcPositionZ(z float64) {
+	pi.item.Position.Z = z
+	pi.item.Modified = true
+
+	// for _, child := range pi.children {
+	// 	child.(*RigidBodyTreeItem).CalcPositionZ(z)
+	// }
+}
+
 func (pi *RigidBodyTreeItem) CalcMass(massRatio float64) {
 	pi.item.MassRatio = massRatio
 	pi.item.Modified = true
