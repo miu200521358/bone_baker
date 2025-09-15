@@ -11,6 +11,7 @@ import (
 	pRepository "github.com/miu200521358/bone_baker/pkg/infrastructure/repository"
 	"github.com/miu200521358/mlib_go/pkg/config/mi18n"
 	"github.com/miu200521358/mlib_go/pkg/config/mlog"
+	"github.com/miu200521358/mlib_go/pkg/domain/mmath"
 	"github.com/miu200521358/mlib_go/pkg/domain/pmx"
 	"github.com/miu200521358/mlib_go/pkg/domain/vmd"
 	"github.com/miu200521358/mlib_go/pkg/infrastructure/repository"
@@ -92,7 +93,7 @@ func (uc *LoadUsecase) LoadModel(bakeSet *entity.BakeSet, path string) error {
 	var originalModel, bakeModel *pmx.PmxModel
 	errChan := make(chan error, 2)
 
-	// 元モーション読み込み
+	// 元モデル読み込み
 	wg.Add(1)
 	go func() {
 		defer wg.Done()
@@ -106,6 +107,15 @@ func (uc *LoadUsecase) LoadModel(bakeSet *entity.BakeSet, path string) error {
 				return
 			}
 
+			if err := originalModel.Bones.InsertSystemTailBones(); err != nil {
+				mlog.ET(mi18n.T("システム用ボーン追加失敗"), err, "")
+				errChan <- err
+				return
+			}
+
+			// 剛体を追加
+			uc.appendTailRigidBody(originalModel)
+
 			// 物理剛体の名前を変更して表示枠に追加
 			uc.insertPhysicsBonePrefix(originalModel)
 			uc.appendPhysicsBoneToDisplaySlots(originalModel)
@@ -114,7 +124,7 @@ func (uc *LoadUsecase) LoadModel(bakeSet *entity.BakeSet, path string) error {
 		}
 	}()
 
-	// 出力モーション読み込み
+	// 焼き込み用モデル読み込み
 	wg.Add(1)
 	go func() {
 		defer wg.Done()
@@ -153,6 +163,50 @@ func (uc *LoadUsecase) LoadModel(bakeSet *entity.BakeSet, path string) error {
 	bakeSet.BakedModel = bakeModel
 
 	return nil
+}
+
+func (uc *LoadUsecase) appendTailRigidBody(model *pmx.PmxModel) {
+	if model == nil {
+		return
+	}
+	vertexMap := model.Vertices.GetMapByBoneIndex(0.0)
+
+	for _, boneName := range []pmx.StandardBoneName{pmx.KNEE, pmx.ANKLE, pmx.TOE_T, pmx.HEEL, pmx.ELBOW, pmx.WRIST, pmx.EYE} {
+		for _, direction := range []pmx.BoneDirection{pmx.BONE_DIRECTION_LEFT, pmx.BONE_DIRECTION_RIGHT} {
+			bone, err := model.Bones.GetByName(boneName.StringFromDirection(direction))
+			if err != nil {
+				continue
+			}
+
+			rigidBody := pmx.NewRigidBody()
+			rigidBody.SetName(fmt.Sprintf("BBJ_%s", bone.Name()))
+			rigidBody.BoneIndex = bone.Index()
+			rigidBody.ShapeType = pmx.SHAPE_SPHERE
+			rigidBody.Position = bone.Position.Copy()
+			rigidBody.Bone = bone
+			rigidBody.IsSystem = true
+			rigidBody.CollisionGroupMask = pmx.NewCollisionGroupAll()
+			rigidBody.CollisionGroupMaskValue = rigidBody.CollisionGroupMask.Value()
+
+			if _, ok := vertexMap[bone.Index()]; ok {
+				// ウェイトが乗っているボーンの場合、サイズを合わせる
+				vectorPositions := make([]*mmath.MVec3, 0)
+				for _, v := range vertexMap[bone.Index()] {
+					vectorPositions = append(vectorPositions, v.Position)
+				}
+				minVertexPosition := mmath.MinVec3(vectorPositions)
+				medianVertexPosition := mmath.MedianVec3(vectorPositions)
+				rigidBody.Size = medianVertexPosition.Subed(minVertexPosition).MuledScalar(0.5)
+			} else {
+				// ウェイトが乗っていないボーンの場合、デフォルト値を設定
+				rigidBody.Size = &mmath.MVec3{X: 0.2, Y: 0.2, Z: 0.2}
+			}
+
+			model.RigidBodies.Append(rigidBody)
+		}
+	}
+
+	model.RigidBodies.Setup(model.Bones)
 }
 
 // appendPhysicsBoneToDisplaySlots 物理ボーンを表示枠に追加
