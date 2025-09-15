@@ -338,6 +338,9 @@ func (s *WidgetStore) createSaveMotionButton() *widget.MPushButton {
 						controller.Beep()
 					}
 				})
+			} else {
+				s.setWidgetEnabled(true)
+				controller.Beep()
 			}
 		}()
 	})
