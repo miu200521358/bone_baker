@@ -790,5 +790,25 @@
     {
         "id": "風向きZ",
         "translation": "風向きZ"
+    },
+    {
+        "id": "風プリセット",
+        "translation": "風プリセット"
+    },
+    {
+        "id": "そよ風",
+        "translation": "そよ風"
+    },
+    {
+        "id": "強風",
+        "translation": "強風"
+    },
+    {
+        "id": "突風",
+        "translation": "突風"
+    },
+    {
+        "id": "台風",
+        "translation": "台風"
     }
 ]
