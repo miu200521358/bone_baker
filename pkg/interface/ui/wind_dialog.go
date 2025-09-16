@@ -13,6 +13,17 @@ import (
 type WindTableViewDialog struct {
 	store    *WidgetStore
 	doDelete bool
+
+	startFrameEdit     *walk.NumberEdit // 開始フレーム入力
+	endFrameEdit       *walk.NumberEdit // 終了フレーム入力
+	directionXEdit     *walk.NumberEdit // 風向きX入力
+	directionYEdit     *walk.NumberEdit // 風向きY入力
+	directionZEdit     *walk.NumberEdit // 風向きZ入力
+	speedEdit          *walk.NumberEdit // 風速入力
+	randomnessEdit     *walk.NumberEdit // 乱れ入力
+	turbulenceFreqEdit *walk.NumberEdit // 乱流周波数入力
+	dragCoeffEdit      *walk.NumberEdit // 抗力係数入力
+	liftCoeffEdit      *walk.NumberEdit // 揚力係数入力
 }
 
 // newWindTableViewDialog コンストラクタ
@@ -30,17 +41,7 @@ func (p *WindTableViewDialog) show(record *entity.WindRecord, recordIndex int) {
 	var deleteBtn *walk.PushButton
 	var cancelBtn *walk.PushButton
 	var db *walk.DataBinder
-	var startFrameEdit *walk.NumberEdit     // 開始フレーム入力
-	var endFrameEdit *walk.NumberEdit       // 終了フレーム入力
-	var directionXEdit *walk.NumberEdit     // 風向きX入力
-	var directionYEdit *walk.NumberEdit     // 風向きY入力
-	var directionZEdit *walk.NumberEdit     // 風向きZ入力
-	var speedEdit *walk.NumberEdit          // 風速入力
-	var randomnessEdit *walk.NumberEdit     // 乱れ入力
-	var turbulenceFreqEdit *walk.NumberEdit // 乱流周波数入力
-	var dragCoeffEdit *walk.NumberEdit      // 抗力係数入力
-	var liftCoeffEdit *walk.NumberEdit      // 揚力係数入力
-	var presetComboBox *walk.ComboBox       // 風プリセット
+	var presetComboBox *walk.ComboBox
 
 	builder := declarative.NewBuilder(p.store.Window())
 
@@ -58,17 +59,14 @@ func (p *WindTableViewDialog) show(record *entity.WindRecord, recordIndex int) {
 		},
 		Children: []declarative.Widget{
 			declarative.Composite{
-				Layout: declarative.Grid{Columns: 6},
-				Children: p.createFormWidgets(&startFrameEdit, &endFrameEdit,
-					&directionXEdit, &directionYEdit, &directionZEdit,
-					&speedEdit, &randomnessEdit, &turbulenceFreqEdit,
-					&dragCoeffEdit, &liftCoeffEdit, &presetComboBox),
+				Layout:   declarative.Grid{Columns: 6},
+				Children: p.createFormWidgets(&presetComboBox),
 			},
 			declarative.Composite{
 				Layout: declarative.HBox{
 					Alignment: declarative.AlignHFarVCenter,
 				},
-				Children: p.createButtonWidgets(&startFrameEdit, &endFrameEdit, &okBtn, &deleteBtn, &cancelBtn, &dlg, &db),
+				Children: p.createButtonWidgets(&okBtn, &deleteBtn, &cancelBtn, &dlg, &db),
 			},
 		},
 	}
@@ -78,9 +76,7 @@ func (p *WindTableViewDialog) show(record *entity.WindRecord, recordIndex int) {
 	}
 }
 
-func (p *WindTableViewDialog) createFormWidgets(startFrameEdit, endFrameEdit,
-	directionXEdit, directionYEdit, directionZEdit, speedEdit, randomnessEdit,
-	turbulenceFreqEdit, dragCoeffEdit, liftCoeffEdit **walk.NumberEdit, presetComboBox **walk.ComboBox) []declarative.Widget {
+func (p *WindTableViewDialog) createFormWidgets(presetComboBox **walk.ComboBox) []declarative.Widget {
 
 	return []declarative.Widget{
 		declarative.Label{
@@ -94,7 +90,7 @@ func (p *WindTableViewDialog) createFormWidgets(startFrameEdit, endFrameEdit,
 		},
 		declarative.NumberEdit{
 			Value:              declarative.Bind("StartFrame"),
-			AssignTo:           startFrameEdit,
+			AssignTo:           &p.startFrameEdit,
 			ToolTipText:        mi18n.T("開始フレーム説明"),
 			SpinButtonsVisible: true,
 			Decimals:           0,
@@ -104,6 +100,9 @@ func (p *WindTableViewDialog) createFormWidgets(startFrameEdit, endFrameEdit,
 			DefaultValue:       float64(p.store.minFrame()),
 			MinSize:            declarative.Size{Width: 80, Height: 20},
 			MaxSize:            declarative.Size{Width: 80, Height: 20},
+			OnValueChanged: func() {
+				p.onChangeValue()
+			},
 		},
 		declarative.Label{
 			Text:        mi18n.T("終了フレーム"),
@@ -116,7 +115,7 @@ func (p *WindTableViewDialog) createFormWidgets(startFrameEdit, endFrameEdit,
 		},
 		declarative.NumberEdit{
 			Value:              declarative.Bind("EndFrame"),
-			AssignTo:           endFrameEdit,
+			AssignTo:           &p.endFrameEdit,
 			ToolTipText:        mi18n.T("終了フレーム説明"),
 			SpinButtonsVisible: true,
 			Decimals:           0,
@@ -126,6 +125,9 @@ func (p *WindTableViewDialog) createFormWidgets(startFrameEdit, endFrameEdit,
 			DefaultValue:       float64(p.store.maxFrame()),
 			MinSize:            declarative.Size{Width: 80, Height: 20},
 			MaxSize:            declarative.Size{Width: 80, Height: 20},
+			OnValueChanged: func() {
+				p.onChangeValue()
+			},
 		},
 		declarative.HSpacer{
 			ColumnSpan: 2,
@@ -140,7 +142,7 @@ func (p *WindTableViewDialog) createFormWidgets(startFrameEdit, endFrameEdit,
 			MaxSize: declarative.Size{Width: 80, Height: 20},
 		},
 		declarative.NumberEdit{
-			AssignTo:           directionXEdit,
+			AssignTo:           &p.directionXEdit,
 			Value:              declarative.Bind("WindConfig.Direction.X"), // 初期値
 			MinValue:           -100.00,                                    // 最小値
 			MaxValue:           100.0,                                      // 最大値
@@ -150,6 +152,9 @@ func (p *WindTableViewDialog) createFormWidgets(startFrameEdit, endFrameEdit,
 			SpinButtonsVisible: true,                                       // スピンボタンを表示
 			MinSize:            declarative.Size{Width: 80, Height: 20},
 			MaxSize:            declarative.Size{Width: 80, Height: 20},
+			OnValueChanged: func() {
+				p.onChangeValue()
+			},
 		},
 		declarative.TextLabel{
 			Text:        mi18n.T("風向きY"),
@@ -161,7 +166,7 @@ func (p *WindTableViewDialog) createFormWidgets(startFrameEdit, endFrameEdit,
 			MaxSize: declarative.Size{Width: 80, Height: 20},
 		},
 		declarative.NumberEdit{
-			AssignTo:           directionYEdit,
+			AssignTo:           &p.directionYEdit,
 			Value:              declarative.Bind("WindConfig.Direction.Y"), // 初期値
 			MinValue:           -100.00,                                    // 最小値
 			MaxValue:           100.0,                                      // 最大値
@@ -171,6 +176,9 @@ func (p *WindTableViewDialog) createFormWidgets(startFrameEdit, endFrameEdit,
 			SpinButtonsVisible: true,                                       // スピンボタンを表示
 			MinSize:            declarative.Size{Width: 80, Height: 20},
 			MaxSize:            declarative.Size{Width: 80, Height: 20},
+			OnValueChanged: func() {
+				p.onChangeValue()
+			},
 		},
 		declarative.TextLabel{
 			Text:        mi18n.T("風向きZ"),
@@ -182,7 +190,7 @@ func (p *WindTableViewDialog) createFormWidgets(startFrameEdit, endFrameEdit,
 			MaxSize: declarative.Size{Width: 80, Height: 20},
 		},
 		declarative.NumberEdit{
-			AssignTo:           directionZEdit,
+			AssignTo:           &p.directionZEdit,
 			Value:              declarative.Bind("WindConfig.Direction.Z"), // 初期値
 			MinValue:           -100.00,                                    // 最小値
 			MaxValue:           100.0,                                      // 最大値
@@ -192,6 +200,9 @@ func (p *WindTableViewDialog) createFormWidgets(startFrameEdit, endFrameEdit,
 			SpinButtonsVisible: true,                                       // スピンボタンを表示
 			MinSize:            declarative.Size{Width: 80, Height: 20},
 			MaxSize:            declarative.Size{Width: 80, Height: 20},
+			OnValueChanged: func() {
+				p.onChangeValue()
+			},
 		},
 		declarative.TextLabel{
 			Text:        mi18n.T("風プリセット"),
@@ -214,41 +225,41 @@ func (p *WindTableViewDialog) createFormWidgets(startFrameEdit, endFrameEdit,
 			OnCurrentIndexChanged: func() {
 				switch (*presetComboBox).CurrentIndex() {
 				case 0: // そよ風
-					(*directionXEdit).SetValue(1.0)
-					(*directionYEdit).SetValue(0.1)
-					(*directionZEdit).SetValue(0.0)
-					(*speedEdit).SetValue(10.0)
-					(*randomnessEdit).SetValue(0.2)
-					(*turbulenceFreqEdit).SetValue(0.3)
-					(*dragCoeffEdit).SetValue(0.8)
-					(*liftCoeffEdit).SetValue(0.08)
+					(p.directionXEdit).SetValue(1.0)
+					(p.directionYEdit).SetValue(0.1)
+					(p.directionZEdit).SetValue(0.0)
+					(p.speedEdit).SetValue(10.0)
+					(p.randomnessEdit).SetValue(0.2)
+					(p.turbulenceFreqEdit).SetValue(0.3)
+					(p.dragCoeffEdit).SetValue(0.8)
+					(p.liftCoeffEdit).SetValue(0.08)
 				case 1: // 強風
-					(*directionXEdit).SetValue(1.0)
-					(*directionYEdit).SetValue(0.0)
-					(*directionZEdit).SetValue(0.2)
-					(*speedEdit).SetValue(20.0)
-					(*randomnessEdit).SetValue(0.3)
-					(*turbulenceFreqEdit).SetValue(0.6)
-					(*dragCoeffEdit).SetValue(1.2)
-					(*liftCoeffEdit).SetValue(0.22)
+					(p.directionXEdit).SetValue(1.0)
+					(p.directionYEdit).SetValue(0.0)
+					(p.directionZEdit).SetValue(0.2)
+					(p.speedEdit).SetValue(20.0)
+					(p.randomnessEdit).SetValue(0.3)
+					(p.turbulenceFreqEdit).SetValue(0.6)
+					(p.dragCoeffEdit).SetValue(1.2)
+					(p.liftCoeffEdit).SetValue(0.22)
 				case 2: // 突風
-					(*directionXEdit).SetValue(0.3)
-					(*directionYEdit).SetValue(1.0)
-					(*directionZEdit).SetValue(0.0)
-					(*speedEdit).SetValue(40.0)
-					(*randomnessEdit).SetValue(0.7)
-					(*turbulenceFreqEdit).SetValue(2.0)
-					(*dragCoeffEdit).SetValue(1.2)
-					(*liftCoeffEdit).SetValue(0.7)
+					(p.directionXEdit).SetValue(0.3)
+					(p.directionYEdit).SetValue(1.0)
+					(p.directionZEdit).SetValue(0.0)
+					(p.speedEdit).SetValue(40.0)
+					(p.randomnessEdit).SetValue(0.7)
+					(p.turbulenceFreqEdit).SetValue(2.0)
+					(p.dragCoeffEdit).SetValue(1.2)
+					(p.liftCoeffEdit).SetValue(0.7)
 				case 3: // 台風
-					(*directionXEdit).SetValue(1.0)
-					(*directionYEdit).SetValue(0.0)
-					(*directionZEdit).SetValue(0.0)
-					(*speedEdit).SetValue(60.0)
-					(*randomnessEdit).SetValue(0.9)
-					(*turbulenceFreqEdit).SetValue(3.0)
-					(*dragCoeffEdit).SetValue(1.5)
-					(*liftCoeffEdit).SetValue(0.9)
+					(p.directionXEdit).SetValue(1.0)
+					(p.directionYEdit).SetValue(0.0)
+					(p.directionZEdit).SetValue(0.0)
+					(p.speedEdit).SetValue(60.0)
+					(p.randomnessEdit).SetValue(0.9)
+					(p.turbulenceFreqEdit).SetValue(3.0)
+					(p.dragCoeffEdit).SetValue(1.5)
+					(p.liftCoeffEdit).SetValue(0.9)
 				}
 			},
 		},
@@ -266,7 +277,7 @@ func (p *WindTableViewDialog) createFormWidgets(startFrameEdit, endFrameEdit,
 		},
 		declarative.NumberEdit{
 			Value:              declarative.Bind("WindConfig.Speed"),
-			AssignTo:           speedEdit,
+			AssignTo:           &p.speedEdit,
 			MinValue:           0.0,   // 最小値
 			MaxValue:           100.0, // 最大値
 			DefaultValue:       0.0,   // 初期値
@@ -275,6 +286,9 @@ func (p *WindTableViewDialog) createFormWidgets(startFrameEdit, endFrameEdit,
 			SpinButtonsVisible: true,  // スピンボタンを表示
 			MinSize:            declarative.Size{Width: 80, Height: 20},
 			MaxSize:            declarative.Size{Width: 80, Height: 20},
+			OnValueChanged: func() {
+				p.onChangeValue()
+			},
 		},
 		declarative.TextLabel{
 			Text:        mi18n.T("ランダム"),
@@ -287,7 +301,7 @@ func (p *WindTableViewDialog) createFormWidgets(startFrameEdit, endFrameEdit,
 		},
 		declarative.NumberEdit{
 			Value:              declarative.Bind("WindConfig.Randomness"),
-			AssignTo:           randomnessEdit,
+			AssignTo:           &p.randomnessEdit,
 			MinValue:           0.0,   // 最小値
 			MaxValue:           100.0, // 最大値
 			DefaultValue:       0.0,   // 初期値
@@ -296,6 +310,9 @@ func (p *WindTableViewDialog) createFormWidgets(startFrameEdit, endFrameEdit,
 			SpinButtonsVisible: true,  // スピンボタンを表示
 			MinSize:            declarative.Size{Width: 80, Height: 20},
 			MaxSize:            declarative.Size{Width: 80, Height: 20},
+			OnValueChanged: func() {
+				p.onChangeValue()
+			},
 		},
 		declarative.TextLabel{
 			Text:        mi18n.T("乱流周波数"),
@@ -308,7 +325,7 @@ func (p *WindTableViewDialog) createFormWidgets(startFrameEdit, endFrameEdit,
 		},
 		declarative.NumberEdit{
 			Value:              declarative.Bind("WindConfig.TurbulenceFreqHz"),
-			AssignTo:           turbulenceFreqEdit,
+			AssignTo:           &p.turbulenceFreqEdit,
 			MinValue:           0.0,   // 最小値
 			MaxValue:           100.0, // 最大値
 			DefaultValue:       0.5,   // 初期値
@@ -317,6 +334,9 @@ func (p *WindTableViewDialog) createFormWidgets(startFrameEdit, endFrameEdit,
 			SpinButtonsVisible: true,  // スピンボタンを表示
 			MinSize:            declarative.Size{Width: 80, Height: 20},
 			MaxSize:            declarative.Size{Width: 80, Height: 20},
+			OnValueChanged: func() {
+				p.onChangeValue()
+			},
 		},
 		declarative.TextLabel{
 			Text:        mi18n.T("抗力係数"),
@@ -329,7 +349,7 @@ func (p *WindTableViewDialog) createFormWidgets(startFrameEdit, endFrameEdit,
 		},
 		declarative.NumberEdit{
 			Value:              declarative.Bind("WindConfig.DragCoeff"),
-			AssignTo:           dragCoeffEdit,
+			AssignTo:           &p.dragCoeffEdit,
 			MinValue:           0.0,   // 最小値
 			MaxValue:           100.0, // 最大値
 			DefaultValue:       0.8,   // 初期値
@@ -338,6 +358,9 @@ func (p *WindTableViewDialog) createFormWidgets(startFrameEdit, endFrameEdit,
 			SpinButtonsVisible: true,  // スピンボタンを表示
 			MinSize:            declarative.Size{Width: 80, Height: 20},
 			MaxSize:            declarative.Size{Width: 80, Height: 20},
+			OnValueChanged: func() {
+				p.onChangeValue()
+			},
 		},
 		declarative.TextLabel{
 			Text:        mi18n.T("揚力係数"),
@@ -350,7 +373,7 @@ func (p *WindTableViewDialog) createFormWidgets(startFrameEdit, endFrameEdit,
 		},
 		declarative.NumberEdit{
 			Value:              declarative.Bind("WindConfig.LiftCoeff"),
-			AssignTo:           liftCoeffEdit,
+			AssignTo:           &p.liftCoeffEdit,
 			MinValue:           0.0,   // 最小値
 			MaxValue:           100.0, // 最大値
 			DefaultValue:       0.2,   // 初期値
@@ -359,12 +382,14 @@ func (p *WindTableViewDialog) createFormWidgets(startFrameEdit, endFrameEdit,
 			SpinButtonsVisible: true,  // スピンボタンを表示
 			MinSize:            declarative.Size{Width: 80, Height: 20},
 			MaxSize:            declarative.Size{Width: 80, Height: 20},
+			OnValueChanged: func() {
+				p.onChangeValue()
+			},
 		},
 	}
 }
 
 func (p *WindTableViewDialog) createButtonWidgets(
-	startFrameEdit, endFrameEdit **walk.NumberEdit,
 	okBtn, deleteBtn, cancelBtn **walk.PushButton, dlg **walk.Dialog, db **walk.DataBinder,
 ) []declarative.Widget {
 	return []declarative.Widget{
@@ -373,7 +398,7 @@ func (p *WindTableViewDialog) createButtonWidgets(
 			Text:        mi18n.T("登録"),
 			ToolTipText: mi18n.T("物理設定登録説明"),
 			OnClicked: func() {
-				if !((*startFrameEdit).Value() < (*endFrameEdit).Value()) {
+				if !((p.startFrameEdit).Value() < (p.endFrameEdit).Value()) {
 					mlog.E(mi18n.T("ワールド物理範囲設定エラー"), nil, "")
 					return
 				}
@@ -440,4 +465,33 @@ func (p *WindTableViewDialog) handleDialogOK(record *entity.WindRecord, recordIn
 
 	// 更新
 	p.store.WindTableView.SetModel(newWindTableModelWithRecords(p.store.WindRecords))
+}
+
+func (p *WindTableViewDialog) onChangeValue() {
+	p.store.setWidgetEnabled(false)
+
+	record := entity.NewWindRecord(
+		float32(p.startFrameEdit.Value()),
+		float32(p.endFrameEdit.Value()),
+	)
+	record.WindConfig.Direction.X = p.directionXEdit.Value()
+	record.WindConfig.Direction.Y = p.directionYEdit.Value()
+	record.WindConfig.Direction.Z = p.directionZEdit.Value()
+	record.WindConfig.Speed = float32(p.speedEdit.Value())
+	record.WindConfig.Randomness = float32(p.randomnessEdit.Value())
+	record.WindConfig.TurbulenceFreqHz = float32(p.turbulenceFreqEdit.Value())
+	record.WindConfig.DragCoeff = float32(p.dragCoeffEdit.Value())
+	record.WindConfig.LiftCoeff = float32(p.liftCoeffEdit.Value())
+
+	windMotion := vmd.NewVmdMotion("")
+
+	p.store.physicsUsecase.ApplyWindMotion(
+		windMotion,
+		[]*entity.WindRecord{record},
+	)
+
+	p.store.mWidgets.Window().StoreWindMotion(0, windMotion)
+	p.store.mWidgets.Window().TriggerPhysicsReset()
+
+	p.store.setWidgetEnabled(true)
 }
