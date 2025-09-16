@@ -139,13 +139,12 @@ func (u *PhysicsUsecase) ApplyPhysicsModelMotion(
 				rigidBodyItemA := record.Tree.AtByRigidBodyIndex(joint.RigidBodyIndexA)
 				rigidBodyItemB := record.Tree.AtByRigidBodyIndex(joint.RigidBodyIndexB)
 
-				if rigidBodyItemA == nil && rigidBodyItemB == nil {
-					// ジョイントの両端が未設定の場合はスキップ
+				if rigidBodyItemA == nil || rigidBodyItemB == nil {
+					// ジョイントが繋がっている剛体のいずれかが未設定の場合はスキップ
 					return true
 				}
 
-				if ((rigidBodyItemA != nil && !rigidBodyItemA.Modified) || rigidBodyItemA == nil) &&
-					((rigidBodyItemB != nil && !rigidBodyItemB.Modified) || rigidBodyItemB == nil) {
+				if !rigidBodyItemA.Modified && !rigidBodyItemB.Modified {
 					// 両方の剛体が未変更の場合はスキップ
 					return true
 				}
