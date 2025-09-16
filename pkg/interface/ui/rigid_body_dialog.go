@@ -1,6 +1,8 @@
 package ui
 
 import (
+	"time"
+
 	"github.com/miu200521358/bone_baker/pkg/domain/entity"
 	"github.com/miu200521358/mlib_go/pkg/config/mi18n"
 	"github.com/miu200521358/mlib_go/pkg/config/mlog"
@@ -11,8 +13,24 @@ import (
 
 // RigidBodyTableViewDialog モデル物理設定ダイアログのロジックを管理
 type RigidBodyTableViewDialog struct {
-	store    *WidgetStore
-	doDelete bool
+	store                *WidgetStore
+	doDelete             bool
+	lastChangedTimestamp int64 // 最後に値が変更されたタイムスタンプ
+
+	startFrameEdit    *walk.NumberEdit // 開始フレーム入力
+	endFrameEdit      *walk.NumberEdit // 終了フレーム入力
+	maxStartFrameEdit *walk.NumberEdit // 最大開始フレーム入力
+	maxEndFrameEdit   *walk.NumberEdit // 最大終了フレーム入力
+	sizeXEdit         *walk.NumberEdit // 大きさX入力
+	sizeYEdit         *walk.NumberEdit // 大きさY入力
+	sizeZEdit         *walk.NumberEdit // 大きさZ入力
+	positionXEdit     *walk.NumberEdit // 位置X入力
+	positionYEdit     *walk.NumberEdit // 位置Y入力
+	positionZEdit     *walk.NumberEdit // 位置Z入力
+	massEdit          *walk.NumberEdit // 質量入力
+	stiffnessEdit     *walk.NumberEdit // 硬さ入力
+	tensionEdit       *walk.NumberEdit // 張り入力
+	treeView          *walk.TreeView   // 剛体ツリービュー
 }
 
 // NewRigidBodyTableViewDialog コンストラクタ
@@ -30,20 +48,6 @@ func (p *RigidBodyTableViewDialog) Show(record *entity.RigidBodyRecord, recordIn
 	var deleteBtn *walk.PushButton
 	var cancelBtn *walk.PushButton
 	var db *walk.DataBinder
-	var treeView *walk.TreeView
-	var startFrameEdit *walk.NumberEdit    // 開始フレーム入力
-	var endFrameEdit *walk.NumberEdit      // 終了フレーム入力
-	var maxStartFrameEdit *walk.NumberEdit // 最大開始フレーム入力
-	var maxEndFrameEdit *walk.NumberEdit   // 最大終了フレーム入力
-	var sizeXEdit *walk.NumberEdit         // 大きさX入力
-	var sizeYEdit *walk.NumberEdit         // 大きさY入力
-	var sizeZEdit *walk.NumberEdit         // 大きさZ入力
-	var positionXEdit *walk.NumberEdit     // 位置X入力
-	var positionYEdit *walk.NumberEdit     // 位置Y入力
-	var positionZEdit *walk.NumberEdit     // 位置Z入力
-	var massEdit *walk.NumberEdit          // 質量入力
-	var stiffnessEdit *walk.NumberEdit     // 硬さ入力
-	var tensionEdit *walk.NumberEdit       // 張り入力
 
 	builder := declarative.NewBuilder(p.store.Window())
 	treeModel := newRigidBodyTreeModel(record)
@@ -62,16 +66,14 @@ func (p *RigidBodyTableViewDialog) Show(record *entity.RigidBodyRecord, recordIn
 		},
 		Children: []declarative.Widget{
 			declarative.Composite{
-				Layout: declarative.Grid{Columns: 6},
-				Children: p.createFormWidgets(&startFrameEdit, &endFrameEdit,
-					&maxStartFrameEdit, &maxEndFrameEdit, &sizeXEdit, &sizeYEdit, &sizeZEdit, &positionXEdit, &positionYEdit, &positionZEdit, &massEdit, &stiffnessEdit, &tensionEdit, &treeView, treeModel),
+				Layout:   declarative.Grid{Columns: 6},
+				Children: p.createFormWidgets(&p.treeView, treeModel),
 			},
 			declarative.Composite{
 				Layout: declarative.HBox{
 					Alignment: declarative.AlignHFarVCenter,
 				},
-				Children: p.createButtonWidgets(&startFrameEdit, &endFrameEdit,
-					&maxStartFrameEdit, &maxEndFrameEdit, &okBtn, &deleteBtn, &cancelBtn, &dlg, &db),
+				Children: p.createButtonWidgets(&okBtn, &deleteBtn, &cancelBtn, &dlg, &db),
 			},
 		},
 	}
@@ -81,8 +83,7 @@ func (p *RigidBodyTableViewDialog) Show(record *entity.RigidBodyRecord, recordIn
 	}
 }
 
-func (p *RigidBodyTableViewDialog) createFormWidgets(startFrameEdit, endFrameEdit,
-	maxStartFrameEdit, maxEndFrameEdit, sizeXEdit, sizeYEdit, sizeZEdit, positionXEdit, positionYEdit, positionZEdit, massEdit, stiffnessEdit, tensionEdit **walk.NumberEdit, treeView **walk.TreeView, treeModel *RigidBodyTreeModel) []declarative.Widget {
+func (p *RigidBodyTableViewDialog) createFormWidgets(treeView **walk.TreeView, treeModel *RigidBodyTreeModel) []declarative.Widget {
 
 	return []declarative.Widget{
 		declarative.Label{
@@ -96,7 +97,7 @@ func (p *RigidBodyTableViewDialog) createFormWidgets(startFrameEdit, endFrameEdi
 		},
 		declarative.NumberEdit{
 			Value:              declarative.Bind("StartFrame"),
-			AssignTo:           startFrameEdit,
+			AssignTo:           &p.startFrameEdit,
 			ToolTipText:        mi18n.T("開始フレーム説明"),
 			SpinButtonsVisible: true,
 			Decimals:           0,
@@ -106,6 +107,9 @@ func (p *RigidBodyTableViewDialog) createFormWidgets(startFrameEdit, endFrameEdi
 			DefaultValue:       float64(p.store.currentSet().OriginalMotion.MinFrame()),
 			MinSize:            declarative.Size{Width: 80, Height: 20},
 			MaxSize:            declarative.Size{Width: 80, Height: 20},
+			OnValueChanged: func() {
+				p.onChangeValue()
+			},
 		},
 		declarative.Label{
 			Text:        mi18n.T("最大開始フレーム"),
@@ -118,7 +122,7 @@ func (p *RigidBodyTableViewDialog) createFormWidgets(startFrameEdit, endFrameEdi
 		},
 		declarative.NumberEdit{
 			Value:              declarative.Bind("MaxStartFrame"),
-			AssignTo:           maxStartFrameEdit,
+			AssignTo:           &p.maxStartFrameEdit,
 			ToolTipText:        mi18n.T("最大開始フレーム説明"),
 			SpinButtonsVisible: true,
 			Decimals:           0,
@@ -128,6 +132,9 @@ func (p *RigidBodyTableViewDialog) createFormWidgets(startFrameEdit, endFrameEdi
 			DefaultValue:       float64(p.store.currentSet().OriginalMotion.MinFrame()),
 			MinSize:            declarative.Size{Width: 80, Height: 20},
 			MaxSize:            declarative.Size{Width: 80, Height: 20},
+			OnValueChanged: func() {
+				p.onChangeValue()
+			},
 		},
 		declarative.HSpacer{
 			ColumnSpan: 2,
@@ -143,7 +150,7 @@ func (p *RigidBodyTableViewDialog) createFormWidgets(startFrameEdit, endFrameEdi
 		},
 		declarative.NumberEdit{
 			Value:              declarative.Bind("MaxEndFrame"),
-			AssignTo:           maxEndFrameEdit,
+			AssignTo:           &p.maxEndFrameEdit,
 			ToolTipText:        mi18n.T("最大終了フレーム説明"),
 			SpinButtonsVisible: true,
 			Decimals:           0,
@@ -153,6 +160,9 @@ func (p *RigidBodyTableViewDialog) createFormWidgets(startFrameEdit, endFrameEdi
 			DefaultValue:       float64(p.store.currentSet().OriginalMotion.MaxFrame()),
 			MinSize:            declarative.Size{Width: 80, Height: 20},
 			MaxSize:            declarative.Size{Width: 80, Height: 20},
+			OnValueChanged: func() {
+				p.onChangeValue()
+			},
 		},
 		declarative.Label{
 			Text:        mi18n.T("終了フレーム"),
@@ -165,7 +175,7 @@ func (p *RigidBodyTableViewDialog) createFormWidgets(startFrameEdit, endFrameEdi
 		},
 		declarative.NumberEdit{
 			Value:              declarative.Bind("EndFrame"),
-			AssignTo:           endFrameEdit,
+			AssignTo:           &p.endFrameEdit,
 			ToolTipText:        mi18n.T("終了フレーム説明"),
 			SpinButtonsVisible: true,
 			Decimals:           0,
@@ -175,6 +185,9 @@ func (p *RigidBodyTableViewDialog) createFormWidgets(startFrameEdit, endFrameEdi
 			DefaultValue:       float64(p.store.currentSet().OriginalMotion.MaxFrame()),
 			MinSize:            declarative.Size{Width: 80, Height: 20},
 			MaxSize:            declarative.Size{Width: 80, Height: 20},
+			OnValueChanged: func() {
+				p.onChangeValue()
+			},
 		},
 		declarative.HSpacer{
 			ColumnSpan: 2,
@@ -188,11 +201,9 @@ func (p *RigidBodyTableViewDialog) createFormWidgets(startFrameEdit, endFrameEdi
 			MinSize: declarative.Size{Width: 150, Height: 20},
 		},
 		declarative.NumberEdit{
-			AssignTo: positionXEdit,
+			AssignTo: &p.positionXEdit,
 			OnValueChanged: func() {
-				p.updateItemProperty(*treeView, func(item *RigidBodyTreeItem) {
-					item.CalcPositionX((*positionXEdit).Value())
-				})
+				p.onChangeValue()
 			},
 			Value:              0,     // 初期値
 			MinValue:           0.00,  // 最小値
@@ -213,11 +224,9 @@ func (p *RigidBodyTableViewDialog) createFormWidgets(startFrameEdit, endFrameEdi
 			MinSize: declarative.Size{Width: 150, Height: 20},
 		},
 		declarative.NumberEdit{
-			AssignTo: positionYEdit,
+			AssignTo: &p.positionYEdit,
 			OnValueChanged: func() {
-				p.updateItemProperty(*treeView, func(item *RigidBodyTreeItem) {
-					item.CalcPositionY((*positionYEdit).Value())
-				})
+				p.onChangeValue()
 			},
 			Value:              0,     // 初期値
 			MinValue:           0.00,  // 最小値
@@ -238,11 +247,9 @@ func (p *RigidBodyTableViewDialog) createFormWidgets(startFrameEdit, endFrameEdi
 			MinSize: declarative.Size{Width: 150, Height: 20},
 		},
 		declarative.NumberEdit{
-			AssignTo: positionZEdit,
+			AssignTo: &p.positionZEdit,
 			OnValueChanged: func() {
-				p.updateItemProperty(*treeView, func(item *RigidBodyTreeItem) {
-					item.CalcPositionZ((*positionZEdit).Value())
-				})
+				p.onChangeValue()
 			},
 			Value:              0,     // 初期値
 			MinValue:           0.00,  // 最小値
@@ -263,11 +270,9 @@ func (p *RigidBodyTableViewDialog) createFormWidgets(startFrameEdit, endFrameEdi
 			MinSize: declarative.Size{Width: 150, Height: 20},
 		},
 		declarative.NumberEdit{
-			AssignTo: sizeXEdit,
+			AssignTo: &p.sizeXEdit,
 			OnValueChanged: func() {
-				p.updateItemProperty(*treeView, func(item *RigidBodyTreeItem) {
-					item.CalcSizeX((*sizeXEdit).Value())
-				})
+				p.onChangeValue()
 			},
 			Value:              1,     // 初期値
 			MinValue:           0.01,  // 最小値
@@ -288,11 +293,9 @@ func (p *RigidBodyTableViewDialog) createFormWidgets(startFrameEdit, endFrameEdi
 			MinSize: declarative.Size{Width: 150, Height: 20},
 		},
 		declarative.NumberEdit{
-			AssignTo: sizeYEdit,
+			AssignTo: &p.sizeYEdit,
 			OnValueChanged: func() {
-				p.updateItemProperty(*treeView, func(item *RigidBodyTreeItem) {
-					item.CalcSizeY((*sizeYEdit).Value())
-				})
+				p.onChangeValue()
 			},
 			Value:              1,     // 初期値
 			MinValue:           0.01,  // 最小値
@@ -313,11 +316,9 @@ func (p *RigidBodyTableViewDialog) createFormWidgets(startFrameEdit, endFrameEdi
 			MinSize: declarative.Size{Width: 150, Height: 20},
 		},
 		declarative.NumberEdit{
-			AssignTo: sizeZEdit,
+			AssignTo: &p.sizeZEdit,
 			OnValueChanged: func() {
-				p.updateItemProperty(*treeView, func(item *RigidBodyTreeItem) {
-					item.CalcSizeZ((*sizeZEdit).Value())
-				})
+				p.onChangeValue()
 			},
 			Value:              1,     // 初期値
 			MinValue:           0.01,  // 最小値
@@ -338,11 +339,9 @@ func (p *RigidBodyTableViewDialog) createFormWidgets(startFrameEdit, endFrameEdi
 			MinSize: declarative.Size{Width: 150, Height: 20},
 		},
 		declarative.NumberEdit{
-			AssignTo: massEdit,
+			AssignTo: &p.massEdit,
 			OnValueChanged: func() {
-				p.updateItemProperty(*treeView, func(item *RigidBodyTreeItem) {
-					item.CalcMass((*massEdit).Value())
-				})
+				p.onChangeValue()
 			},
 			Value:              1,     // 初期値
 			MinValue:           0.01,  // 最小値
@@ -363,11 +362,9 @@ func (p *RigidBodyTableViewDialog) createFormWidgets(startFrameEdit, endFrameEdi
 			MinSize: declarative.Size{Width: 150, Height: 20},
 		},
 		declarative.NumberEdit{
-			AssignTo: stiffnessEdit,
+			AssignTo: &p.stiffnessEdit,
 			OnValueChanged: func() {
-				p.updateItemProperty(*treeView, func(item *RigidBodyTreeItem) {
-					item.CalcStiffness((*stiffnessEdit).Value())
-				})
+				p.onChangeValue()
 			},
 			Value:              1,     // 初期値
 			MinValue:           0.01,  // 最小値
@@ -388,11 +385,9 @@ func (p *RigidBodyTableViewDialog) createFormWidgets(startFrameEdit, endFrameEdi
 			MinSize: declarative.Size{Width: 150, Height: 20},
 		},
 		declarative.NumberEdit{
-			AssignTo: tensionEdit,
+			AssignTo: &p.tensionEdit,
 			OnValueChanged: func() {
-				p.updateItemProperty(*treeView, func(item *RigidBodyTreeItem) {
-					item.CalcTension((*tensionEdit).Value())
-				})
+				p.onChangeValue()
 			},
 			Value:              1,     // 初期値
 			MinValue:           0.01,  // 最小値
@@ -410,45 +405,42 @@ func (p *RigidBodyTableViewDialog) createFormWidgets(startFrameEdit, endFrameEdi
 			MinSize:    declarative.Size{Width: 450, Height: 200},
 			ColumnSpan: 6,
 			OnCurrentItemChanged: func() {
-				p.updateEditValues(*treeView, *sizeXEdit, *sizeYEdit, *sizeZEdit, *positionXEdit, *positionYEdit,
-					*positionZEdit, *massEdit, *stiffnessEdit, *tensionEdit)
+				p.updateEditValues(*treeView)
 			},
 		},
 	}
 }
 
 // updateEditValues 編集値を更新
-func (p *RigidBodyTableViewDialog) updateEditValues(treeView *walk.TreeView, sizeXEdit, sizeYEdit, sizeZEdit,
-	positionXEdit, positionYEdit, positionZEdit, massEdit, stiffnessEdit, tensionEdit *walk.NumberEdit) {
+func (p *RigidBodyTableViewDialog) updateEditValues(treeView *walk.TreeView) {
 	if treeView.CurrentItem() == nil {
 		return
 	}
 
 	// 選択されたアイテムの情報を更新
 	currentItem := treeView.CurrentItem().(*RigidBodyTreeItem)
-	positionXEdit.ChangeValue(currentItem.item.Position.X)
-	positionYEdit.ChangeValue(currentItem.item.Position.Y)
-	positionZEdit.ChangeValue(currentItem.item.Position.Z)
-	sizeXEdit.ChangeValue(currentItem.item.SizeRatio.X)
-	sizeYEdit.ChangeValue(currentItem.item.SizeRatio.Y)
-	sizeZEdit.ChangeValue(currentItem.item.SizeRatio.Z)
-	massEdit.ChangeValue(currentItem.item.MassRatio)
-	stiffnessEdit.ChangeValue(currentItem.item.StiffnessRatio)
-	tensionEdit.ChangeValue(currentItem.item.TensionRatio)
+	p.positionXEdit.ChangeValue(currentItem.item.Position.X)
+	p.positionYEdit.ChangeValue(currentItem.item.Position.Y)
+	p.positionZEdit.ChangeValue(currentItem.item.Position.Z)
+	p.sizeXEdit.ChangeValue(currentItem.item.SizeRatio.X)
+	p.sizeYEdit.ChangeValue(currentItem.item.SizeRatio.Y)
+	p.sizeZEdit.ChangeValue(currentItem.item.SizeRatio.Z)
+	p.massEdit.ChangeValue(currentItem.item.MassRatio)
+	p.stiffnessEdit.ChangeValue(currentItem.item.StiffnessRatio)
+	p.tensionEdit.ChangeValue(currentItem.item.TensionRatio)
 }
 
 // updateItemProperty アイテムプロパティを更新
-func (p *RigidBodyTableViewDialog) updateItemProperty(treeView *walk.TreeView, updateFunc func(*RigidBodyTreeItem)) {
-	if treeView.CurrentItem() == nil {
+func (p *RigidBodyTableViewDialog) updateItemProperty(updateFunc func(*RigidBodyTreeItem)) {
+	if p.treeView.CurrentItem() == nil {
 		return
 	}
-	updateFunc(treeView.CurrentItem().(*RigidBodyTreeItem))
+	updateFunc(p.treeView.CurrentItem().(*RigidBodyTreeItem))
 	// モデルの更新
-	treeView.Model().(*RigidBodyTreeModel).PublishItemChanged(treeView.CurrentItem())
+	p.treeView.Model().(*RigidBodyTreeModel).PublishItemChanged(p.treeView.CurrentItem())
 }
 
 func (p *RigidBodyTableViewDialog) createButtonWidgets(
-	startFrameEdit, endFrameEdit, maxStartFrameEdit, maxEndFrameEdit **walk.NumberEdit,
 	okBtn, deleteBtn, cancelBtn **walk.PushButton, dlg **walk.Dialog, db **walk.DataBinder,
 ) []declarative.Widget {
 	return []declarative.Widget{
@@ -457,9 +449,9 @@ func (p *RigidBodyTableViewDialog) createButtonWidgets(
 			Text:        mi18n.T("登録"),
 			ToolTipText: mi18n.T("モデル物理設定登録説明"),
 			OnClicked: func() {
-				if !((*startFrameEdit).Value() <= (*maxStartFrameEdit).Value() &&
-					(*maxStartFrameEdit).Value() < (*maxEndFrameEdit).Value() &&
-					(*maxEndFrameEdit).Value() <= (*endFrameEdit).Value()) {
+				if !((p.startFrameEdit).Value() <= (p.maxStartFrameEdit).Value() &&
+					(p.maxStartFrameEdit).Value() < (p.maxEndFrameEdit).Value() &&
+					(p.maxEndFrameEdit).Value() <= (p.endFrameEdit).Value()) {
 					mlog.E(mi18n.T("モデル物理範囲設定エラー"), nil, "")
 					return
 				}
@@ -537,4 +529,50 @@ func (p *RigidBodyTableViewDialog) handleDialogOK(record *entity.RigidBodyRecord
 
 	// 削除フラグをリセット
 	p.doDelete = false
+}
+
+func (p *RigidBodyTableViewDialog) onChangeValue() {
+	// 最後に値が変更されたタイムスタンプから0.5秒以内なら無視
+	nowTimestamp := time.Now().UnixMilli()
+	if p.lastChangedTimestamp+500 > nowTimestamp {
+		return
+	}
+
+	physicsWorldMotion := p.store.mWidgets.Window().LoadPhysicsWorldMotion(0)
+	physicsModelMotion := vmd.NewVmdMotion("")
+
+	record := entity.NewRigidBodyRecord(float32(p.startFrameEdit.Value()), float32(p.endFrameEdit.Value()), p.store.currentSet().OriginalModel)
+	record.MaxStartFrame = float32(p.maxStartFrameEdit.Value())
+	record.MaxEndFrame = float32(p.maxEndFrameEdit.Value())
+
+	p.updateItemProperty(func(item *RigidBodyTreeItem) {
+		item.CalcPositionX((p.positionXEdit).Value())
+		item.CalcPositionY((p.positionYEdit).Value())
+		item.CalcPositionZ((p.positionZEdit).Value())
+		item.CalcSizeX((p.sizeXEdit).Value())
+		item.CalcSizeY((p.sizeYEdit).Value())
+		item.CalcSizeZ((p.sizeZEdit).Value())
+		item.CalcMass((p.massEdit).Value())
+		item.CalcTension((p.tensionEdit).Value())
+		item.CalcStiffness((p.stiffnessEdit).Value())
+	})
+
+	p.store.physicsUsecase.ApplyPhysicsModelMotion(
+		physicsWorldMotion,
+		physicsModelMotion,
+		[]*entity.RigidBodyRecord{record},
+		p.store.currentSet().OriginalModel,
+	)
+
+	p.store.mWidgets.Window().StorePhysicsWorldMotion(0, physicsWorldMotion)
+	p.store.mWidgets.Window().StorePhysicsModelMotion(0, p.store.CurrentIndex, physicsModelMotion)
+	p.store.mWidgets.Window().TriggerPhysicsReset()
+
+	// 台形テーブルの再描画を強制
+	if p.store.RigidBodyTableWidget != nil {
+		p.store.RigidBodyTableWidget.Invalidate()
+	}
+
+	p.store.setWidgetEnabled(true)
+	p.lastChangedTimestamp = nowTimestamp
 }

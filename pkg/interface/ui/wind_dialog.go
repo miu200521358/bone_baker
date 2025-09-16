@@ -1,6 +1,8 @@
 package ui
 
 import (
+	"time"
+
 	"github.com/miu200521358/bone_baker/pkg/domain/entity"
 	"github.com/miu200521358/mlib_go/pkg/config/mi18n"
 	"github.com/miu200521358/mlib_go/pkg/config/mlog"
@@ -11,8 +13,9 @@ import (
 
 // WindTableViewDialog 物理設定ダイアログのロジックを管理
 type WindTableViewDialog struct {
-	store    *WidgetStore
-	doDelete bool
+	store                *WidgetStore
+	doDelete             bool
+	lastChangedTimestamp int64 // 最後に値が変更されたタイムスタンプ
 
 	startFrameEdit     *walk.NumberEdit // 開始フレーム入力
 	endFrameEdit       *walk.NumberEdit // 終了フレーム入力
@@ -49,7 +52,7 @@ func (p *WindTableViewDialog) show(record *entity.WindRecord, recordIndex int) {
 		AssignTo:      &dlg,
 		CancelButton:  &cancelBtn,
 		DefaultButton: &okBtn,
-		Title:         mi18n.T("物理設定"),
+		Title:         mi18n.T("風物理設定"),
 		Layout:        declarative.VBox{},
 		MinSize:       declarative.Size{Width: 250, Height: 250},
 		MaxSize:       declarative.Size{Width: 250, Height: 250},
@@ -468,6 +471,11 @@ func (p *WindTableViewDialog) handleDialogOK(record *entity.WindRecord, recordIn
 }
 
 func (p *WindTableViewDialog) onChangeValue() {
+	// 最後に値が変更されたタイムスタンプから0.5秒以内なら無視
+	nowTimestamp := time.Now().UnixMilli()
+	if p.lastChangedTimestamp+500 > nowTimestamp {
+		return
+	}
 	p.store.setWidgetEnabled(false)
 
 	record := entity.NewWindRecord(
@@ -494,4 +502,5 @@ func (p *WindTableViewDialog) onChangeValue() {
 	p.store.mWidgets.Window().TriggerPhysicsReset()
 
 	p.store.setWidgetEnabled(true)
+	p.lastChangedTimestamp = nowTimestamp
 }
