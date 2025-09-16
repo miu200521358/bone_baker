@@ -75,6 +75,15 @@ func newRigidBodyTree(model *pmx.PmxModel) *RigidBodyTree {
 		}
 	}
 
+	model.RigidBodies.ForEach(func(rigidIndex int, rb *pmx.RigidBody) bool {
+		if found := items.AtByRigidBodyIndex(rb.Index()); found == nil {
+			// ボーンに紐付かない剛体はルートに追加
+			item := newRigidBodyItem(nil, rb, nil)
+			items.AddNode(item)
+		}
+		return true
+	})
+
 	// 剛体を持つボーンのみを保存
 	items.SaveOnlyRigidBodyItems()
 
