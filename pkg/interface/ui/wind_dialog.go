@@ -136,7 +136,8 @@ func (p *WindTableViewDialog) createFormWidgets(startFrameEdit, endFrameEdit,
 			OnMouseDown: func(x, y int, button walk.MouseButton) {
 				mlog.IL("%s", mi18n.T("風向きX説明"))
 			},
-			MinSize: declarative.Size{Width: 150, Height: 20},
+			MinSize: declarative.Size{Width: 80, Height: 20},
+			MaxSize: declarative.Size{Width: 80, Height: 20},
 		},
 		declarative.NumberEdit{
 			AssignTo:           directionXEdit,
@@ -147,8 +148,8 @@ func (p *WindTableViewDialog) createFormWidgets(startFrameEdit, endFrameEdit,
 			Decimals:           2,                                          // 小数点以下の桁数
 			Increment:          0.1,                                        // 増分
 			SpinButtonsVisible: true,                                       // スピンボタンを表示
-			MinSize:            declarative.Size{Width: 60, Height: 20},
-			MaxSize:            declarative.Size{Width: 60, Height: 20},
+			MinSize:            declarative.Size{Width: 80, Height: 20},
+			MaxSize:            declarative.Size{Width: 80, Height: 20},
 		},
 		declarative.TextLabel{
 			Text:        mi18n.T("風向きY"),
@@ -156,7 +157,8 @@ func (p *WindTableViewDialog) createFormWidgets(startFrameEdit, endFrameEdit,
 			OnMouseDown: func(x, y int, button walk.MouseButton) {
 				mlog.IL("%s", mi18n.T("風向きY説明"))
 			},
-			MinSize: declarative.Size{Width: 150, Height: 20},
+			MinSize: declarative.Size{Width: 80, Height: 20},
+			MaxSize: declarative.Size{Width: 80, Height: 20},
 		},
 		declarative.NumberEdit{
 			AssignTo:           directionYEdit,
@@ -167,8 +169,8 @@ func (p *WindTableViewDialog) createFormWidgets(startFrameEdit, endFrameEdit,
 			Decimals:           2,                                          // 小数点以下の桁数
 			Increment:          0.1,                                        // 増分
 			SpinButtonsVisible: true,                                       // スピンボタンを表示
-			MinSize:            declarative.Size{Width: 60, Height: 20},
-			MaxSize:            declarative.Size{Width: 60, Height: 20},
+			MinSize:            declarative.Size{Width: 80, Height: 20},
+			MaxSize:            declarative.Size{Width: 80, Height: 20},
 		},
 		declarative.TextLabel{
 			Text:        mi18n.T("風向きZ"),
@@ -176,7 +178,8 @@ func (p *WindTableViewDialog) createFormWidgets(startFrameEdit, endFrameEdit,
 			OnMouseDown: func(x, y int, button walk.MouseButton) {
 				mlog.IL("%s", mi18n.T("風向きZ説明"))
 			},
-			MinSize: declarative.Size{Width: 150, Height: 20},
+			MinSize: declarative.Size{Width: 80, Height: 20},
+			MaxSize: declarative.Size{Width: 80, Height: 20},
 		},
 		declarative.NumberEdit{
 			AssignTo:           directionZEdit,
@@ -187,8 +190,8 @@ func (p *WindTableViewDialog) createFormWidgets(startFrameEdit, endFrameEdit,
 			Decimals:           2,                                          // 小数点以下の桁数
 			Increment:          0.1,                                        // 増分
 			SpinButtonsVisible: true,                                       // スピンボタンを表示
-			MinSize:            declarative.Size{Width: 60, Height: 20},
-			MaxSize:            declarative.Size{Width: 60, Height: 20},
+			MinSize:            declarative.Size{Width: 80, Height: 20},
+			MaxSize:            declarative.Size{Width: 80, Height: 20},
 		},
 		declarative.TextLabel{
 			Text:        mi18n.T("風プリセット"),
@@ -196,13 +199,13 @@ func (p *WindTableViewDialog) createFormWidgets(startFrameEdit, endFrameEdit,
 			OnMouseDown: func(x, y int, button walk.MouseButton) {
 				mlog.IL("%s", mi18n.T("風プリセット説明"))
 			},
-			MinSize: declarative.Size{Width: 150, Height: 20},
+			MinSize: declarative.Size{Width: 80, Height: 20},
+			MaxSize: declarative.Size{Width: 80, Height: 20},
 		},
 		declarative.ComboBox{
 			AssignTo: presetComboBox,
 			Value:    0, // 初期値
 			Model: []string{
-				mi18n.T("無風"),
 				mi18n.T("そよ風"),
 				mi18n.T("強風"),
 				mi18n.T("突風"),
@@ -210,16 +213,7 @@ func (p *WindTableViewDialog) createFormWidgets(startFrameEdit, endFrameEdit,
 			},
 			OnCurrentIndexChanged: func() {
 				switch (*presetComboBox).CurrentIndex() {
-				case 0: // 無風
-					(*directionXEdit).SetValue(0.0)
-					(*directionYEdit).SetValue(0.0)
-					(*directionZEdit).SetValue(0.0)
-					(*speedEdit).SetValue(0.0)
-					(*randomnessEdit).SetValue(0.0)
-					(*turbulenceFreqEdit).SetValue(0.0)
-					(*dragCoeffEdit).SetValue(0.0)
-					(*liftCoeffEdit).SetValue(0.0)
-				case 1: // そよ風
+				case 0: // そよ風
 					(*directionXEdit).SetValue(1.0)
 					(*directionYEdit).SetValue(0.1)
 					(*directionZEdit).SetValue(0.0)
@@ -228,7 +222,7 @@ func (p *WindTableViewDialog) createFormWidgets(startFrameEdit, endFrameEdit,
 					(*turbulenceFreqEdit).SetValue(0.3)
 					(*dragCoeffEdit).SetValue(0.8)
 					(*liftCoeffEdit).SetValue(0.08)
-				case 2: // 強風
+				case 1: // 強風
 					(*directionXEdit).SetValue(1.0)
 					(*directionYEdit).SetValue(0.0)
 					(*directionZEdit).SetValue(0.2)
@@ -237,7 +231,7 @@ func (p *WindTableViewDialog) createFormWidgets(startFrameEdit, endFrameEdit,
 					(*turbulenceFreqEdit).SetValue(0.6)
 					(*dragCoeffEdit).SetValue(1.2)
 					(*liftCoeffEdit).SetValue(0.22)
-				case 3: // 突風
+				case 2: // 突風
 					(*directionXEdit).SetValue(0.3)
 					(*directionYEdit).SetValue(1.0)
 					(*directionZEdit).SetValue(0.0)
@@ -246,7 +240,7 @@ func (p *WindTableViewDialog) createFormWidgets(startFrameEdit, endFrameEdit,
 					(*turbulenceFreqEdit).SetValue(2.0)
 					(*dragCoeffEdit).SetValue(1.2)
 					(*liftCoeffEdit).SetValue(0.7)
-				case 4: // 台風
+				case 3: // 台風
 					(*directionXEdit).SetValue(1.0)
 					(*directionYEdit).SetValue(0.0)
 					(*directionZEdit).SetValue(0.0)
@@ -390,8 +384,9 @@ func (p *WindTableViewDialog) createButtonWidgets(
 				}
 				(*dlg).Accept()
 			},
-			MinSize: declarative.Size{Width: 80, Height: 20},
-			MaxSize: declarative.Size{Width: 80, Height: 20},
+			MinSize:    declarative.Size{Width: 80, Height: 20},
+			MaxSize:    declarative.Size{Width: 80, Height: 20},
+			ColumnSpan: 2,
 		},
 		declarative.PushButton{
 			AssignTo:    deleteBtn,
@@ -401,8 +396,9 @@ func (p *WindTableViewDialog) createButtonWidgets(
 				p.doDelete = true
 				(*dlg).Accept()
 			},
-			MinSize: declarative.Size{Width: 80, Height: 20},
-			MaxSize: declarative.Size{Width: 80, Height: 20},
+			MinSize:    declarative.Size{Width: 80, Height: 20},
+			MaxSize:    declarative.Size{Width: 80, Height: 20},
+			ColumnSpan: 2,
 		},
 		declarative.PushButton{
 			AssignTo:    cancelBtn,
@@ -411,8 +407,9 @@ func (p *WindTableViewDialog) createButtonWidgets(
 			OnClicked: func() {
 				(*dlg).Cancel()
 			},
-			MinSize: declarative.Size{Width: 80, Height: 20},
-			MaxSize: declarative.Size{Width: 80, Height: 20},
+			MinSize:    declarative.Size{Width: 80, Height: 20},
+			MaxSize:    declarative.Size{Width: 80, Height: 20},
+			ColumnSpan: 2,
 		},
 	}
 }
