@@ -22,6 +22,10 @@ func NewMenuItems() []declarative.MenuItem {
 			OnTriggered: func() { mlog.ILT("モデル物理の調整", "%s", mi18n.T("モデル物理の調整説明")) },
 		},
 		declarative.Action{
+			Text:        mi18n.T("風物理の調整"),
+			OnTriggered: func() { mlog.ILT("風物理の調整", "%s", mi18n.T("風物理の調整説明")) },
+		},
+		declarative.Action{
 			Text:        mi18n.T("焼き込み再生"),
 			OnTriggered: func() { mlog.ILT("焼き込み再生", "%s", mi18n.T("焼き込み再生説明")) },
 		},
