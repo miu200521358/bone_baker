@@ -147,8 +147,8 @@ func (p *WindTableViewDialog) createFormWidgets(presetComboBox **walk.ComboBox) 
 		declarative.NumberEdit{
 			AssignTo:           &p.directionXEdit,
 			Value:              declarative.Bind("WindConfig.Direction.X"), // 初期値
-			MinValue:           -100.00,                                    // 最小値
-			MaxValue:           100.0,                                      // 最大値
+			MinValue:           -1.0,                                       // 最小値
+			MaxValue:           1.0,                                        // 最大値
 			DefaultValue:       0.0,                                        // 初期値
 			Decimals:           2,                                          // 小数点以下の桁数
 			Increment:          0.1,                                        // 増分
@@ -171,8 +171,8 @@ func (p *WindTableViewDialog) createFormWidgets(presetComboBox **walk.ComboBox) 
 		declarative.NumberEdit{
 			AssignTo:           &p.directionYEdit,
 			Value:              declarative.Bind("WindConfig.Direction.Y"), // 初期値
-			MinValue:           -100.00,                                    // 最小値
-			MaxValue:           100.0,                                      // 最大値
+			MinValue:           -1.0,                                       // 最小値
+			MaxValue:           1.0,                                        // 最大値
 			DefaultValue:       0,                                          // 初期値
 			Decimals:           2,                                          // 小数点以下の桁数
 			Increment:          0.1,                                        // 増分
@@ -195,8 +195,8 @@ func (p *WindTableViewDialog) createFormWidgets(presetComboBox **walk.ComboBox) 
 		declarative.NumberEdit{
 			AssignTo:           &p.directionZEdit,
 			Value:              declarative.Bind("WindConfig.Direction.Z"), // 初期値
-			MinValue:           -100.00,                                    // 最小値
-			MaxValue:           100.0,                                      // 最大値
+			MinValue:           -1.0,                                       // 最小値
+			MaxValue:           1.0,                                        // 最大値
 			DefaultValue:       0,                                          // 初期値
 			Decimals:           2,                                          // 小数点以下の桁数
 			Increment:          0.1,                                        // 増分
@@ -222,47 +222,37 @@ func (p *WindTableViewDialog) createFormWidgets(presetComboBox **walk.ComboBox) 
 			Model: []string{
 				mi18n.T("そよ風"),
 				mi18n.T("強風"),
-				mi18n.T("突風"),
 				mi18n.T("台風"),
 			},
 			OnCurrentIndexChanged: func() {
 				switch (*presetComboBox).CurrentIndex() {
 				case 0: // そよ風
 					(p.directionXEdit).SetValue(1.0)
-					(p.directionYEdit).SetValue(0.1)
+					(p.directionYEdit).SetValue(0.0)
 					(p.directionZEdit).SetValue(0.0)
-					(p.speedEdit).SetValue(10.0)
-					(p.randomnessEdit).SetValue(0.2)
-					(p.turbulenceFreqEdit).SetValue(0.3)
-					(p.dragCoeffEdit).SetValue(0.8)
-					(p.liftCoeffEdit).SetValue(0.08)
+					(p.speedEdit).SetValue(2.0)
+					(p.randomnessEdit).SetValue(1.0)
+					(p.turbulenceFreqEdit).SetValue(0.5)
+					(p.dragCoeffEdit).SetValue(0.2)
+					(p.liftCoeffEdit).SetValue(0.1)
 				case 1: // 強風
 					(p.directionXEdit).SetValue(1.0)
 					(p.directionYEdit).SetValue(0.0)
-					(p.directionZEdit).SetValue(0.2)
+					(p.directionZEdit).SetValue(0.0)
 					(p.speedEdit).SetValue(20.0)
-					(p.randomnessEdit).SetValue(0.3)
-					(p.turbulenceFreqEdit).SetValue(0.6)
-					(p.dragCoeffEdit).SetValue(1.2)
-					(p.liftCoeffEdit).SetValue(0.22)
-				case 2: // 突風
-					(p.directionXEdit).SetValue(0.3)
+					(p.randomnessEdit).SetValue(2.0)
+					(p.turbulenceFreqEdit).SetValue(0.5)
+					(p.dragCoeffEdit).SetValue(0.8)
+					(p.liftCoeffEdit).SetValue(0.5)
+				case 2: // 台風
+					(p.directionXEdit).SetValue(0.0)
 					(p.directionYEdit).SetValue(1.0)
-					(p.directionZEdit).SetValue(0.0)
-					(p.speedEdit).SetValue(40.0)
-					(p.randomnessEdit).SetValue(0.7)
-					(p.turbulenceFreqEdit).SetValue(2.0)
-					(p.dragCoeffEdit).SetValue(1.2)
-					(p.liftCoeffEdit).SetValue(0.7)
-				case 3: // 台風
-					(p.directionXEdit).SetValue(1.0)
-					(p.directionYEdit).SetValue(0.0)
-					(p.directionZEdit).SetValue(0.0)
-					(p.speedEdit).SetValue(60.0)
-					(p.randomnessEdit).SetValue(0.9)
+					(p.directionZEdit).SetValue(-0.4)
+					(p.speedEdit).SetValue(100.0)
+					(p.randomnessEdit).SetValue(0.1)
 					(p.turbulenceFreqEdit).SetValue(3.0)
-					(p.dragCoeffEdit).SetValue(1.5)
-					(p.liftCoeffEdit).SetValue(0.9)
+					(p.dragCoeffEdit).SetValue(3.0)
+					(p.liftCoeffEdit).SetValue(10.0)
 				}
 			},
 		},
@@ -281,12 +271,12 @@ func (p *WindTableViewDialog) createFormWidgets(presetComboBox **walk.ComboBox) 
 		declarative.NumberEdit{
 			Value:              declarative.Bind("WindConfig.Speed"),
 			AssignTo:           &p.speedEdit,
-			MinValue:           0.0,   // 最小値
-			MaxValue:           100.0, // 最大値
-			DefaultValue:       0.0,   // 初期値
-			Decimals:           2,     // 小数点以下の桁数
-			Increment:          0.1,   // 増分
-			SpinButtonsVisible: true,  // スピンボタンを表示
+			MinValue:           0.0,    // 最小値
+			MaxValue:           1000.0, // 最大値
+			DefaultValue:       0.0,    // 初期値
+			Decimals:           2,      // 小数点以下の桁数
+			Increment:          0.1,    // 増分
+			SpinButtonsVisible: true,   // スピンボタンを表示
 			MinSize:            declarative.Size{Width: 80, Height: 20},
 			MaxSize:            declarative.Size{Width: 80, Height: 20},
 			OnValueChanged: func() {
@@ -305,12 +295,12 @@ func (p *WindTableViewDialog) createFormWidgets(presetComboBox **walk.ComboBox) 
 		declarative.NumberEdit{
 			Value:              declarative.Bind("WindConfig.Randomness"),
 			AssignTo:           &p.randomnessEdit,
-			MinValue:           0.0,   // 最小値
-			MaxValue:           100.0, // 最大値
-			DefaultValue:       0.0,   // 初期値
-			Decimals:           2,     // 小数点以下の桁数
-			Increment:          0.1,   // 増分
-			SpinButtonsVisible: true,  // スピンボタンを表示
+			MinValue:           0.0,  // 最小値
+			MaxValue:           1.0,  // 最大値
+			DefaultValue:       0.0,  // 初期値
+			Decimals:           2,    // 小数点以下の桁数
+			Increment:          0.01, // 増分
+			SpinButtonsVisible: true, // スピンボタンを表示
 			MinSize:            declarative.Size{Width: 80, Height: 20},
 			MaxSize:            declarative.Size{Width: 80, Height: 20},
 			OnValueChanged: func() {
