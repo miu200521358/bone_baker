@@ -1,3 +1,822 @@
 [
-
+    {
+        "id": "ツール概要説明",
+        "translation": "You can bake the bone deformation information of a model during motion playback and output any history of deformation information as a motion.\nThere are no restrictions on which bones can be baked.\nTo allow MMD to read the baked result, bone names related to physics in the model will be prefixed and added to the display frame."
+    },
+    {
+        "id": "焼き込み",
+        "translation": "Bake"
+    },
+    {
+        "id": "&ツールについて",
+        "translation": "&About Tool"
+    },
+    {
+        "id": "設定追加",
+        "translation": "Add Setting"
+    },
+    {
+        "id": "設定追加説明",
+        "translation": "You can additionally load multi-person motions or models for rigid bodies.\nBy adding settings, you can switch the target models or motions for baking."
+    },
+    {
+        "id": "設定全削除",
+        "translation": "Delete All Settings"
+    },
+    {
+        "id": "設定全削除説明",
+        "translation": "Delete all baking settings."
+    },
+    {
+        "id": "設定設定読込",
+        "translation": "Load Settings"
+    },
+    {
+        "id": "設定設定読込説明",
+        "translation": "Load baking settings saved separately in JSON."
+    },
+    {
+        "id": "設定設定保存",
+        "translation": "Save Settings"
+    },
+    {
+        "id": "設定設定保存説明",
+        "translation": "Save the current baking settings in JSON.\nNext time, you can restore them by loading the saved JSON."
+    },
+    {
+        "id": "焼き込み停止",
+        "translation": "Stop Baking"
+    },
+    {
+        "id": "焼き込み停止説明",
+        "translation": "Stops both motion playback and baking simultaneously."
+    },
+    {
+        "id": "焼き込み再生",
+        "translation": "Bake Playback"
+    },
+    {
+        "id": "焼き込み再生説明",
+        "translation": "Starts both motion playback and baking simultaneously.\nThe baked motion result can be played back in the \"Baked Viewer.\""
+    },
+    {
+        "id": "重力",
+        "translation": "Gravity"
+    },
+    {
+        "id": "重力説明",
+        "translation": "Set the downward gravity for physics simulation."
+    },
+    {
+        "id": "焼き込み後モーション(Vmd)",
+        "translation": "Baked Motion (Vmd)"
+    },
+    {
+        "id": "焼き込み後モーション説明",
+        "translation": "You can set the output destination of the baked motion result."
+    },
+    {
+        "id": "変更後モデル(Pmx)",
+        "translation": "Modified Model (Pmx)"
+    },
+    {
+        "id": "変更後モデル説明",
+        "translation": "You can set the output destination of the modified model with adjusted bone names for baking.\nIn the modified model, bones with baking prefixes are added to the display frame."
+    },
+    {
+        "id": "保存失敗",
+        "translation": "Save Failed"
+    },
+    {
+        "id": "モーション(Vmd)",
+        "translation": "Motion (Vmd)"
+    },
+    {
+        "id": "モーション説明",
+        "translation": "You can set the motion to be baked."
+    },
+    {
+        "id": "モデル(Pmx)",
+        "translation": "Model (Pmx)"
+    },
+    {
+        "id": "モデル説明",
+        "translation": "You can set the model to be baked."
+    },
+    {
+        "id": "ファイル選択ダイアログタイトル",
+        "translation": "File Selection Dialog Title"
+    },
+    {
+        "id": "ファイル選択ダイアログ選択エラー",
+        "translation": "Failed to select a file in the file selection dialog."
+    },
+    {
+        "id": "モデル保存",
+        "translation": "Save Baking Model"
+    },
+    {
+        "id": "モデル保存説明",
+        "translation": "Save the model adjusted for baking.\nBone names for baking are given prefixes so the physics results can be read in MMD."
+    },
+    {
+        "id": "モデル保存失敗",
+        "translation": "Model Save Failed"
+    },
+    {
+        "id": "モーション保存",
+        "translation": "Save Baked Motion"
+    },
+    {
+        "id": "モーション保存説明",
+        "translation": "Save the specified range of motion from the selected baking history INDEX as a Vmd file."
+    },
+    {
+        "id": "モーション保存失敗",
+        "translation": "Failed to save motion: %s"
+    },
+    {
+        "id": "モーション保存開始: [%.0f-%.0f]",
+        "translation": "Start Saving Motion: [%.0f-%.0f]"
+    },
+    {
+        "id": "ワールド物理設定テーブル",
+        "translation": "World Physics Settings Table"
+    },
+    {
+        "id": "ワールド物理設定テーブル説明",
+        "translation": "Configure the physics options for physics baking.\nThese options can also be modified and applied during baking playback."
+    },
+    {
+        "id": "モデル物理設定テーブル",
+        "translation": "Model Physics Settings Table"
+    },
+    {
+        "id": "モデル物理設定テーブル説明",
+        "translation": "You can configure rigid body options for physics baking.\nThese options can also be modified and applied during baking playback."
+    },
+    {
+        "id": "風設定テーブル",
+        "translation": "Wind Settings Table"
+    },
+    {
+        "id": "風設定テーブル説明",
+        "translation": "You can configure wind options for physics baking.\nThese options can also be modified and applied during baking playback."
+    },
+    {
+        "id": "出力開始フレーム",
+        "translation": "Output Start Frame"
+    },
+    {
+        "id": "出力開始フレーム説明",
+        "translation": "You can set the start frame for saving the baked result."
+    },
+    {
+        "id": "出力終了フレーム",
+        "translation": "Output End Frame"
+    },
+    {
+        "id": "出力終了フレーム説明",
+        "translation": "You can set the end frame for saving the baked result."
+    },
+    {
+        "id": "リセットフレーム",
+        "translation": "Reset Frame"
+    },
+    {
+        "id": "リセットフレーム説明",
+        "translation": "By setting a negative value, the physics will reset during baking playback when the timeline reaches the specified number of frames before the output start frame.\nIf the reset frame is 0, no physics reset will occur."
+    },
+    {
+        "id": "出力対象ボーン",
+        "translation": "Output Target Bones"
+    },
+    {
+        "id": "焼き込み設定変更エラー",
+        "translation": "Failed to change baking settings."
+    },
+    {
+        "id": "登録",
+        "translation": "Register"
+    },
+    {
+        "id": "登録説明",
+        "translation": "Register the current baking settings.\nAfter registration, when you output a motion, baking will be performed with the registered settings.\nIf multiple settings are registered for the same frame, the lower setting takes priority."
+    },
+    {
+        "id": "削除",
+        "translation": "Delete"
+    },
+    {
+        "id": "削除説明",
+        "translation": "Delete the currently selected baking settings."
+    },
+    {
+        "id": "キャンセル",
+        "translation": "Cancel"
+    },
+    {
+        "id": "キャンセル説明",
+        "translation": "Cancel the changes to the current baking settings."
+    },
+    {
+        "id": "焼き込み履歴INDEX",
+        "translation": "Baking History INDEX"
+    },
+    {
+        "id": "焼き込み履歴INDEX説明",
+        "translation": "You can select the baking history INDEX recorded during baking playback.\nThe history INDEX is automatically added during baking playback.\nWhen you change the history INDEX, the corresponding history is displayed in the \"Baked Viewer.\"\nIn this state, pressing the \"Save Baked Motion\" button will save the motion of the selected history according to the settings in the \"Output Settings Table.\""
+    },
+    {
+        "id": "焼き込みセットの元モデルまたは出力モーションが設定されていません",
+        "translation": "The source model or output motion of the baking set has not been set."
+    },
+    {
+        "id": "開始フレームより終了フレームが小さいか、負の値が設定されています",
+        "translation": "The end frame is smaller than the start frame, or a negative value has been set."
+    },
+    {
+        "id": "質量倍率",
+        "translation": "Mass Multiplier"
+    },
+    {
+        "id": "質量倍率説明",
+        "translation": "Set the multiplier for rigid body mass.\nThe larger the value, the heavier the rigid body becomes and the slower it moves.\nSpecifically, the current mass of each rigid body is multiplied by the specified multiplier.\nIt applies only to the selected bones and their child bones in the bone tree view below."
+    },
+    {
+        "id": "硬さ倍率",
+        "translation": "Stiffness Multiplier"
+    },
+    {
+        "id": "硬さ倍率説明",
+        "translation": "Set the multiplier for joint stiffness.\nThe larger the value, the stiffer the joint becomes, making it harder to deform.\nSpecifically, the current rotation limit of each joint is multiplied by the specified multiplier.\nIt applies only to the selected bones and their child bones in the bone tree view below."
+    },
+    {
+        "id": "張り倍率",
+        "translation": "Spring Multiplier"
+    },
+    {
+        "id": "張り倍率説明",
+        "translation": "Set the multiplier for springiness.\nThe larger the value, the stronger the spring becomes, making deformation harder.\nSpecifically, the current spring value of each joint is multiplied by the specified multiplier.\nIt applies only to the selected bones and their child bones in the bone tree view below."
+    },
+    {
+        "id": "%s (大きさ倍率: [%s], 質量: %.2f, 硬さ: %.2f, 張り: %.2f)",
+        "translation": "%s (Scale Multiplier: [%s], Mass: %.2f, Stiffness: %.2f, Spring: %.2f)"
+    },
+    {
+        "id": "最大演算回数",
+        "translation": "Maximum Simulation Steps"
+    },
+    {
+        "id": "最大演算回数説明",
+        "translation": "You can set Bullet's MaxSubSteps.\nTo increase the accuracy of physics calculations, multiple simulations are performed per frame.\nThe larger the value, the higher the accuracy, but processing time also increases."
+    },
+    {
+        "id": "物理演算頻度",
+        "translation": "Physics Calculation Frequency"
+    },
+    {
+        "id": "物理演算頻度説明",
+        "translation": "You can set Bullet's FixedTimeStep.\nThis changes the execution frequency of physics calculations within one frame.\nThe larger the value, the more frequently physics is calculated and the higher the accuracy, but processing time also increases."
+    },
+    {
+        "id": "IK焼き込み対象",
+        "translation": "IK Baking Target"
+    },
+    {
+        "id": "IK焼き込み対象説明",
+        "translation": "Set whether IK-related bones in the output bone tree are targeted for baking.\nSpecifically, IK bones, IK link bones, and IK target bones are included.\nIf enabled, the positions and rotations of IK-related bones will be baked into the output motion."
+    },
+    {
+        "id": "物理焼き込み対象",
+        "translation": "Physics Baking Target"
+    },
+    {
+        "id": "物理焼き込み対象説明",
+        "translation": "Set whether physics bones in the output bone tree are targeted for baking.\nIf enabled, the positions and rotations of physics bones will be baked into the output motion."
+    },
+    {
+        "id": "準標準焼き込み対象",
+        "translation": "Semi-standard Baking Target"
+    },
+    {
+        "id": "準標準焼き込み対象説明",
+        "translation": "Set whether semi-standard bones in the output bone tree, excluding all parents, leg D, and fingers, are targeted for baking.\nIf enabled, the positions and rotations of semi-standard bones, taking into account adjustment (additional parent) bones, will be baked into the output motion."
+    },
+    {
+        "id": "指焼き込み対象",
+        "translation": "Finger Baking Target"
+    },
+    {
+        "id": "指焼き込み対象説明",
+        "translation": "Set whether semi-standard finger bones in the output bone tree are targeted for baking.\nIf enabled, the positions and rotations of finger bones, considering adjustment (additional parent) bones and grasp/spread, will be baked into the output motion."
+    },
+    {
+        "id": "キーフレーム数が上限を超えるため、モーションを切り替えます[%04dF]: %d -> %d",
+        "translation": "The number of keyframes exceeds the limit, switching motion [%04dF]: %d -> %d"
+    },
+    {
+        "id": "- 物理焼き込み中... [%04dF] %dキーフレーム",
+        "translation": "- Baking physics... [%04dF] %d keyframes"
+    },
+    {
+        "id": "物理焼き込みセット保存失敗エラー",
+        "translation": "Failed to save physics baking set settings JSON."
+    },
+    {
+        "id": "物理焼き込みセット保存成功",
+        "translation": "Successfully saved physics baking set settings JSON."
+    },
+    {
+        "id": "物理焼き込みセット読込失敗エラー",
+        "translation": "Failed to load physics baking set settings JSON."
+    },
+    {
+        "id": "物理焼き込みセット読込成功",
+        "translation": "Successfully loaded physics baking set settings JSON."
+    },
+    {
+        "id": "出力ボーンツリー設定失敗エラー",
+        "translation": "Failed to initialize output bone tree."
+    },
+    {
+        "id": "物理ボーンツリー設定失敗エラー",
+        "translation": "Failed to initialize physics bone tree."
+    },
+    {
+        "id": "元モーションのコピーに失敗しました: %w",
+        "translation": "Failed to copy source motion: %w"
+    },
+    {
+        "id": "開始F",
+        "translation": "Start F"
+    },
+    {
+        "id": "終了F",
+        "translation": "End F"
+    },
+    {
+        "id": "リセットF",
+        "translation": "Reset F"
+    },
+    {
+        "id": "ボーン数",
+        "translation": "Number of Bones"
+    },
+    {
+        "id": "焼き込み対象ボーン名",
+        "translation": "Baking Target Bone Names"
+    },
+    {
+        "id": "焼き込み設定変更",
+        "translation": "Change Baking Settings"
+    },
+    {
+        "id": "焼き込み対象キーフレームなし",
+        "translation": "No target keyframes could be extracted for baking.\nIt is possible that baking target bones or the baking range were not set in the output settings table."
+    },
+    {
+        "id": "出力設定テーブル",
+        "translation": "Output Settings Table"
+    },
+    {
+        "id": "出力設定テーブル説明",
+        "translation": "The output settings table is used to set bones and frame ranges for baking.\nYou can configure baking target bones and frame ranges.\nDouble-clicking a row in the table will open the baking settings dialog.\nThe contents set in the baking settings dialog will be reflected in the table when the Register button is pressed.\nAfter registration, when you output a motion, baking will be performed with the registered settings.\nIf multiple settings are registered for the same frame, the lower setting takes priority."
+    },
+    {
+        "id": "焼き込み説明",
+        "translation": "Baking is a function for adjusting the behavior of physics simulations and the physics settings of rigid bodies and joints targeted for baking.\n1. Double-click a row in the \"World Physics Settings Table\" to open the physics settings options dialog.\n2. By adjusting settings in the physics options dialog, you can control the behavior of the physics.\n3. Saving physics settings with the Register button in the physics options dialog will change the behavior.\n\nPhysics adjustments can also be made during baking playback.\nThe meaning of each parameter can be checked in the tooltips of parameter names in the dialog."
+    },
+    {
+        "id": "焼き込み結果の確認",
+        "translation": "Check Baking Results"
+    },
+    {
+        "id": "焼き込み結果の確認説明",
+        "translation": "Check baking results by displaying the outcome of baking playback in the \"Baked Viewer.\"\nWhen baking playback is performed, baking history is recorded.\nThe baking history INDEX is automatically added during baking playback.\nChanging the baking history INDEX allows you to view the baked motion result of the selected history in the \"Baked Viewer.\""
+    },
+    {
+        "id": "焼き込み結果の保存",
+        "translation": "Save Baked Results"
+    },
+    {
+        "id": "焼き込み結果の保存説明",
+        "translation": "This function saves the motion of the baking history selected in the \"Baked Viewer.\"\n1. Change the \"Baking History INDEX\" to select the history you want to save.\n2. Double-click a row in the \"Output Settings Table\" to open the baking settings dialog.\n3. In the baking settings dialog, set the bones and frame range you actually want to bake.\n4. Click the \"Register\" button in the baking settings dialog to save the baking settings.\n5. Press the \"Save Baked Motion\" button to save the motion of the selected history according to the settings in the \"Output Settings Table.\"\n   The save destination will be the path set in Baked Motion (Vmd) + the motion start frame.\n6. Be sure to also perform \"Save Baking Model\" to adjust bone names, etc., so the baked results can be applied."
+    },
+    {
+        "id": "焼き込み履歴クリア",
+        "translation": "Clear Baking History"
+    },
+    {
+        "id": "焼き込み履歴クリア説明",
+        "translation": "Clears all baking history of the currently selected baking set.\nAll history recorded during baking playback will also be deleted.\nIf there is too much history, the performance of baking playback may deteriorate, so it is recommended to clear it regularly."
+    },
+    {
+        "id": "剛体数",
+        "translation": "Number of Rigid Bodies"
+    },
+    {
+        "id": "調整対象剛体名",
+        "translation": "Target Rigid Body Names"
+    },
+    {
+        "id": "開始フレーム",
+        "translation": "Start Frame"
+    },
+    {
+        "id": "開始フレーム説明",
+        "translation": "Sets the change start frame when treating the physics settings as a trapezoid.\nApplies only to the selected rigid bodies and their child rigid bodies in the rigid body tree view below."
+    },
+    {
+        "id": "終了フレーム",
+        "translation": "End Frame"
+    },
+    {
+        "id": "終了フレーム説明",
+        "translation": "Sets the change end frame when treating the physics settings as a trapezoid.\nApplies only to the selected rigid bodies and their child rigid bodies in the rigid body tree view below."
+    },
+    {
+        "id": "大きさX倍率",
+        "translation": "Size X Multiplier"
+    },
+    {
+        "id": "大きさX倍率説明",
+        "translation": "Set the multiplier for the rigid body size X.\nSphere ... radius, Box ... width, Capsule ... radius\nThe larger the value, the larger the rigid body's size X becomes.\nSpecifically, the current size X of each rigid body is multiplied by the specified multiplier.\nApplies only to the selected bones and their child bones in the bone tree view below."
+    },
+    {
+        "id": "大きさY倍率",
+        "translation": "Size Y Multiplier"
+    },
+    {
+        "id": "大きさY倍率説明",
+        "translation": "Set the multiplier for the rigid body size Y.\nSphere ... N/A, Box ... height, Capsule ... height\nThe larger the value, the larger the rigid body's size Y becomes.\nSpecifically, the current size Y of each rigid body is multiplied by the specified multiplier.\nApplies only to the selected bones and their child bones in the bone tree view below."
+    },
+    {
+        "id": "大きさZ倍率",
+        "translation": "Size Z Multiplier"
+    },
+    {
+        "id": "大きさZ倍率説明",
+        "translation": "Set the multiplier for the rigid body size Z.\nSphere ... N/A, Box ... depth, Capsule ... N/A\nThe larger the value, the larger the rigid body's size Z becomes.\nSpecifically, the current size Z of each rigid body is multiplied by the specified multiplier.\nApplies only to the selected bones and their child bones in the bone tree view below."
+    },
+    {
+        "id": "半径: %.2f",
+        "translation": "Radius: %.2f"
+    },
+    {
+        "id": "幅: %.2f, 高さ: %.2f, 奥行: %.2f",
+        "translation": "Width: %.2f, Height: %.2f, Depth: %.2f"
+    },
+    {
+        "id": "半径: %.2f, 高さ: %.2f",
+        "translation": "Radius: %.2f, Height: %.2f"
+    },
+    {
+        "id": "%s (剛体なし)",
+        "translation": "%s (No Rigid Body)"
+    },
+    {
+        "id": "焼き込み物理適用",
+        "translation": "Apply Baking Physics"
+    },
+    {
+        "id": "焼き込み物理適用説明",
+        "translation": "Applies the current settings of the World Physics Settings Table to the model of the currently selected baking set.\nPhysics settings changed in the World Physics Settings Table are reflected in the adjusted model and can be saved.\nChanges to the physics settings table are applied even during baking playback."
+    },
+    {
+        "id": "開始時用整形",
+        "translation": "Startup Shaping"
+    },
+    {
+        "id": "開始時用整形説明",
+        "translation": "When playing a frame where this checkbox is ON, shaping is performed to make the physics simulation cleaner.\nSpecifically, it transitions gradually from an upright Y-stance.\nContinuity with the previous frame is lost, so it is basically recommended to set this only at frame 0."
+    },
+    {
+        "id": "焼き込み再生開始: 焼き込み履歴INDEX[%d]",
+        "translation": "Start Baking Playback: Baking History INDEX[%d]"
+    },
+    {
+        "id": "最大開始フレーム",
+        "translation": "Maximum Start Frame"
+    },
+    {
+        "id": "最大開始フレーム説明",
+        "translation": "Sets the maximum start frame when treating the model physics settings as a trapezoid.\nApplies only to the selected rigid bodies and their child rigid bodies in the rigid body tree view below."
+    },
+    {
+        "id": "最大終了フレーム",
+        "translation": "Maximum End Frame"
+    },
+    {
+        "id": "最大終了フレーム説明",
+        "translation": "Sets the maximum end frame when treating the model physics settings as a trapezoid.\nApplies only to the selected rigid bodies and their child rigid bodies in the rigid body tree view below."
+    },
+    {
+        "id": "ワールド物理設定追加",
+        "translation": "Add World Physics Setting"
+    },
+    {
+        "id": "ワールド物理設定追加説明",
+        "translation": "Add a world physics modification setting."
+    },
+    {
+        "id": "ワールド物理設定",
+        "translation": "World Physics Setting"
+    },
+    {
+        "id": "モデル物理設定追加",
+        "translation": "Add Model Physics Setting"
+    },
+    {
+        "id": "モデル物理設定追加説明",
+        "translation": "Add a rigid body modification setting for the model."
+    },
+    {
+        "id": "モデル物理設定",
+        "translation": "Model Physics Setting"
+    },
+    {
+        "id": "風設定追加",
+        "translation": "Add Wind Setting"
+    },
+    {
+        "id": "風設定追加説明",
+        "translation": "Add a world wind modification setting."
+    },
+    {
+        "id": "風設定",
+        "translation": "Wind Setting"
+    },
+    {
+        "id": "出力設定追加",
+        "translation": "Add Output Setting"
+    },
+    {
+        "id": "出力設定追加説明",
+        "translation": "Add an output target setting for the model."
+    },
+    {
+        "id": "出力設定",
+        "translation": "Output Setting"
+    },
+    {
+        "id": "出力登録説明",
+        "translation": "Output Registration Description"
+    },
+    {
+        "id": "出力削除説明",
+        "translation": "Output Deletion Description"
+    },
+    {
+        "id": "出力キャンセル説明",
+        "translation": "Output Cancel Description"
+    },
+    {
+        "id": "物理設定登録説明",
+        "translation": "Physics Setting Registration Description"
+    },
+    {
+        "id": "物理設定削除説明",
+        "translation": "Physics Setting Deletion Description"
+    },
+    {
+        "id": "物理設定キャンセル説明",
+        "translation": "Physics Setting Cancel Description"
+    },
+    {
+        "id": "変更対象剛体",
+        "translation": "Target Rigid Body for Modification"
+    },
+    {
+        "id": "最大開始F",
+        "translation": "Maximum Start Frame"
+    },
+    {
+        "id": "最大終了F",
+        "translation": "Maximum End Frame"
+    },
+    {
+        "id": "モデル物理設定レコードがありません",
+        "translation": "No model physics setting records found"
+    },
+    {
+        "id": "変更剛体なし",
+        "translation": "No rigid bodies to modify"
+    },
+    {
+        "id": "モデル物理範囲設定エラー",
+        "translation": "The frame range for model physics must satisfy: Start Frame < Maximum Start Frame < Maximum End Frame < End Frame."
+    },
+    {
+        "id": "ワールド物理範囲設定エラー",
+        "translation": "The frame range for world physics must satisfy: Start Frame < End Frame."
+    },
+    {
+        "id": "出力範囲設定エラー",
+        "translation": "The frame range for output settings must satisfy: Start Frame < End Frame."
+    },
+    {
+        "id": "ワールド物理の調整",
+        "translation": "Adjust World Physics"
+    },
+    {
+        "id": "ワールド物理の調整説明",
+        "translation": "Adjust the physics settings of the world (the space where models are loaded).\nThe current settings of the World Physics Settings Table are applied to the world.\nChanges made in the World Physics Settings Table are reflected in the world and can be saved to JSON.\nModifications in the World Physics Settings Table are applied even during baking playback."
+    },
+    {
+        "id": "モデル物理の調整",
+        "translation": "Adjust Model Physics"
+    },
+    {
+        "id": "モデル物理の調整説明",
+        "translation": "Adjust the physics settings of the model.\nYou can temporarily enlarge rigid bodies or change joint stiffness.\nThe current settings of the Model Physics Settings Table are applied to the model.\nChanges made in the Model Physics Settings Table are reflected in the model and can be saved to JSON.\nModifications in the Model Physics Settings Table are applied even during baking playback.\nIf not playing back, rigid body updates may not work correctly, but playback should apply them as specified."
+    },
+    {
+        "id": "風物理の調整",
+        "translation": "Adjust Wind Physics"
+    },
+    {
+        "id": "風物理の調整説明",
+        "translation": "Adjust the physics settings of wind.\nYou can apply simulated wind results to rigid bodies.\nThe current settings of the Wind Physics Settings Table are applied to the rigid bodies.\nChanges made in the Wind Physics Settings Table are reflected in the model and can be saved to JSON.\nModifications in the Wind Physics Settings Table are applied even during baking playback."
+    },
+    {
+        "id": "焼き込み再生",
+        "translation": "Baking Playback"
+    },
+    {
+        "id": "焼き込み再生説明",
+        "translation": "Pressing the \"Baking Playback\" button plays back the current motion with baking.\nTo stabilize the behavior of the physics, playback starts by gradually transitioning from a Y-stance (arms raised diagonally upward) to the initial frame pose.\nEven during baking playback, parameters in the World Physics Settings Table and Model Physics Settings Table can be modified and applied.\nPressing the \"Stop Baking\" button during playback stops baking playback.\nWhen playback reaches the end, it automatically loops."
+    },
+    {
+        "id": "焼き込み履歴INDEXの選択",
+        "translation": "Select Baking History INDEX"
+    },
+    {
+        "id": "焼き込み履歴INDEXの選択説明",
+        "translation": "When played with the \"Baking Playback\" button, the motion including the physics shown in the \"Viewer\" window is internally saved as baking history.\nBy changing the Baking History INDEX, you can switch and check the baking history displayed in the \"Baked Viewer.\"\nWhen playback finishes and loops back to 0F, or when resuming after stopping baking, the Baking History INDEX is updated."
+    },
+    {
+        "id": "焼き込み結果の出力",
+        "translation": "Export Baking Results"
+    },
+    {
+        "id": "焼き込み結果の出力説明",
+        "translation": "The baking results selected by \"Baking History INDEX\" and displayed in the \"Baked Viewer\" can be exported as a VMD motion.\nThe bones selected in the Output Settings Table will be exported, along with other keyframes registered in the original motion.\nThe contents of the Output Settings Table can be saved to JSON.\nTo support the VMD bone name length limit, physics bones are prefixed.\nTherefore, when loading physics baking results in MMD, be sure to also perform \"Save Baking Model\" with adjusted bone names.\nNormal bones output values that take into account adjustment bones including additional parents."
+    },
+    {
+        "id": "出力対象ボーンなし",
+        "translation": "No output target bones"
+    },
+    {
+        "id": "焼き込み開始 [%s]",
+        "translation": "Start Baking [%s]"
+    },
+    {
+        "id": "分割開始 [%04d] - [%d][%d]",
+        "translation": "Split Start [%04d] - [%d][%d]"
+    },
+    {
+        "id": "出力対象ボーンが見つからなかったため、出力設定をスキップします [No.%02d]",
+        "translation": "No output target bones found, skipping output setting [No.%02d]"
+    },
+    {
+        "id": "--- キーフレーム焼き込み処理中 [%s][%04d][%d] ...",
+        "translation": "--- Baking keyframes [%s][%04d][%d] ..."
+    },
+    {
+        "id": "モーション保存完了: 処理時間 %s",
+        "translation": "Motion save complete: Processing time %s"
+    },
+    {
+        "id": "焼き込み開始 [No.%02d][%04d-%04d]",
+        "translation": "Start Baking [No.%02d][%04d-%04d]"
+    },
+    {
+        "id": "出力対象ボーンが見つからなかったため、出力設定をスキップします [No.%02d]",
+        "translation": "No output target bones found, skipping output setting [No.%02d]"
+    },
+    {
+        "id": "物理焼き込みセットの元モデルが設定されていません",
+        "translation": "The source model of the physics baking set has not been set"
+    },
+    {
+        "id": "物理焼き込みセットの元モーションが設定されていません",
+        "translation": "The source motion of the physics baking set has not been set"
+    },
+    {
+        "id": "物理焼き込みセットの出力モーションパスが設定されていません",
+        "translation": "The output motion path of the physics baking set has not been set"
+    },
+    {
+        "id": "物理焼き込みセットの出力モーションが設定されていません",
+        "translation": "The output motion of the physics baking set has not been set"
+    },
+    {
+        "id": "物理焼き込みセットの出力レコードが設定されていません",
+        "translation": "The output record of the physics baking set has not been set"
+    },
+    {
+        "id": "位置X",
+        "translation": "Position X"
+    },
+    {
+        "id": "位置X説明",
+        "translation": "You can set the change in the rigid body's global position X.\nSphere ... radius, Box ... width, Capsule ... radius\nThe larger the value, the more the rigid body moves in the X direction.\nApplies only to the bones selected in the bone tree view below."
+    },
+    {
+        "id": "位置Y",
+        "translation": "Position Y"
+    },
+    {
+        "id": "位置Y説明",
+        "translation": "You can set the change in the rigid body's global position Y.\nSphere ... N/A, Box ... height, Capsule ... height\nThe larger the value, the more the rigid body moves in the Y direction.\nApplies only to the bones selected in the bone tree view below."
+    },
+    {
+        "id": "位置Z",
+        "translation": "Position Z"
+    },
+    {
+        "id": "位置Z説明",
+        "translation": "You can set the change in the rigid body's global position Z.\nSphere ... N/A, Box ... depth, Capsule ... N/A\nThe larger the value, the more the rigid body moves in the Z direction.\nApplies only to the bones selected in the bone tree view below."
+    },
+    {
+        "id": "風向き",
+        "translation": "Wind Direction"
+    },
+    {
+        "id": "風向き説明",
+        "translation": "You can set the direction of the wind.\nThe wind direction is represented as a vector along the X, Y, and Z axes."
+    },
+    {
+        "id": "風速",
+        "translation": "Wind Speed"
+    },
+    {
+        "id": "風速説明",
+        "translation": "You can set the strength of the wind.\nThe larger the value, the stronger the wind effect."
+    },
+    {
+        "id": "ランダム",
+        "translation": "Random"
+    },
+    {
+        "id": "ランダム説明",
+        "translation": "Adds random variation to wind strength.\nThe larger the value, the greater the fluctuation in wind strength."
+    },
+    {
+        "id": "乱流周波数",
+        "translation": "Turbulence Frequency"
+    },
+    {
+        "id": "乱流周波数説明",
+        "translation": "You can set the frequency of wind turbulence.\nThe larger the value, the stronger the wind disturbance."
+    },
+    {
+        "id": "抗力係数",
+        "translation": "Drag Coefficient"
+    },
+    {
+        "id": "抗力係数説明",
+        "translation": "You can set the drag coefficient of wind on rigid bodies.\nThe larger the value, the more the rigid body is affected by the wind."
+    },
+    {
+        "id": "揚力係数",
+        "translation": "Lift Coefficient"
+    },
+    {
+        "id": "揚力係数説明",
+        "translation": "You can set the lift coefficient of wind on rigid bodies.\nThe larger the value, the stronger the lifting effect of the wind."
+    },
+    {
+        "id": "風向きX",
+        "translation": "Wind Direction X"
+    },
+    {
+        "id": "風向きY",
+        "translation": "Wind Direction Y"
+    },
+    {
+        "id": "風向きZ",
+        "translation": "Wind Direction Z"
+    },
+    {
+        "id": "風プリセット",
+        "translation": "Wind Preset"
+    },
+    {
+        "id": "そよ風",
+        "translation": "Breeze"
+    },
+    {
+        "id": "強風",
+        "translation": "Strong Wind"
+    },
+    {
+        "id": "突風",
+        "translation": "Gust"
+    },
+    {
+        "id": "台風",
+        "translation": "Typhoon"
+    }
 ]
