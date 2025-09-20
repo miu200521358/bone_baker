@@ -470,7 +470,7 @@ func (p *RigidBodyTableViewDialog) createButtonWidgets(
 			ToolTipText: mi18n.T("モデル物理設定削除説明"),
 			OnClicked: func() {
 				p.doDelete = true
-				(*dlg).Accept()
+				(*dlg).Cancel()
 			},
 		},
 		declarative.PushButton{

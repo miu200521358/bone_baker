@@ -232,7 +232,7 @@ func (p *PhysicsTableViewDialog) createButtonWidgets(
 			ToolTipText: mi18n.T("物理設定削除説明"),
 			OnClicked: func() {
 				p.doDelete = true
-				(*dlg).Accept()
+				(*dlg).Cancel()
 			},
 			MinSize: declarative.Size{Width: 80, Height: 20},
 			MaxSize: declarative.Size{Width: 80, Height: 20},
