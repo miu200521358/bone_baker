@@ -228,7 +228,7 @@ func (p *WindTableViewDialog) createFormWidgets(presetComboBox **walk.ComboBox) 
 			OnCurrentIndexChanged: func() {
 				switch (*presetComboBox).CurrentIndex() {
 				case 0: // そよ風
-					p.directionXEdit.ChangeValue(2.0)
+					p.directionXEdit.ChangeValue(3.5)
 					p.directionYEdit.ChangeValue(0.0)
 					p.directionZEdit.ChangeValue(0.3)
 					p.speedEdit.ChangeValue(2.0)
