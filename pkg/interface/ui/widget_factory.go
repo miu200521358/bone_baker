@@ -505,7 +505,7 @@ func (s *WidgetStore) createBakeHistoryClearButton() *widget.MPushButton {
 	btn := widget.NewMPushButton()
 	btn.SetLabel(mi18n.T("焼き込み履歴クリア"))
 	btn.SetTooltip(mi18n.T("焼き込み履歴クリア説明"))
-	btn.SetMaxSize(declarative.Size{Width: 100, Height: 20})
+	btn.SetMaxSize(declarative.Size{Width: 120, Height: 20})
 	btn.SetOnClicked(func(cw *controller.ControlWindow) {
 		s.Window().ClearDeltaMotion(0, s.CurrentIndex)
 		s.Window().ClearDeltaMotion(1, s.CurrentIndex)

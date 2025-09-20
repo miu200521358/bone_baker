@@ -42,12 +42,12 @@ type RigidBodyTable struct {
 func createRigidBodyTable(store *WidgetStore) declarative.Widget {
 	return declarative.ScrollView{
 		Layout:  declarative.HBox{},
-		MinSize: declarative.Size{Width: 200, Height: 250},
-		MaxSize: declarative.Size{Width: 200, Height: 250},
+		MinSize: declarative.Size{Width: 200, Height: 180},
+		MaxSize: declarative.Size{Width: 200, Height: 180},
 		Children: []declarative.Widget{
 			declarative.CustomWidget{
 				AssignTo: &store.RigidBodyTableWidget,
-				MinSize:  declarative.Size{Width: defaultMaxFrame * pixelsPerFrame, Height: 200},
+				MinSize:  declarative.Size{Width: defaultMaxFrame * pixelsPerFrame, Height: 180},
 				Paint: func(canvas *walk.Canvas, updateBounds walk.Rectangle) error {
 					return drawGraphicalRigidBodyTable(canvas, updateBounds, store)
 				},
