@@ -821,15 +821,15 @@
     },
     {
         "id": "風向きX説明",
-        "translation": "You can set the wind direction along the X axis.\nThe larger the value, the stronger the wind in the X-axis direction.\nSet within the range of -1.0 to 1.0."
+        "translation": "You can set the wind direction along the X axis.\nThe larger the value, the stronger the wind in the X-axis direction.\nSet within the range of -10.0 to 10.0."
     },
     {
         "id": "風向きY説明",
-        "translation": "You can set the wind direction along the Y axis.\nThe larger the value, the stronger the wind in the Y-axis direction.\nSet within the range of -1.0 to 1.0."
+        "translation": "You can set the wind direction along the Y axis.\nThe larger the value, the stronger the wind in the Y-axis direction.\nSet within the range of -10.0 to 10.0."
     },
     {
         "id": "風向きZ説明",
-        "translation": "You can set the wind direction along the Z axis.\nThe larger the value, the stronger the wind in the Z-axis direction.\nSet within the range of -1.0 to 1.0."
+        "translation": "You can set the wind direction along the Z axis.\nThe larger the value, the stronger the wind in the Z-axis direction.\nSet within the range of -10.0 to 10.0."
     },
     {
         "id": "風物理設定",

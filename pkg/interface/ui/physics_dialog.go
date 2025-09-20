@@ -68,7 +68,8 @@ func (p *PhysicsTableViewDialog) show(record *entity.PhysicsRecord, recordIndex 
 		},
 	}
 
-	if cmd, err := dialog.Run(builder.Parent().Form()); err == nil && cmd == walk.DlgCmdOK {
+	if _, err := dialog.Run(builder.Parent().Form()); err == nil {
+		// どのボタンでも
 		p.handleDialogOK(record, recordIndex)
 	}
 }

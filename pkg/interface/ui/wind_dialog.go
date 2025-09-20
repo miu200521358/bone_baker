@@ -74,7 +74,8 @@ func (p *WindTableViewDialog) show(record *entity.WindRecord, recordIndex int) {
 		},
 	}
 
-	if cmd, err := dialog.Run(builder.Parent().Form()); err == nil && cmd == walk.DlgCmdOK {
+	if _, err := dialog.Run(builder.Parent().Form()); err == nil {
+		// どのボタンでも
 		p.handleDialogOK(record, recordIndex)
 	}
 }
@@ -147,8 +148,8 @@ func (p *WindTableViewDialog) createFormWidgets(presetComboBox **walk.ComboBox) 
 		declarative.NumberEdit{
 			AssignTo:           &p.directionXEdit,
 			Value:              declarative.Bind("WindConfig.Direction.X"), // 初期値
-			MinValue:           -1.0,                                       // 最小値
-			MaxValue:           1.0,                                        // 最大値
+			MinValue:           -10.0,                                      // 最小値
+			MaxValue:           10.0,                                       // 最大値
 			DefaultValue:       0.0,                                        // 初期値
 			Decimals:           2,                                          // 小数点以下の桁数
 			Increment:          0.1,                                        // 増分
@@ -171,8 +172,8 @@ func (p *WindTableViewDialog) createFormWidgets(presetComboBox **walk.ComboBox) 
 		declarative.NumberEdit{
 			AssignTo:           &p.directionYEdit,
 			Value:              declarative.Bind("WindConfig.Direction.Y"), // 初期値
-			MinValue:           -1.0,                                       // 最小値
-			MaxValue:           1.0,                                        // 最大値
+			MinValue:           -10.0,                                      // 最小値
+			MaxValue:           10.0,                                       // 最大値
 			DefaultValue:       0,                                          // 初期値
 			Decimals:           2,                                          // 小数点以下の桁数
 			Increment:          0.1,                                        // 増分
@@ -195,8 +196,8 @@ func (p *WindTableViewDialog) createFormWidgets(presetComboBox **walk.ComboBox) 
 		declarative.NumberEdit{
 			AssignTo:           &p.directionZEdit,
 			Value:              declarative.Bind("WindConfig.Direction.Z"), // 初期値
-			MinValue:           -1.0,                                       // 最小値
-			MaxValue:           1.0,                                        // 最大値
+			MinValue:           -10.0,                                      // 最小値
+			MaxValue:           10.0,                                       // 最大値
 			DefaultValue:       0,                                          // 初期値
 			Decimals:           2,                                          // 小数点以下の桁数
 			Increment:          0.1,                                        // 増分
@@ -227,33 +228,34 @@ func (p *WindTableViewDialog) createFormWidgets(presetComboBox **walk.ComboBox) 
 			OnCurrentIndexChanged: func() {
 				switch (*presetComboBox).CurrentIndex() {
 				case 0: // そよ風
-					(p.directionXEdit).SetValue(1.0)
-					(p.directionYEdit).SetValue(0.0)
-					(p.directionZEdit).SetValue(0.0)
-					(p.speedEdit).SetValue(2.0)
-					(p.randomnessEdit).SetValue(1.0)
-					(p.turbulenceFreqEdit).SetValue(0.5)
-					(p.dragCoeffEdit).SetValue(0.2)
-					(p.liftCoeffEdit).SetValue(0.1)
+					p.directionXEdit.ChangeValue(2.0)
+					p.directionYEdit.ChangeValue(0.0)
+					p.directionZEdit.ChangeValue(0.3)
+					p.speedEdit.ChangeValue(2.0)
+					p.randomnessEdit.ChangeValue(1.0)
+					p.turbulenceFreqEdit.ChangeValue(0.5)
+					p.dragCoeffEdit.ChangeValue(0.2)
+					p.liftCoeffEdit.ChangeValue(0.1)
 				case 1: // 強風
-					(p.directionXEdit).SetValue(1.0)
-					(p.directionYEdit).SetValue(0.0)
-					(p.directionZEdit).SetValue(0.0)
-					(p.speedEdit).SetValue(20.0)
-					(p.randomnessEdit).SetValue(2.0)
-					(p.turbulenceFreqEdit).SetValue(0.5)
-					(p.dragCoeffEdit).SetValue(0.8)
-					(p.liftCoeffEdit).SetValue(0.5)
+					p.directionXEdit.ChangeValue(5.0)
+					p.directionYEdit.ChangeValue(0.5)
+					p.directionZEdit.ChangeValue(0.0)
+					p.speedEdit.ChangeValue(20.0)
+					p.randomnessEdit.ChangeValue(1.0)
+					p.turbulenceFreqEdit.ChangeValue(1.5)
+					p.dragCoeffEdit.ChangeValue(0.8)
+					p.liftCoeffEdit.ChangeValue(1.5)
 				case 2: // 台風
-					(p.directionXEdit).SetValue(0.0)
-					(p.directionYEdit).SetValue(1.0)
-					(p.directionZEdit).SetValue(-0.4)
-					(p.speedEdit).SetValue(100.0)
-					(p.randomnessEdit).SetValue(0.1)
-					(p.turbulenceFreqEdit).SetValue(3.0)
-					(p.dragCoeffEdit).SetValue(3.0)
-					(p.liftCoeffEdit).SetValue(10.0)
+					p.directionXEdit.ChangeValue(-0.6)
+					p.directionYEdit.ChangeValue(10.0)
+					p.directionZEdit.ChangeValue(1.0)
+					p.speedEdit.ChangeValue(100.0)
+					p.randomnessEdit.ChangeValue(0.6)
+					p.turbulenceFreqEdit.ChangeValue(3.0)
+					p.dragCoeffEdit.ChangeValue(1.0)
+					p.liftCoeffEdit.ChangeValue(10.0)
 				}
+				p.onChangeValue()
 			},
 		},
 		declarative.HSpacer{

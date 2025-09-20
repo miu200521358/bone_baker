@@ -78,7 +78,8 @@ func (p *RigidBodyTableViewDialog) Show(record *entity.RigidBodyRecord, recordIn
 		},
 	}
 
-	if cmd, err := dialog.Run(builder.Parent().Form()); err == nil && cmd == walk.DlgCmdOK {
+	if _, err := dialog.Run(builder.Parent().Form()); err == nil {
+		// どのボタンでも
 		p.handleDialogOK(record, recordIndex)
 	}
 }
