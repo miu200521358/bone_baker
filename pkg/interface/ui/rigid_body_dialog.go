@@ -78,17 +78,10 @@ func (p *RigidBodyTableViewDialog) Show(record *entity.RigidBodyRecord, recordIn
 		},
 	}
 
-	if cmd, err := dialog.RunWithFunc(builder.Parent().Form(), func(dialog *walk.Dialog) {
-		// ダイアログが完全に表示された後に実行
-		go func() {
-			// 少し待ってからチェック状態を適用
-			time.Sleep(10 * time.Millisecond)
-			p.treeView.Synchronize(func() {
-				p.treeView.ExpandAll()
-			})
-		}()
-	}); err == nil && cmd == walk.DlgCmdOK {
+	if _, err := dialog.Run(builder.Parent().Form()); err == nil {
 		p.handleDialogOK(record, recordIndex)
+	} else {
+		mlog.E(mi18n.T("モデル物理設定ダイアログ表示エラー"), err, "")
 	}
 }
 
@@ -415,6 +408,12 @@ func (p *RigidBodyTableViewDialog) createFormWidgets(treeView **walk.TreeView, t
 			ColumnSpan: 6,
 			OnCurrentItemChanged: func() {
 				p.updateEditValues(*treeView)
+			},
+			OnExpandedChanged: func(item walk.TreeItem) {
+				// SHIFTキーが押されている場合は、子ノードも展開・折りたたみする
+				if walk.ShiftDown() {
+					(*treeView).ExpandChildren(item)
+				}
 			},
 		},
 	}

@@ -68,18 +68,19 @@ func (p *OutputTableViewDialog) show(record *entity.OutputRecord, recordIndex in
 		},
 	}
 
-	if cmd, err := dialog.RunWithFunc(builder.Parent().Form(), func(dialog *walk.Dialog) {
+	if _, err := dialog.RunWithFunc(builder.Parent().Form(), func(dialog *walk.Dialog) {
 		// ダイアログが完全に表示された後に実行
 		go func() {
 			// 少し待ってからチェック状態を適用
 			time.Sleep(10 * time.Millisecond)
 			treeView.Synchronize(func() {
 				treeView.ApplyRootCheckStates()
-				treeView.ExpandAll()
 			})
 		}()
-	}); err == nil && cmd == walk.DlgCmdOK {
+	}); err == nil {
 		p.handleDialogOK(record, recordIndex)
+	} else {
+		mlog.E(mi18n.T("出力設定ダイアログ表示エラー"), err, "")
 	}
 }
 
@@ -175,6 +176,12 @@ func (p *OutputTableViewDialog) createFormWidgets(startFrameEdit, endFrameEdit *
 			MinSize:    declarative.Size{Width: 450, Height: 200},
 			Checkable:  true,
 			ColumnSpan: 4,
+			OnExpandedChanged: func(item walk.TreeItem) {
+				// SHIFTキーが押されている場合は、子ノードも展開・折りたたみする
+				if walk.ShiftDown() {
+					(*treeView).ExpandChildren(item)
+				}
+			},
 		},
 	}
 }
