@@ -85,7 +85,7 @@ func (s *WidgetStore) createOnChangePlayingPre() func(playing bool) {
 		// 情報表示
 		s.Window().SetCheckedShowInfoEnabled(playing)
 		// フレームドロップOFF
-		s.Window().SetFrameDropEnabled(false)
+		s.Window().SetCheckedFrameDropEnabled(false)
 
 		if playing {
 			// 焼き込み開始時にINDEX加算
