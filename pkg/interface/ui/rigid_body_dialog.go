@@ -78,8 +78,16 @@ func (p *RigidBodyTableViewDialog) Show(record *entity.RigidBodyRecord, recordIn
 		},
 	}
 
-	if _, err := dialog.Run(builder.Parent().Form()); err == nil {
-		// どのボタンでも
+	if cmd, err := dialog.RunWithFunc(builder.Parent().Form(), func(dialog *walk.Dialog) {
+		// ダイアログが完全に表示された後に実行
+		go func() {
+			// 少し待ってからチェック状態を適用
+			time.Sleep(10 * time.Millisecond)
+			p.treeView.Synchronize(func() {
+				p.treeView.ExpandAll()
+			})
+		}()
+	}); err == nil && cmd == walk.DlgCmdOK {
 		p.handleDialogOK(record, recordIndex)
 	}
 }

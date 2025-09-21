@@ -72,12 +72,11 @@ func (p *OutputTableViewDialog) show(record *entity.OutputRecord, recordIndex in
 		// ダイアログが完全に表示された後に実行
 		go func() {
 			// 少し待ってからチェック状態を適用
-			for range 5 {
-				time.Sleep(10 * time.Millisecond)
-				treeView.Synchronize(func() {
-					treeView.ApplyRootCheckStates()
-				})
-			}
+			time.Sleep(10 * time.Millisecond)
+			treeView.Synchronize(func() {
+				treeView.ApplyRootCheckStates()
+				treeView.ExpandAll()
+			})
 		}()
 	}); err == nil && cmd == walk.DlgCmdOK {
 		p.handleDialogOK(record, recordIndex)
