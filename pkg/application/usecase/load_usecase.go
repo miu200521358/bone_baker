@@ -342,9 +342,14 @@ func (uc *LoadUsecase) encodeName(name string, limit int) string {
 
 	decodedText := string(trimBytes)
 
-	// 末尾が文字化けしている場合は削除
-	if len(decodedText) > 0 && (decodedText[len(decodedText)-1] < 0x20 || decodedText[len(decodedText)-1] > 0x7E) {
-		decodedText = decodedText[:len(decodedText)-1]
+	// 末尾が置換文字や制御文字の場合は削除
+	for len(decodedText) > 0 {
+		last := rune(decodedText[len(decodedText)-1])
+		if last == '\uFFFD' || last == '\u0000' || (last < 0x20) {
+			decodedText = decodedText[:len(decodedText)-1]
+			continue
+		}
+		break
 	}
 
 	return decodedText
