@@ -47,6 +47,7 @@ Bullet（MMDと同じ物理演算エンジン）のパラメーターを調整�
 
 ・BoneBaker_x.xx.xx.exe       …  ツール本体
 ・Readme.txt                  …  Readme
+・OFL.txt                     …  Noto Sans JPライセンス（SIL Open Font License 1.1）
 ・content_tree.txt            …  コンテンツツリーセット
 ・Community Link - miu's Lab  …  miuの実験室Discordサーバー招待リンク
 
@@ -151,6 +152,8 @@ miuの実験室：https://discord.gg/MW2Bn47aCN
 ・https://github.com/petar/GoLLRB
 ・https://github.com/ftrvxmtrx/tga
 
+フォントは下記を同梱しています。
+Noto Sans JP c Google/SIL, licensed under SIL Open Font License 1.1
 
 ソースコードは、Githubで公開しています。(MITライセンス)
 ただし、著作権は放棄しておりません。
