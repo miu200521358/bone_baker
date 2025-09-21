@@ -253,13 +253,22 @@ func (p *PhysicsTableViewDialog) createButtonWidgets(
 func (p *PhysicsTableViewDialog) handleDialogOK(record *entity.PhysicsRecord, recordIndex int) {
 	p.store.setWidgetEnabled(false)
 
-	if recordIndex == -1 {
-		p.store.PhysicsRecords =
-			append(p.store.PhysicsRecords, record)
-		p.store.PhysicsTableView.SetCurrentIndex(len(p.store.PhysicsRecords) - 1)
+	if p.doDelete {
+		// 削除処理
+		if recordIndex >= 0 && recordIndex < len(p.store.PhysicsRecords) {
+			// 指定インデックスのレコードを削除
+			records := p.store.PhysicsRecords
+			p.store.PhysicsRecords = append(records[:recordIndex], records[recordIndex+1:]...)
+		}
 	} else {
-		p.store.PhysicsRecords[recordIndex] = record
-		p.store.PhysicsTableView.SetCurrentIndex(recordIndex)
+		if recordIndex == -1 {
+			p.store.PhysicsRecords =
+				append(p.store.PhysicsRecords, record)
+			p.store.PhysicsTableView.SetCurrentIndex(len(p.store.PhysicsRecords) - 1)
+		} else {
+			p.store.PhysicsRecords[recordIndex] = record
+			p.store.PhysicsTableView.SetCurrentIndex(recordIndex)
+		}
 	}
 
 	physicsWorldMotion := vmd.NewVmdMotion("")
