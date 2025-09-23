@@ -275,7 +275,7 @@ func (uc *LoadUsecase) insertPhysicsBonePrefix(model *pmx.PmxModel) {
 			formattedBoneName := fmt.Sprintf("BB%0*d_%s", digits, boneIndex, bone.Name())
 
 			// BoneNameEncodingServiceを使用
-			bone.SetName(uc.encodeName(formattedBoneName, 14))
+			bone.SetName(uc.encodeName(formattedBoneName, 15))
 		}
 		return true
 	})
