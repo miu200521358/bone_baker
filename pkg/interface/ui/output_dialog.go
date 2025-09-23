@@ -34,6 +34,7 @@ func (p *OutputTableViewDialog) show(record *entity.OutputRecord, recordIndex in
 	var startFrameEdit *walk.NumberEdit // 開始フレーム入力
 	var endFrameEdit *walk.NumberEdit   // 終了フレーム入力
 	var treeView *walk.TreeView
+	var reduceCheckBox *walk.CheckBox
 	var ikCheckBox *walk.CheckBox
 	var physicsCheckBox *walk.CheckBox
 	var standardCheckBox *walk.CheckBox
@@ -56,8 +57,8 @@ func (p *OutputTableViewDialog) show(record *entity.OutputRecord, recordIndex in
 		},
 		Children: []declarative.Widget{
 			declarative.Composite{
-				Layout:   declarative.Grid{Columns: 4},
-				Children: p.createFormWidgets(&startFrameEdit, &endFrameEdit, &ikCheckBox, &physicsCheckBox, &standardCheckBox, &fingerCheckBox, &treeView, treeModel),
+				Layout:   declarative.Grid{Columns: 5},
+				Children: p.createFormWidgets(&startFrameEdit, &endFrameEdit, &reduceCheckBox, &ikCheckBox, &physicsCheckBox, &standardCheckBox, &fingerCheckBox, &treeView, treeModel),
 			},
 			declarative.Composite{
 				Layout: declarative.HBox{
@@ -85,7 +86,7 @@ func (p *OutputTableViewDialog) show(record *entity.OutputRecord, recordIndex in
 }
 
 func (p *OutputTableViewDialog) createFormWidgets(startFrameEdit, endFrameEdit **walk.NumberEdit,
-	ikCheckBox, physicsCheckBox, standardCheckBox, fingerCheckBox **walk.CheckBox, treeView **walk.TreeView, treeModel *OutputTreeModel) []declarative.Widget {
+	reduceCheckBox, ikCheckBox, physicsCheckBox, standardCheckBox, fingerCheckBox **walk.CheckBox, treeView **walk.TreeView, treeModel *OutputTreeModel) []declarative.Widget {
 
 	return []declarative.Widget{
 		declarative.Label{
@@ -132,11 +133,17 @@ func (p *OutputTableViewDialog) createFormWidgets(startFrameEdit, endFrameEdit *
 			MinSize:            declarative.Size{Width: 100, Height: 20},
 			MaxSize:            declarative.Size{Width: 100, Height: 20},
 		},
+		declarative.CheckBox{
+			Checked:     declarative.Bind("Reduce"),
+			AssignTo:    reduceCheckBox,
+			Text:        mi18n.T("間引き"),
+			ToolTipText: mi18n.T("間引き説明"),
+		},
 		declarative.Label{
 			Text: mi18n.T("出力対象ボーン"),
 		},
 		declarative.HSpacer{
-			ColumnSpan: 3,
+			ColumnSpan: 4,
 		},
 		declarative.CheckBox{
 			AssignTo:    physicsCheckBox,
@@ -175,7 +182,7 @@ func (p *OutputTableViewDialog) createFormWidgets(startFrameEdit, endFrameEdit *
 			Model:      treeModel,
 			MinSize:    declarative.Size{Width: 450, Height: 200},
 			Checkable:  true,
-			ColumnSpan: 4,
+			ColumnSpan: 5,
 			OnExpandedChanged: func(item walk.TreeItem) {
 				// SHIFTキーが押されている場合は、子ノードも展開・折りたたみする
 				if walk.ShiftDown() {

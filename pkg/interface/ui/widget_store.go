@@ -2,6 +2,7 @@ package ui
 
 import (
 	"fmt"
+	"sync/atomic"
 
 	"github.com/miu200521358/bone_baker/pkg/application/usecase"
 	"github.com/miu200521358/bone_baker/pkg/domain/entity"
@@ -27,6 +28,7 @@ type WidgetStore struct {
 	BakeHistoryClearButton *widget.MPushButton     // 焼き込み履歴クリアボタン
 	SaveModelButton        *widget.MPushButton     // モデル保存ボタン
 	SaveMotionButton       *widget.MPushButton     // モーション保存ボタン
+	TerminateMotionButton  *widget.MPushButton     // モーション処理強制終了ボタン
 	Player                 *widget.MotionPlayer    // モーションプレイヤー
 	AddPhysicsButton       *widget.MPushButton     // 物理設定追加ボタン
 	PhysicsTableView       *walk.TableView         // ワールド物理設定テーブル
@@ -45,6 +47,8 @@ type WidgetStore struct {
 	saveUsecase    *usecase.SaveUsecase
 	physicsUsecase *usecase.PhysicsUsecase
 	outputUsecase  *usecase.OutputUsecase
+
+	IsTerminate atomic.Bool // モーション処理強制終了フラグ
 }
 
 func NewWidgetStore(mWidgets *controller.MWidgets) *WidgetStore {

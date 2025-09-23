@@ -8,9 +8,19 @@ import (
 	"github.com/miu200521358/mlib_go/pkg/domain/pmx"
 )
 
+type OutputBoneFlag = int
+
+const (
+	OutputBoneFlagEmpty    OutputBoneFlag = 0 // 出力無し
+	OutputBoneFlagOriginal OutputBoneFlag = 1 // 元モーション登録
+	OutputBoneFlagBake     OutputBoneFlag = 2 // 出力モーション登録
+	OutputBoneFlagReduce   OutputBoneFlag = 4 // 間引き出力
+)
+
 type OutputRecord struct {
 	StartFrame float32     `json:"start_frame"` // 区間開始フレーム
 	EndFrame   float32     `json:"end_frame"`   // 区間終了フレーム
+	Reduce     bool        `json:"reduce"`      // 間引き有無
 	Tree       *OutputTree `json:"items"`       // ボーンアイテム一覧
 }
 

@@ -29,6 +29,7 @@ func NewBakePage(mWidgets *controller.MWidgets) declarative.TabPage {
 		store.AddOutputButton.SetEnabled(false)
 		store.SaveModelButton.SetEnabled(false)
 		store.SaveMotionButton.SetEnabled(false)
+		store.TerminateMotionButton.SetEnabled(false)
 	})
 
 	return declarative.TabPage{
@@ -157,6 +158,7 @@ func NewBakePage(mWidgets *controller.MWidgets) declarative.TabPage {
 					declarative.VSeparator{},
 					store.OutputMotionPicker.Widgets(),
 					store.SaveMotionButton.Widgets(),
+					store.TerminateMotionButton.Widgets(),
 				},
 			},
 			store.Player.Widgets(),

@@ -834,5 +834,29 @@
     {
         "id": "風物理設定",
         "translation": "Wind Physics Settings"
+    },
+    {
+        "id": "間引き",
+        "translation": "Thinning"
+    },
+    {
+        "id": "間引き説明",
+        "translation": "Thins out the keyframes of the baked motion output from all keyframes.\nKeyframes with little or no change are thinned and replaced with interpolation curves."
+    },
+    {
+        "id": "--- [%03d/%03d] キーフレーム間引き処理中 [%s] ...",
+        "translation": "--- [%03d/%03d] Thinning keyframes [%s] ..."
+    },
+    {
+        "id": "--- [%04d/%04d] キーフレーム焼き込み処理中 [%d] ...",
+        "translation": "--- [%04d/%04d] Baking keyframes [%d] ..."
+    },
+    {
+        "id": "--- [%04d/%04d] キーフレーム出力処理中 [%d] ...",
+        "translation": "--- [%04d/%04d] Outputting keyframes [%d] ..."
+    },
+    {
+        "id": "物理焼き込みセットの出力レコードに対応するボーンが存在しません",
+        "translation": "No bone exists corresponding to the output record of the physics bake set"
     }
 ]

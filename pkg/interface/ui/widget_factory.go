@@ -3,6 +3,7 @@ package ui
 import (
 	"fmt"
 	"path/filepath"
+	"sync/atomic"
 	"time"
 
 	"github.com/miu200521358/bone_baker/pkg/domain/entity"
@@ -63,6 +64,7 @@ func (s *WidgetStore) setWidgetEnabled(enabled bool) {
 
 	s.SaveModelButton.SetEnabled(enabled)
 	s.SaveMotionButton.SetEnabled(enabled)
+	s.TerminateMotionButton.SetEnabled(enabled)
 
 	s.setWidgetPlayingEnabled(enabled)
 }
@@ -125,6 +127,7 @@ func (s *WidgetStore) createButtonWidgets() {
 	s.SaveSetButton = s.createSaveSetButton()
 	s.SaveModelButton = s.createSaveModelButton()
 	s.SaveMotionButton = s.createSaveMotionButton()
+	s.TerminateMotionButton = s.createTerminateMotionButton()
 	s.AddPhysicsButton = s.createAddPhysicsButton()
 	s.AddWindButton = s.createAddWindButton()
 	s.AddRigidBodyButton = s.createAddRigidBodyButton()
@@ -312,6 +315,18 @@ func (s *WidgetStore) createSaveModelButton() *widget.MPushButton {
 	return btn
 }
 
+func (s *WidgetStore) createTerminateMotionButton() *widget.MPushButton {
+	btn := widget.NewMPushButton()
+	btn.SetLabel(mi18n.T("モーション処理強制終了"))
+	btn.SetTooltip(mi18n.T("モーション処理強制終了説明"))
+	btn.SetMinSize(declarative.Size{Width: 256, Height: 20})
+	btn.SetStretchFactor(20)
+	btn.SetOnClicked(func(cw *controller.ControlWindow) {
+		s.IsTerminate.Store(true)
+	})
+	return btn
+}
+
 func (s *WidgetStore) createSaveMotionButton() *widget.MPushButton {
 	btn := widget.NewMPushButton()
 	btn.SetLabel(mi18n.T("モーション保存"))
@@ -320,6 +335,7 @@ func (s *WidgetStore) createSaveMotionButton() *widget.MPushButton {
 	btn.SetStretchFactor(20)
 	btn.SetOnClicked(func(cw *controller.ControlWindow) {
 		s.setWidgetEnabled(false)
+		s.TerminateMotionButton.SetEnabled(true)
 
 		// エラーを受け取るためのチャネルを作成
 		errCh := make(chan error, 1)
@@ -337,11 +353,15 @@ func (s *WidgetStore) createSaveMotionButton() *widget.MPushButton {
 				cw.Synchronize(func() {
 					if ok := merr.ShowErrorDialog(cw.AppConfig(), err); ok {
 						s.setWidgetEnabled(true)
+						s.TerminateMotionButton.SetEnabled(false)
+
 						controller.Beep()
 					}
 				})
 			} else {
 				s.setWidgetEnabled(true)
+				s.TerminateMotionButton.SetEnabled(false)
+
 				controller.Beep()
 			}
 		}()
@@ -380,12 +400,48 @@ func (s *WidgetStore) saveMotions() error {
 		return nil
 	}
 
+	var completedProcessCount int32 = 0
+	incrementCompletedCount := func() {
+		atomic.AddInt32(&completedProcessCount, 1)
+		s.Window().Synchronize(func() {
+			s.Window().ProgressBar().Increment()
+		})
+	}
+
+	isTerminate := func() bool {
+		return s.IsTerminate.Load()
+	}
+
+	outputBoneFlags := s.outputUsecase.GetBakedBoneFlags(
+		bakeSet.OriginalModel,
+		bakeSet.OriginalMotion,
+		bakeSet.OutputRecords,
+	)
+
+	if len(outputBoneFlags) == 0 || len(outputBoneFlags[0]) == 0 {
+		mlog.W(mi18n.T("物理焼き込みセットの出力レコードに対応するボーンが存在しません"))
+		return nil
+	}
+
+	// 全体処理数として、焼き込みキーフレ件数 / 実際の焼き込み処理 / 実際の間引き処理 / 分割件数
+	totalProcessCount := (len(outputBoneFlags) * len(outputBoneFlags[0])) * 4
+	// 間引きボーン件数
+	totalProcessCount += len(outputBoneFlags)
+
+	s.Window().Synchronize(func() {
+		s.Window().ProgressBar().SetMax(totalProcessCount)
+		s.Window().ProgressBar().SetValue(int(completedProcessCount))
+	})
+
 	motions, err := s.outputUsecase.ProcessOutputMotions(
 		bakeSet.OriginalModel,
 		bakeSet.OriginalMotion,
 		bakeSet.OutputMotion,
 		bakeSet.OutputMotionPath,
 		bakeSet.OutputRecords,
+		outputBoneFlags,
+		incrementCompletedCount,
+		isTerminate,
 	)
 
 	if err != nil {
