@@ -317,8 +317,8 @@ func (s *WidgetStore) createSaveModelButton() *widget.MPushButton {
 
 func (s *WidgetStore) createTerminateMotionButton() *widget.MPushButton {
 	btn := widget.NewMPushButton()
-	btn.SetLabel(mi18n.T("モーション処理強制終了"))
-	btn.SetTooltip(mi18n.T("モーション処理強制終了説明"))
+	btn.SetLabel(mi18n.T("モーション保存強制終了"))
+	btn.SetTooltip(mi18n.T("モーション保存強制終了説明"))
 	btn.SetMinSize(declarative.Size{Width: 256, Height: 20})
 	btn.SetStretchFactor(20)
 	btn.SetOnClicked(func(cw *controller.ControlWindow) {
@@ -355,17 +355,26 @@ func (s *WidgetStore) createSaveMotionButton() *widget.MPushButton {
 						s.setWidgetEnabled(true)
 						s.TerminateMotionButton.SetEnabled(false)
 
+						cw.ProgressBar().SetMax(0)
+						cw.ProgressBar().SetValue(0)
+
 						controller.Beep()
 					}
 				})
 			} else {
-				s.setWidgetEnabled(true)
-				s.TerminateMotionButton.SetEnabled(false)
+				cw.Synchronize(func() {
+					s.setWidgetEnabled(true)
+					s.TerminateMotionButton.SetEnabled(false)
 
-				controller.Beep()
+					cw.ProgressBar().SetMax(0)
+					cw.ProgressBar().SetValue(0)
+
+					controller.Beep()
+				})
 			}
 		}()
 	})
+
 	return btn
 }
 
@@ -412,7 +421,7 @@ func (s *WidgetStore) saveMotions() error {
 		return s.IsTerminate.Load()
 	}
 
-	outputBoneFlags := s.outputUsecase.GetBakedBoneFlags(
+	outputBoneFlags, isContainsReduce := s.outputUsecase.GetBakedBoneFlags(
 		bakeSet.OriginalModel,
 		bakeSet.OriginalMotion,
 		bakeSet.OutputRecords,
@@ -440,6 +449,7 @@ func (s *WidgetStore) saveMotions() error {
 		bakeSet.OutputMotionPath,
 		bakeSet.OutputRecords,
 		outputBoneFlags,
+		isContainsReduce,
 		incrementCompletedCount,
 		isTerminate,
 	)

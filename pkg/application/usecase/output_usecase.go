@@ -26,7 +26,7 @@ func (uc *OutputUsecase) GetBakedBoneFlags(
 	originalModel *pmx.PmxModel,
 	originalMotion *vmd.VmdMotion,
 	records []*entity.OutputRecord,
-) [][]entity.OutputBoneFlag {
+) (outputBoneFlags [][]entity.OutputBoneFlag, isContainsReduce bool) {
 	minFrame := originalMotion.MinFrame()
 	maxFrame := originalMotion.MaxFrame()
 	// 焼き込み対象ボーン一覧を取得
@@ -41,7 +41,7 @@ func (uc *OutputUsecase) GetBakedBoneFlags(
 	frameCount := int(maxFrame + 1)
 
 	// ボーン毎のフレーム焼き込み有無を設定
-	outputBoneFlags := make([][]entity.OutputBoneFlag, originalModel.Bones.Length())
+	outputBoneFlags = make([][]entity.OutputBoneFlag, originalModel.Bones.Length())
 	originalModel.Bones.ForEach(func(boneIndex int, bone *pmx.Bone) bool {
 		outputBoneFlags[boneIndex] = make([]entity.OutputBoneFlag, frameCount)
 
@@ -56,6 +56,7 @@ func (uc *OutputUsecase) GetBakedBoneFlags(
 					// 出力対象レコードに登録されている場合、焼き込み対象
 					if record.Reduce {
 						outputBoneFlags[boneIndex][int(f)] = entity.OutputBoneFlagReduce
+						isContainsReduce = true
 					} else {
 						outputBoneFlags[boneIndex][int(f)] = entity.OutputBoneFlagBake
 					}
@@ -66,7 +67,7 @@ func (uc *OutputUsecase) GetBakedBoneFlags(
 		return true
 	})
 
-	return outputBoneFlags
+	return outputBoneFlags, isContainsReduce
 }
 
 // ProcessOutputMotion 出力モーション処理のビジネスロジック
@@ -77,51 +78,53 @@ func (uc *OutputUsecase) ProcessOutputMotions(
 	outputMotionPath string,
 	records []*entity.OutputRecord,
 	outputBoneFlags [][]entity.OutputBoneFlag,
+	isContainsReduce bool,
 	incrementCompletedCount func(),
 	isTerminate func() bool,
 ) ([]*vmd.VmdMotion, error) {
-	// 焼き込み後のキーフレームを生成
-	bakedBoneFrames, err := uc.generateBakedBoneFrames(originalModel, outputMotion, outputBoneFlags, incrementCompletedCount, isTerminate)
-	if err != nil {
-		return nil, err
-	}
-
 	// 焼き込みモーションを生成
-	bakedMotion, err := uc.bakeMotion(originalModel, originalMotion, outputBoneFlags, bakedBoneFrames, incrementCompletedCount, isTerminate)
+	bakedMotion, err := uc.bakeMotion(originalModel, originalMotion, outputMotion, outputBoneFlags, incrementCompletedCount, isTerminate)
 	if err != nil {
 		return nil, err
 	}
 
-	// 間引き後のキーフレームを生成
-	reducedBoneFrames, err := uc.generateReducedBoneFrames(originalModel, bakedMotion, outputBoneFlags, incrementCompletedCount, isTerminate)
-	if err != nil {
-		return nil, err
-	}
+	var reducedMotion *vmd.VmdMotion
 
-	// 間引きモーションを生成
-	reducedMotion, err := uc.reduceMotion(originalModel, originalMotion, outputBoneFlags, bakedBoneFrames, reducedBoneFrames, incrementCompletedCount, isTerminate)
-	if err != nil {
-		return nil, err
+	if isContainsReduce {
+		// 間引き後のキーフレームを生成
+		reducedBoneFrames, err := uc.generateReducedBoneFrames(originalModel, bakedMotion, incrementCompletedCount, isTerminate)
+		if err != nil {
+			return nil, err
+		}
+
+		// 間引きモーションを生成
+		reducedMotion, err = uc.reduceMotion(originalModel, originalMotion, outputMotion, outputBoneFlags, reducedBoneFrames, incrementCompletedCount, isTerminate)
+		if err != nil {
+			return nil, err
+		}
+	} else {
+		reducedMotion = bakedMotion
 	}
 
 	// 最大件数で分割
 	return uc.splitMotion(originalModel, originalMotion, outputMotionPath, reducedMotion, incrementCompletedCount, isTerminate)
 }
 
-func (uc *OutputUsecase) generateBakedBoneFrames(
+func (uc *OutputUsecase) bakeMotion(
 	originalModel *pmx.PmxModel,
+	originalMotion *vmd.VmdMotion,
 	outputMotion *vmd.VmdMotion,
 	outputBoneFlags [][]entity.OutputBoneFlag,
 	incrementCompletedCount func(),
 	isTerminate func() bool,
-) (bakedBoneFrames [][]*vmd.BoneFrame, err error) {
+) (bakedMotion *vmd.VmdMotion, err error) {
+	bakedMotion, err = originalMotion.Copy()
+	if err != nil {
+		return nil, err
+	}
+
 	logBlockSize := runtime.NumCPU() * 100
 	blockSize, _ := miter.GetBlockSize(len(originalModel.Bones.Names()))
-
-	bakedBoneFrames = make([][]*vmd.BoneFrame, len(originalModel.Bones.Names()))
-	for i := range bakedBoneFrames {
-		bakedBoneFrames[i] = make([]*vmd.BoneFrame, len(outputBoneFlags))
-	}
 
 	// 焼き込み処理
 	err = miter.IterParallelByList(originalModel.Bones.Names(), blockSize, logBlockSize,
@@ -141,23 +144,11 @@ func (uc *OutputUsecase) generateBakedBoneFrames(
 					bf := vmd.NewBoneFrame(float32(f))
 					bf.Position = bakedBf.FilledPosition().Copy()     // 位置を保存
 					bf.Rotation = bakedBf.FilledUnitRotation().Copy() // (モーフ・付与親含む)トータル回転を保存
-					if bakedBf.Curves != nil {
-						bf.Curves = bakedBf.Curves.Copy()
-					}
 
-					bone, err := originalModel.Bones.GetByName(boneName)
-					if err != nil {
-						continue
-					}
-
-					// 物理ボーンの場合、物理無効で登録
-					if bone.HasDynamicPhysics() {
-						bf.DisablePhysics = true
-					}
-
-					bakedBoneFrames[boneIndex][f] = bf
+					bakedMotion.InsertBoneFrame(boneName, bf)
 				}
 			}
+			mlog.I(fmt.Sprintf(mi18n.T("--- [%07d/%07d] キーフレーム焼き込み処理中 [%s] ..."), originalModel.Bones.Length(), originalModel.Bones.Length(), boneName))
 
 			return nil
 		},
@@ -168,64 +159,18 @@ func (uc *OutputUsecase) generateBakedBoneFrames(
 		return nil, err
 	}
 
-	return bakedBoneFrames, nil
-}
-
-func (uc *OutputUsecase) bakeMotion(
-	originalModel *pmx.PmxModel,
-	originalMotion *vmd.VmdMotion,
-	outputBoneFlags [][]entity.OutputBoneFlag,
-	bakedBoneFrames [][]*vmd.BoneFrame,
-	incrementCompletedCount func(),
-	isTerminate func() bool,
-) (bakedMotion *vmd.VmdMotion, err error) {
-	bakedMotion, err = originalMotion.Copy()
-	if err != nil {
-		return nil, err
-	}
-
-	logInterval := 100000
-	frameCount := 0
-	maxFrameCount := len(bakedBoneFrames[0]) / logInterval
-
-	for boneIndex, boneName := range originalModel.Bones.Names() {
-		for f, outputFlag := range outputBoneFlags[boneIndex] {
-			if isTerminate() {
-				return nil, merr.NewTerminateError("manual terminate")
-			}
-
-			switch outputFlag {
-			case entity.OutputBoneFlagBake, entity.OutputBoneFlagReduce:
-				if bf := bakedBoneFrames[boneIndex][f]; bf != nil {
-					bakedMotion.InsertBoneFrame(boneName, bf)
-				}
-			}
-
-			frameCount++
-			if frameCount%logInterval == 0 {
-				mlog.I(fmt.Sprintf(mi18n.T("--- [%03d/%03d] キーフレーム焼き込み処理中 ..."), frameCount/logInterval, maxFrameCount))
-			}
-
-			incrementCompletedCount()
-		}
-	}
-
 	return bakedMotion, nil
 }
 
 func (uc *OutputUsecase) generateReducedBoneFrames(
 	originalModel *pmx.PmxModel,
 	bakedMotion *vmd.VmdMotion,
-	outputBoneFlags [][]entity.OutputBoneFlag,
 	incrementCompletedCount func(),
 	isTerminate func() bool,
-) (reducedBoneFrames [][]*vmd.BoneFrame, err error) {
+) (reducedBoneFrames []*vmd.BoneNameFrames, err error) {
 	blockSize, _ := miter.GetBlockSize(len(originalModel.Bones.Names()))
 
-	reducedBoneFrames = make([][]*vmd.BoneFrame, len(originalModel.Bones.Names()))
-	for i := range reducedBoneFrames {
-		reducedBoneFrames[i] = make([]*vmd.BoneFrame, len(outputBoneFlags))
-	}
+	reducedBoneFrames = make([]*vmd.BoneNameFrames, len(originalModel.Bones.Names()))
 
 	// 間引き処理
 	err = miter.IterParallelByList(originalModel.Bones.Names(), blockSize, 1,
@@ -234,27 +179,9 @@ func (uc *OutputUsecase) generateReducedBoneFrames(
 				return merr.NewTerminateError("manual terminate")
 			}
 
-			reducedBoneNameFrames := bakedMotion.BoneFrames.Get(boneName).Reduce()
+			reducedBoneFrames[boneIndex] = bakedMotion.BoneFrames.Get(boneName).Reduce()
 
 			incrementCompletedCount()
-
-			for f, outputFlag := range outputBoneFlags[boneIndex] {
-				switch outputFlag {
-				case entity.OutputBoneFlagReduce:
-					// 焼き込み出力対象の場合、出力モーションから取得
-					reducedBf := reducedBoneNameFrames.Get(float32(f))
-
-					bf := vmd.NewBoneFrame(float32(f))
-					bf.Position = reducedBf.FilledPosition().Copy() // 位置を保存
-					bf.Rotation = reducedBf.FilledRotation().Copy() // 回転を保存
-					bf.DisablePhysics = reducedBf.DisablePhysics    // 物理無効有無を保存
-					if reducedBf.Curves != nil {
-						bf.Curves = reducedBf.Curves.Copy()
-					}
-
-					reducedBoneFrames[boneIndex][f] = bf
-				}
-			}
 
 			return nil
 		},
@@ -271,9 +198,9 @@ func (uc *OutputUsecase) generateReducedBoneFrames(
 func (uc *OutputUsecase) reduceMotion(
 	originalModel *pmx.PmxModel,
 	originalMotion *vmd.VmdMotion,
+	outputMotion *vmd.VmdMotion,
 	outputBoneFlags [][]entity.OutputBoneFlag,
-	bakedBoneFrames [][]*vmd.BoneFrame,
-	reducedBoneFrames [][]*vmd.BoneFrame,
+	reducedBoneFrames []*vmd.BoneNameFrames,
 	incrementCompletedCount func(),
 	isTerminate func() bool,
 ) (reducedMotion *vmd.VmdMotion, err error) {
@@ -284,7 +211,7 @@ func (uc *OutputUsecase) reduceMotion(
 
 	logInterval := 100000
 	frameCount := 0
-	maxFrameCount := len(bakedBoneFrames[0]) / logInterval
+	maxFrameCount := len(outputBoneFlags[0]) / logInterval
 
 	for boneIndex, boneName := range originalModel.Bones.Names() {
 		for f, outputFlag := range outputBoneFlags[boneIndex] {
@@ -292,17 +219,27 @@ func (uc *OutputUsecase) reduceMotion(
 				return nil, merr.NewTerminateError("manual terminate")
 			}
 
-			switch outputFlag {
-			case entity.OutputBoneFlagBake:
-				// 焼き込み出力対象の場合、焼き込み後のフレームを登録
-				if bf := bakedBoneFrames[boneIndex][f]; bf != nil {
-					reducedMotion.InsertBoneFrame(boneName, bf)
+			if (outputFlag == entity.OutputBoneFlagReduce && reducedBoneFrames[boneIndex].Contains(float32(f))) ||
+				outputFlag == entity.OutputBoneFlagBake {
+				// 間引き出力対象で間引き後のフレームに含まれる場合、または焼き込み出力対象の場合、処理継続
+				outputBf := outputMotion.BoneFrames.Get(boneName).Get(float32(f))
+
+				bf := vmd.NewBoneFrame(float32(f))
+				bf.Position = outputBf.FilledPosition().Copy() // 位置を保存
+				bf.Rotation = outputBf.FilledRotation().Copy() // 回転を保存
+				bf.Curves = nil
+
+				bone, err := originalModel.Bones.GetByName(boneName)
+				if err != nil {
+					continue
 				}
-			case entity.OutputBoneFlagReduce:
-				// 間引き出力対象の場合、間引き後のフレームを登録
-				if bf := reducedBoneFrames[boneIndex][f]; bf != nil {
-					reducedMotion.InsertBoneFrame(boneName, bf)
+
+				// 物理ボーンの場合、物理無効で登録
+				if bone.HasDynamicPhysics() {
+					bf.DisablePhysics = true
 				}
+
+				reducedMotion.InsertBoneFrame(boneName, bf)
 			}
 
 			frameCount++
@@ -343,9 +280,10 @@ func (uc *OutputUsecase) splitMotion(
 		if len(motions) == 0 || prevFrameTotalCount+frameCount > vmd.MAX_BONE_FRAMES {
 			// 最大登録数を超える場合、新規モーションを作成
 
-			motion := vmd.NewVmdMotion("")
+			motion = vmd.NewVmdMotion("")
 			motion.SetName(fmt.Sprintf("%s_baked", originalModel.Name()))
 			motion.SetPath(fmt.Sprintf("%s%s_%02d_%04d%s", dirPath, fileName, len(motions)+1, int(f), ext))
+			motions = append(motions, motion)
 
 			prevFrameTotalCount = 0
 		} else {
@@ -357,17 +295,27 @@ func (uc *OutputUsecase) splitMotion(
 			incrementCompletedCount()
 
 			if reducedMotion.BoneFrames.Get(boneName).Contains(f) {
-				motion.AppendBoneFrame(boneName, reducedMotion.BoneFrames.Get(boneName).Get(f))
+				bone, err := originalModel.Bones.GetByName(boneName)
+				if err != nil {
+					continue
+				}
+
+				bf := reducedMotion.BoneFrames.Get(boneName).Get(f)
+
+				if bone.HasDynamicPhysics() {
+					// 物理ボーンの場合、物理無効で登録
+					bf.DisablePhysics = true
+				}
+
+				motion.AppendBoneFrame(boneName, bf)
 
 				// 補間曲線分割済みの次のキーフレ取得して、出力モーションに追加
 				nextFrame := reducedMotion.BoneFrames.Get(boneName).NextFrame(f + 1)
 				nextBf := reducedMotion.BoneFrames.Get(boneName).Get(nextFrame)
 
-				if bone, err := originalModel.Bones.GetByName(boneName); err == nil {
-					if bone.HasDynamicPhysics() {
-						// 物理ボーンの場合、物理有効で登録
-						nextBf.DisablePhysics = false
-					}
+				if bone.HasDynamicPhysics() {
+					// 物理ボーンの場合、物理有効で登録
+					nextBf.DisablePhysics = false
 				}
 
 				motion.AppendBoneFrame(boneName, nextBf)
@@ -379,9 +327,6 @@ func (uc *OutputUsecase) splitMotion(
 			}
 		}
 	}
-
-	// 最後のモーションを追加
-	motions = append(motions, motion)
 
 	return motions, nil
 }
